@@ -2,8 +2,8 @@
 # Machine-readable registry of all documentation
 # All docs MUST be registered here per DOCS_RULES.md
 
-version: "1.0"
-last_updated: "2024-01-15"
+version: "1.1"
+last_updated: "2025-01-25"
 
 documents:
   # Root-level documents
@@ -13,6 +13,34 @@ documents:
     status: active
     last_reviewed: "2024-01-15"
     description: "SSOT entry point - read first"
+
+  - path: SESSION_LOG.md
+    title: "Session Log"
+    owner: core-team
+    status: active
+    last_reviewed: "2025-01-25"
+    description: "Chronological log of coding sessions"
+
+  - path: NEXT_SESSION.md
+    title: "Next Session Quick Start"
+    owner: core-team
+    status: active
+    last_reviewed: "2025-01-25"
+    description: "Fast context loading for new sessions"
+
+  - path: TECH_DEBT.md
+    title: "Technical Debt Tracker"
+    owner: core-team
+    status: active
+    last_reviewed: "2025-01-25"
+    description: "Known issues and shortcuts to address"
+
+  - path: AI_CONTEXT.md
+    title: "AI Context"
+    owner: core-team
+    status: active
+    last_reviewed: "2025-01-25"
+    description: "Quick project overview for AI assistants"
 
   - path: DOCS_RULES.md
     title: "Documentation Governance"

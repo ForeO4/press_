@@ -44,6 +44,15 @@
 | **Backlog** | [08-backlog/](./08-backlog/) - Backlog, epics, milestones |
 | **Development** | [09-dev/](./09-dev/) - Local dev, testing, conventions |
 
+### AI-Assisted Development
+
+| Document | Purpose |
+|----------|---------|
+| [AI_CONTEXT.md](./AI_CONTEXT.md) | Quick project overview for AI assistants |
+| [NEXT_SESSION.md](./NEXT_SESSION.md) | Fast context loading for new sessions |
+| [SESSION_LOG.md](./SESSION_LOG.md) | Chronological session history |
+| [TECH_DEBT.md](./TECH_DEBT.md) | Technical debt tracking |
+
 ### Contracts & Operations
 
 | Document | Purpose |

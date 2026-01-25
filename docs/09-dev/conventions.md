@@ -196,3 +196,44 @@ return Response.json({
   }
 }, { status: 400 });
 ```
+
+## Configuration & Data
+
+### No Hardcoding Rule
+
+Never hardcode values that could change or vary by context:
+
+```typescript
+// BAD - hardcoded game types
+const GAME_TYPES = ['match_play', 'nassau', 'skins'];
+
+// GOOD - fetch from database
+const gameTypes = await db.from('game_types').select('*');
+```
+
+### What Must Be Database-Driven
+
+| Category | Examples | Table |
+|----------|----------|-------|
+| Game configuration | Game types, scoring formats, press rules | `game_types`, `scoring_formats` |
+| Betting/currency | Default stakes, limits, payout structures | `system_config`, event-level settings |
+| UI/display | Labels, messages, dropdown options | `ui_strings` (future), `system_config` |
+| Feature flags | Enabled features per event/user | `system_config`, `event_settings` |
+
+### Exceptions (OK to hardcode)
+
+- TypeScript type definitions (derived from DB schema)
+- Enum validation (must match DB constraints)
+- Mathematical constants
+- Security-critical values (e.g., max retry attempts)
+
+### Caching Strategy
+
+```typescript
+// Use React Query or similar for config caching
+const { data: gameTypes } = useQuery({
+  queryKey: ['config', 'gameTypes'],
+  queryFn: () => fetchGameTypes(),
+  staleTime: 5 * 60 * 1000, // 5 min cache
+});
+```

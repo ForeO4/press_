@@ -148,3 +148,40 @@ Three visibility levels: PRIVATE, UNLISTED, PUBLIC.
 - **PRIVATE:** Members only, no share links work
 - **UNLISTED:** Leaderboard via share links; feed/chat members-only
 - **PUBLIC:** Leaderboard public; feed/chat still members-only
+
+---
+
+## ADR-008: Database-Driven Configuration
+
+**Status:** Accepted
+**Date:** 2026-01-25
+**Deciders:** Core Team
+
+### Context
+Press! has various configurable elements: game types, scoring formats, betting structures, UI labels, and system settings. We need to decide between hardcoding these values or storing them in the database.
+
+### Decision
+All configurable data must be stored in the database and retrieved dynamically. No hardcoding of:
+- Game types and rules
+- Scoring formats and calculations
+- Betting amounts and limits
+- UI display text and labels
+- System configuration values
+
+### Consequences
+- **Positive:** Change configuration without code deployment
+- **Positive:** A/B testing and feature flags become trivial
+- **Positive:** Different events can have different rules
+- **Positive:** Admins can modify settings via UI
+- **Negative:** More complex initial setup
+- **Negative:** Requires configuration seeding strategy
+- **Negative:** Slightly more database queries (mitigated by caching)
+
+### Implementation
+Configuration tables:
+- `game_types` - Available game formats
+- `scoring_formats` - Scoring calculation rules
+- `system_config` - Key-value system settings
+- `ui_strings` - Localizable UI text (future i18n)
+
+Related: ADR-005 (Mock Mode must include config seeding)

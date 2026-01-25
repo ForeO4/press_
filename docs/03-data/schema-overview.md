@@ -79,6 +79,28 @@ erDiagram
         integer balance_int
         text reason
     }
+
+    game_types {
+        uuid id PK
+        text code UK
+        text name
+        text description
+        jsonb rules
+        boolean is_active
+    }
+
+    scoring_formats {
+        uuid id PK
+        text code UK
+        text name
+        jsonb calculation_rules
+    }
+
+    system_config {
+        text key PK
+        jsonb value
+        text description
+    }
 ```
 
 ## Table Groups
@@ -150,6 +172,14 @@ erDiagram
 | `event_threads` | Chat threads |
 | `event_messages` | Chat messages |
 | `media_objects` | Uploaded media |
+
+### Configuration
+
+| Table | Description |
+|-------|-------------|
+| `game_types` | Available game formats and rules |
+| `scoring_formats` | Scoring calculation definitions |
+| `system_config` | Global key-value settings |
 
 ### System
 

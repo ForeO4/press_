@@ -91,7 +91,7 @@ Press! uses a modern, serverless-first stack optimized for developer productivit
 
 | Tool | Purpose |
 |------|---------|
-| **pnpm** | Package manager |
+| **npm** | Package manager |
 | **ESLint** | Linting |
 | **Prettier** | Code formatting |
 | **Supabase CLI** | Local development |

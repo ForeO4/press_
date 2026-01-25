@@ -1,36 +1,48 @@
 # Roadmap
 
+## Completed: v0.1 - Foundation ✅
+
+- [x] Repository setup & documentation (51 docs)
+- [x] Database schema design (3 migrations)
+- [x] Next.js 14 App Router setup
+- [x] Mock mode implementation
+- [x] R2 worker scaffold
+- [x] Domain logic (press creation, settlement computation)
+- [x] Unit tests (26 passing)
+- [x] UI component scaffolds
+
 ## Current: v1.0 - Core Features
 
 ### Scoring
-- [x] 18-hole scorecard
-- [x] Multi-player grid view
-- [x] Gross score totals
+- [ ] Scorecard UI (scaffold exists)
+- [ ] Score entry with real-time sync
+- [ ] Multi-player grid view
+- [ ] Gross score totals
 - [ ] Net score with handicaps
 
 ### Games
-- [x] Match play
-- [x] Nassau
-- [x] Skins
-- [x] Press creation
+- [ ] Match play UI
+- [ ] Nassau UI
+- [ ] Skins UI
+- [x] Press creation logic (tested)
 - [ ] Team games (best ball)
 
 ### Settlement
-- [x] Alligator Teeth ledger
-- [x] Settlement computation
-- [x] Payer/payee display
+- [x] Settlement computation logic (tested)
+- [ ] Alligator Teeth ledger UI
+- [ ] Payer/payee display
 - [ ] Settlement confirmation flow
 
 ### Social
-- [x] Event feed
-- [x] Event chat
+- [ ] Event feed UI
+- [ ] Event chat UI
 - [ ] Photo upload
 - [ ] Reactions
 
 ### Calcutta
-- [x] Pool creation
-- [x] Results entry
-- [x] Payout calculation
+- [ ] Pool creation UI
+- [ ] Results entry
+- [ ] Payout calculation UI
 - [ ] Live bidding
 
 ## Next: v1.1 - Polish & Mobile

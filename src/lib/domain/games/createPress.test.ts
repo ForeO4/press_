@@ -81,13 +81,14 @@ describe('validatePress', () => {
   });
 
   it('rejects press starting after parent ends', () => {
+    const shortGame: Game = { ...mockParentGame, endHole: 9 };
     const input: CreatePressInput = {
       parentGameId: 'game-1',
-      startHole: 19,
+      startHole: 10,
       stake: 10,
     };
 
-    const result = validatePress(input, mockParentGame, 17);
+    const result = validatePress(input, shortGame, 8);
 
     expect(result.valid).toBe(false);
     expect(result.error).toContain('after parent game ends');

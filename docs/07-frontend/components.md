@@ -6,25 +6,37 @@ Using shadcn/ui as the base component library. Components are copied into the co
 
 ## Directory Structure
 
+### Implemented ✅
+
 ```
 src/components/
 ├── ui/                 # Base UI components (shadcn)
-│   ├── button.tsx
-│   ├── card.tsx
+│   ├── button.tsx      ✅
+│   ├── card.tsx        ✅
+│   └── input.tsx       ✅
+├── games/              # Games components
+│   ├── GamesList.tsx   ✅
+│   ├── GameCard.tsx    ✅
+│   └── CreatePressModal.tsx ✅
+├── settlement/         # Settlement components
+│   └── SettlementLedger.tsx ✅
+└── UserSwitcher.tsx    ✅ (dev tool for mock mode)
+```
+
+### Planned (v1.0)
+
+```
+src/components/
+├── ui/                 # Additional UI components
 │   ├── dialog.tsx
-│   ├── input.tsx
 │   └── select.tsx
 ├── scorecard/          # Scoring components
 │   ├── ScorecardGrid.tsx
 │   ├── HoleSelector.tsx
 │   └── StrokeAdjuster.tsx
-├── games/              # Games components
-│   ├── GamesList.tsx
-│   ├── GameCard.tsx
-│   ├── PressCard.tsx
-│   └── CreatePressModal.tsx
-├── settlement/         # Settlement components
-│   ├── SettlementLedger.tsx
+├── games/
+│   └── PressCard.tsx
+├── settlement/
 │   └── ComputeSettlementBtn.tsx
 ├── feed/               # Social feed components
 │   ├── FeedList.tsx

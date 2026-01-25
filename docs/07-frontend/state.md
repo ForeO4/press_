@@ -4,42 +4,45 @@
 
 Press! uses Zustand for client-side state management with a simple, hook-based API.
 
-## Store Structure
+## Current Implementation ✅
 
 ```typescript
 // src/stores/index.ts
 import { create } from 'zustand';
+import type { MockUser } from '@/types';
+import { defaultMockUser } from '@/lib/mock/users';
+import { isMockMode } from '@/lib/env/public';
 
 interface AppStore {
-  // Auth
-  user: User | null;
-  setUser: (user: User | null) => void;
-
-  // Mock mode
+  // Mock mode user (for development)
   mockUser: MockUser | null;
   setMockUser: (user: MockUser | null) => void;
 
-  // Current event
+  // Current event ID (for navigation context)
   currentEventId: string | null;
   setCurrentEventId: (id: string | null) => void;
 }
 
 export const useAppStore = create<AppStore>((set) => ({
-  user: null,
-  setUser: (user) => set({ user }),
-
-  mockUser: null,
+  mockUser: isMockMode ? defaultMockUser : null,
   setMockUser: (mockUser) => set({ mockUser }),
 
   currentEventId: null,
   setCurrentEventId: (currentEventId) => set({ currentEventId }),
 }));
+
+// Hook to get current user (mock or real)
+export function useCurrentUser() {
+  const mockUser = useAppStore((state) => state.mockUser);
+  if (isMockMode) return mockUser;
+  return null; // TODO: Return real Supabase user
+}
 ```
 
-## Event Store
+## Planned: Event Store (v1.0)
 
 ```typescript
-// src/stores/eventStore.ts
+// src/stores/eventStore.ts (planned)
 interface EventStore {
   events: Map<string, Event>;
   setEvent: (event: Event) => void;

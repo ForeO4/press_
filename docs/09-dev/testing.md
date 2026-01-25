@@ -8,13 +8,13 @@ Press! uses Vitest for unit and integration testing.
 
 ```bash
 # Run all tests
-pnpm test
+npm test
 
 # Run with watch mode
-pnpm test:watch
+npm run test:watch
 
 # Run with coverage
-pnpm test:coverage
+npm run test:coverage
 ```
 
 ## Test Structure
@@ -184,7 +184,32 @@ export const mockScores: HoleScore[] = [
 
 ```typescript
 // vitest.setup.ts
-import '@testing-library/jest-dom';
+import { expect } from 'vitest'
+import * as matchers from '@testing-library/jest-dom/matchers'
+
+expect.extend(matchers)
+```
+
+```typescript
+// vitest.config.ts
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./vitest.setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+})
 ```
 
 ## Coverage
@@ -195,5 +220,5 @@ Aim for:
 - API routes: 80%+
 
 ```bash
-pnpm test:coverage
+npm run test:coverage
 ```

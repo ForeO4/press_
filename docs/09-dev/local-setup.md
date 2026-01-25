@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Node.js 18+
-- pnpm
+- npm
 - Docker (for local Supabase)
 - Supabase CLI
 - Wrangler CLI (for R2 worker)
@@ -13,14 +13,14 @@
 ### 1. Clone Repository
 
 ```bash
-git clone <repo-url>
-cd press
+git clone https://github.com/ForeO4/press_.git
+cd press_
 ```
 
 ### 2. Install Dependencies
 
 ```bash
-pnpm install
+npm install
 ```
 
 ### 3. Run in Mock Mode
@@ -28,7 +28,7 @@ pnpm install
 No backend needed - app uses static demo data:
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 Open http://localhost:3000
@@ -64,14 +64,14 @@ supabase db reset
 Run app:
 
 ```bash
-pnpm dev
+npm run dev
 ```
 
 ### 5. (Optional) Run R2 Worker
 
 ```bash
 cd workers/media-proxy
-pnpm install
+npm install
 wrangler dev
 ```
 
@@ -98,19 +98,19 @@ Open Supabase Studio at http://localhost:54323
 ### Run Tests
 
 ```bash
-pnpm test
+npm test
 ```
 
 ### Lint
 
 ```bash
-pnpm lint
+npm lint
 ```
 
 ### Format
 
 ```bash
-pnpm format
+npm format
 ```
 
 ## Troubleshooting
@@ -129,7 +129,7 @@ Default ports:
 - Supabase API: 54321
 - Supabase Studio: 54323
 
-Change in `supabase/config.toml` or Next.js with `pnpm dev -p 3001`.
+Change in `supabase/config.toml` or Next.js with `npm dev -p 3001`.
 
 ### Mock mode not working
 

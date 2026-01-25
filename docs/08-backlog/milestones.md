@@ -1,15 +1,18 @@
 # Milestones
 
-## M1: Foundation (v0.1)
+## M1: Foundation (v0.1) ✅ COMPLETE
 
 **Goal:** Basic infrastructure and development environment
 
 - [x] Repository setup
-- [x] Documentation structure
-- [x] Database schema design
-- [x] Next.js project setup
+- [x] Documentation structure (51 docs)
+- [x] Database schema design (3 migrations)
+- [x] Next.js project setup (App Router)
 - [x] Mock mode implementation
 - [x] R2 worker scaffold
+- [x] Domain logic (press, settlement)
+- [x] Unit tests (26 passing)
+- [x] UI component scaffolds
 
 ## M2: Core MVP (v1.0)
 

@@ -1,0 +1,15 @@
+name = "press-media-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# R2 bucket binding
+[[r2_buckets]]
+binding = "MEDIA_BUCKET"
+bucket_name = "press-media"
+
+# Environment variables (set via wrangler secret)
+# JWT_SECRET - for validating Supabase JWTs
+# SUPABASE_URL - for verifying membership
+
+[vars]
+ENVIRONMENT = "development"

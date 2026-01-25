@@ -1,0 +1,345 @@
+# Press! Documentation Manifest
+# Machine-readable registry of all documentation
+# All docs MUST be registered here per DOCS_RULES.md
+
+version: "1.0"
+last_updated: "2024-01-15"
+
+documents:
+  # Root-level documents
+  - path: startup.md
+    title: "Documentation Entry Point"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "SSOT entry point - read first"
+
+  - path: DOCS_RULES.md
+    title: "Documentation Governance"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "Rules and standards for documentation"
+
+  - path: CHANGELOG.md
+    title: "Changelog"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "Version history and release notes"
+
+  - path: DECISIONS.md
+    title: "Architectural Decision Records"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "ADRs for significant technical decisions"
+
+  - path: OPEN_QUESTIONS.md
+    title: "Open Questions"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "Unresolved questions and discussions"
+
+  - path: CONTRIBUTING.md
+    title: "Contributing Guide"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "How to contribute to Press!"
+
+  - path: SECURITY_BOUNDARIES.md
+    title: "Security Boundaries"
+    owner: security-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "Security perimeter and trust boundaries"
+
+  - path: API_CONTRACTS.md
+    title: "API Contracts"
+    owner: backend-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "API endpoint specifications"
+
+  - path: DATA_CONTRACTS.md
+    title: "Data Contracts"
+    owner: backend-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "Database schema contracts"
+
+  - path: OPERATIONS.md
+    title: "Operations Guide"
+    owner: devops-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "Deployment, monitoring, runbooks"
+
+  # 00-overview
+  - path: 00-overview/index.md
+    title: "Overview Index"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 00-overview/glossary.md
+    title: "Glossary"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "Terminology definitions including Alligator Teeth"
+
+  - path: 00-overview/vision.md
+    title: "Product Vision"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 00-overview/roadmap.md
+    title: "Roadmap"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  # 01-product
+  - path: 01-product/index.md
+    title: "Product Index"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 01-product/personas.md
+    title: "User Personas"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 01-product/user-flows.md
+    title: "User Flows"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  # 02-architecture
+  - path: 02-architecture/index.md
+    title: "Architecture Index"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 02-architecture/tech-stack.md
+    title: "Tech Stack"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 02-architecture/system-design.md
+    title: "System Design"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  # 03-data
+  - path: 03-data/index.md
+    title: "Data Index"
+    owner: backend-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 03-data/schema-overview.md
+    title: "Schema Overview"
+    owner: backend-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "Database schema with ERD"
+
+  - path: 03-data/rls-policies.md
+    title: "RLS Policies"
+    owner: backend-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  # 04-security
+  - path: 04-security/index.md
+    title: "Security Index"
+    owner: security-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 04-security/auth.md
+    title: "Authentication"
+    owner: security-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 04-security/permissions.md
+    title: "Permissions Model"
+    owner: security-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  # 05-features
+  - path: 05-features/index.md
+    title: "Features Index"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 05-features/scoring.md
+    title: "Scoring System"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 05-features/games.md
+    title: "Games"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 05-features/presses.md
+    title: "Presses"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "Press mechanics specification"
+
+  - path: 05-features/alligator-teeth.md
+    title: "Alligator Teeth"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+    description: "Teeth ledger specification"
+
+  - path: 05-features/calcutta.md
+    title: "Calcutta"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 05-features/settlement.md
+    title: "Settlement"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 05-features/social.md
+    title: "Social Features"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  # 06-integrations
+  - path: 06-integrations/index.md
+    title: "Integrations Index"
+    owner: backend-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 06-integrations/supabase.md
+    title: "Supabase Integration"
+    owner: backend-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 06-integrations/cloudflare-r2.md
+    title: "Cloudflare R2 Integration"
+    owner: backend-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 06-integrations/stripe.md
+    title: "Stripe Integration"
+    owner: backend-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  # 07-frontend
+  - path: 07-frontend/index.md
+    title: "Frontend Index"
+    owner: frontend-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 07-frontend/routes.md
+    title: "Routes"
+    owner: frontend-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 07-frontend/components.md
+    title: "Components"
+    owner: frontend-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 07-frontend/state.md
+    title: "State Management"
+    owner: frontend-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  # 08-backlog
+  - path: 08-backlog/index.md
+    title: "Backlog Index"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 08-backlog/epics.md
+    title: "Epics"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 08-backlog/milestones.md
+    title: "Milestones"
+    owner: product-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  # 09-dev
+  - path: 09-dev/index.md
+    title: "Development Index"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 09-dev/local-setup.md
+    title: "Local Setup"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 09-dev/testing.md
+    title: "Testing Guide"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: 09-dev/conventions.md
+    title: "Code Conventions"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  # Templates
+  - path: _templates/adr.md
+    title: "ADR Template"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: _templates/feature-spec.md
+    title: "Feature Spec Template"
+    owner: core-team
+    status: active
+    last_reviewed: "2024-01-15"
+
+  - path: _templates/runbook.md
+    title: "Runbook Template"
+    owner: devops-team
+    status: active
+    last_reviewed: "2024-01-15"

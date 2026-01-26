@@ -7,6 +7,7 @@ Frontend architecture and component documentation.
 - [routes.md](./routes.md) - Application routes
 - [components.md](./components.md) - Component library
 - [state.md](./state.md) - State management
+- [services.md](./services.md) - Client services (data access layer)
 
 ## Tech Stack
 

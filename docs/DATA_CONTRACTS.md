@@ -109,6 +109,32 @@ Hole definitions for tee sets.
 | handicap | integer | | Handicap index (1-18) |
 | yards | integer | | Distance |
 
+### event_tee_snapshots
+
+Snapshot of course/tee data for an event (immutable after creation).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Snapshot ID |
+| event_id | uuid | FK events, NOT NULL, UNIQUE | Event reference |
+| tee_set_id | uuid | FK tee_sets | Original tee set (nullable) |
+| course_name | text | NOT NULL | Snapshot of course name |
+| tee_set_name | text | NOT NULL | Snapshot of tee name |
+| rating | decimal(4,1) | NOT NULL | Course rating |
+| slope | integer | NOT NULL | Slope rating |
+| holes | jsonb | NOT NULL | Array of HoleSnapshot objects |
+| created_at | timestamptz | default now() | Creation timestamp |
+
+**HoleSnapshot structure (in holes JSONB):**
+```typescript
+interface HoleSnapshot {
+  number: number;    // 1-18
+  par: number;       // 3, 4, or 5
+  handicap: number;  // Stroke index 1-18
+  yardage: number;   // Distance
+}
+```
+
 ### rounds
 
 Scoring rounds for events.

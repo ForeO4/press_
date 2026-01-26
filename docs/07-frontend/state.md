@@ -39,6 +39,58 @@ export function useCurrentUser() {
 }
 ```
 
+## Scorecard Store ✅
+
+```typescript
+// src/stores/scorecardStore.ts
+interface ScorecardStore {
+  // Scores indexed by playerId, then holeNumber
+  scores: Record<string, Record<number, number>>;
+  selectedCell: { playerId: string; holeNumber: number } | null;
+  isEditorOpen: boolean;
+
+  // Tee selection
+  eventDefaultTeeId: string;
+  playerTeeOverrides: Record<string, string>; // playerId -> teeSetId
+
+  // Course data from server
+  courseData: TeeSnapshot | null;
+  courseDataLoading: boolean;
+  courseDataError: string | null;
+
+  // Score actions
+  selectCell: (playerId: string, holeNumber: number) => void;
+  clearSelection: () => void;
+  setScore: (playerId: string, holeNumber: number, strokes: number) => void;
+  incrementScore: (playerId: string, holeNumber: number) => void;
+  decrementScore: (playerId: string, holeNumber: number) => void;
+
+  // Tee actions
+  setEventDefaultTee: (teeSetId: string) => void;
+  setPlayerTee: (playerId: string, teeSetId: string) => void;
+  getPlayerTee: (playerId: string) => string;
+
+  // Course data actions
+  loadCourseData: (eventId: string) => Promise<void>;
+  clearCourseData: () => void;
+}
+```
+
+### Usage
+
+```typescript
+// Load course data on page mount
+const { loadCourseData, courseData } = useScorecardStore();
+
+useEffect(() => {
+  loadCourseData(eventId);
+}, [eventId, loadCourseData]);
+
+// Access hole data
+const holes = courseData?.holes ?? [];
+const frontNine = holes.filter(h => h.number <= 9);
+```
+
 ## Planned: Event Store (v1.0)
 
 ```typescript

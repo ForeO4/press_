@@ -50,9 +50,9 @@ const docSections = [
 
 export default function DocsPage() {
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <header className="border-b bg-white">
+      <header className="border-b bg-white dark:bg-gray-900 dark:border-gray-800">
         <div className="container mx-auto px-4 py-4">
           <Link href="/" className="text-2xl font-bold text-primary">
             Press!
@@ -90,8 +90,8 @@ export default function DocsPage() {
           ))}
         </div>
 
-        <div className="mt-8 rounded-md bg-blue-50 p-4">
-          <p className="text-sm text-blue-800">
+        <div className="mt-8 rounded-md bg-blue-50 dark:bg-blue-950 p-4">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
             <strong>Note:</strong> Documentation is stored as Markdown files in
             the <code>/docs/</code> directory. View them directly in your code
             editor or on GitHub.

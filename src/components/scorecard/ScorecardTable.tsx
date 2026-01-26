@@ -2,15 +2,44 @@
 
 import { ScorecardRow } from './ScorecardRow';
 import { ScoreEditorSheet } from './ScoreEditorSheet';
-import { mockCourse, getFrontNine, getBackNine } from '@/lib/mock/course';
 import { mockUsers } from '@/lib/mock/users';
+import { useScorecardStore } from '@/stores/scorecardStore';
 
 /**
  * Full 18-hole scorecard table with sticky player column
  */
 export function ScorecardTable() {
-  const frontNine = getFrontNine();
-  const backNine = getBackNine();
+  const courseData = useScorecardStore((state) => state.courseData);
+  const courseDataLoading = useScorecardStore((state) => state.courseDataLoading);
+
+  // Derive hole data from course snapshot
+  const holes = courseData?.holes ?? [];
+  const frontNine = holes.filter((h) => h.number <= 9);
+  const backNine = holes.filter((h) => h.number > 9);
+
+  // Calculate totals from hole data
+  const frontPar = frontNine.reduce((sum, h) => sum + h.par, 0);
+  const backPar = backNine.reduce((sum, h) => sum + h.par, 0);
+  const totalPar = frontPar + backPar;
+  const frontYardage = frontNine.reduce((sum, h) => sum + h.yardage, 0);
+  const backYardage = backNine.reduce((sum, h) => sum + h.yardage, 0);
+  const totalYardage = frontYardage + backYardage;
+
+  if (courseDataLoading) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        Loading course data...
+      </div>
+    );
+  }
+
+  if (!courseData || holes.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        No course data available
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
@@ -62,7 +91,7 @@ export function ScorecardTable() {
                 </td>
               ))}
               <td className="px-2 py-1 text-center font-medium bg-muted/50">
-                {mockCourse.frontPar}
+                {frontPar}
               </td>
               {/* Back 9 pars */}
               {backNine.map((hole) => (
@@ -71,10 +100,38 @@ export function ScorecardTable() {
                 </td>
               ))}
               <td className="px-2 py-1 text-center font-medium bg-muted/50">
-                {mockCourse.backPar}
+                {backPar}
               </td>
               <td className="px-2 py-1 text-center font-medium bg-muted">
-                {mockCourse.totalPar}
+                {totalPar}
+              </td>
+            </tr>
+
+            {/* Yardage row */}
+            <tr className="border-b bg-muted/30 text-xs text-muted-foreground">
+              <td className="sticky left-0 z-10 bg-muted/30 py-1">
+                Yards ({courseData.teeSetName})
+              </td>
+              {/* Front 9 yardages */}
+              {frontNine.map((hole) => (
+                <td key={hole.number} className="px-2 py-1 text-center">
+                  {hole.yardage}
+                </td>
+              ))}
+              <td className="px-2 py-1 text-center font-medium bg-muted/50">
+                {frontYardage}
+              </td>
+              {/* Back 9 yardages */}
+              {backNine.map((hole) => (
+                <td key={hole.number} className="px-2 py-1 text-center">
+                  {hole.yardage}
+                </td>
+              ))}
+              <td className="px-2 py-1 text-center font-medium bg-muted/50">
+                {backYardage}
+              </td>
+              <td className="px-2 py-1 text-center font-medium bg-muted">
+                {totalYardage}
               </td>
             </tr>
           </thead>

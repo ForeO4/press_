@@ -1,23 +1,43 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScorecardTable } from '@/components/scorecard';
-import { mockCourse } from '@/lib/mock/course';
+import { useScorecardStore } from '@/stores/scorecardStore';
 
 export default function ScorecardPage({
   params,
 }: {
   params: { eventId: string };
 }) {
+  const { loadCourseData, courseData, courseDataLoading } = useScorecardStore();
+
+  // Load course data when page mounts
+  useEffect(() => {
+    loadCourseData(params.eventId);
+  }, [params.eventId, loadCourseData]);
+
+  // Calculate totals from course data
+  const holes = courseData?.holes ?? [];
+  const totalPar = holes.reduce((sum, h) => sum + h.par, 0);
+  const totalYardage = holes.reduce((sum, h) => sum + h.yardage, 0);
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Scorecard</h1>
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg">{mockCourse.name}</CardTitle>
+          <CardTitle className="text-lg">
+            {courseDataLoading ? 'Loading...' : courseData?.courseName ?? 'Course'}
+          </CardTitle>
           <p className="text-sm text-muted-foreground">
-            Par {mockCourse.totalPar} &bull; 18 Holes
+            {courseData && (
+              <>
+                Par {totalPar} &bull; {totalYardage.toLocaleString()} yards (
+                {courseData.teeSetName}) &bull; 18 Holes
+              </>
+            )}
           </p>
         </CardHeader>
         <CardContent className="px-0 pb-4">

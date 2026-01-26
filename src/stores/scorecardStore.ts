@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { mockScores, mockRounds } from '@/lib/mock/data';
+import { getEventTeeSnapshot } from '@/lib/services/courses';
+import type { TeeSnapshot } from '@/types';
 
 interface SelectedCell {
   playerId: string;
@@ -12,6 +14,15 @@ interface ScorecardStore {
   selectedCell: SelectedCell | null;
   isEditorOpen: boolean;
 
+  // Tee selection
+  eventDefaultTeeId: string;
+  playerTeeOverrides: Record<string, string>; // playerId -> teeSetId
+
+  // Course data from server
+  courseData: TeeSnapshot | null;
+  courseDataLoading: boolean;
+  courseDataError: string | null;
+
   // Actions
   selectCell: (playerId: string, holeNumber: number) => void;
   clearSelection: () => void;
@@ -21,6 +32,16 @@ interface ScorecardStore {
   incrementScore: (playerId: string, holeNumber: number) => void;
   decrementScore: (playerId: string, holeNumber: number) => void;
   getScore: (playerId: string, holeNumber: number) => number | null;
+
+  // Tee actions
+  setEventDefaultTee: (teeSetId: string) => void;
+  setPlayerTee: (playerId: string, teeSetId: string) => void;
+  clearPlayerTee: (playerId: string) => void;
+  getPlayerTee: (playerId: string) => string;
+
+  // Course data actions
+  loadCourseData: (eventId: string) => Promise<void>;
+  clearCourseData: () => void;
 }
 
 /**
@@ -46,6 +67,11 @@ export const useScorecardStore = create<ScorecardStore>((set, get) => ({
   scores: initializeScores(),
   selectedCell: null,
   isEditorOpen: false,
+  eventDefaultTeeId: 'tee-set-blue',
+  playerTeeOverrides: {},
+  courseData: null,
+  courseDataLoading: false,
+  courseDataError: null,
 
   selectCell: (playerId, holeNumber) => {
     set({ selectedCell: { playerId, holeNumber }, isEditorOpen: true });
@@ -90,5 +116,50 @@ export const useScorecardStore = create<ScorecardStore>((set, get) => ({
 
   getScore: (playerId, holeNumber) => {
     return get().scores[playerId]?.[holeNumber] ?? null;
+  },
+
+  setEventDefaultTee: (teeSetId) => {
+    set({ eventDefaultTeeId: teeSetId });
+  },
+
+  setPlayerTee: (playerId, teeSetId) => {
+    set((state) => ({
+      playerTeeOverrides: {
+        ...state.playerTeeOverrides,
+        [playerId]: teeSetId,
+      },
+    }));
+  },
+
+  clearPlayerTee: (playerId) => {
+    set((state) => {
+      const { [playerId]: _, ...rest } = state.playerTeeOverrides;
+      return { playerTeeOverrides: rest };
+    });
+  },
+
+  getPlayerTee: (playerId) => {
+    const state = get();
+    return state.playerTeeOverrides[playerId] ?? state.eventDefaultTeeId;
+  },
+
+  loadCourseData: async (eventId) => {
+    console.log('[scorecardStore] loadCourseData called with eventId:', eventId);
+    set({ courseDataLoading: true, courseDataError: null });
+    try {
+      const data = await getEventTeeSnapshot(eventId);
+      console.log('[scorecardStore] courseData loaded:', data);
+      set({ courseData: data, courseDataLoading: false });
+    } catch (error) {
+      console.error('[scorecardStore] loadCourseData error:', error);
+      set({
+        courseDataError: error instanceof Error ? error.message : 'Failed to load course data',
+        courseDataLoading: false,
+      });
+    }
+  },
+
+  clearCourseData: () => {
+    set({ courseData: null, courseDataLoading: false, courseDataError: null });
   },
 }));

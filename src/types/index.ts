@@ -154,6 +154,29 @@ export interface Hole {
   yardage: number;
 }
 
+export interface TeeSetWithHoles extends TeeSet {
+  holes: Hole[];
+}
+
+export interface TeeSnapshot {
+  id: string;
+  eventId: string;
+  teeSetId: string | null;
+  courseName: string;
+  teeSetName: string;
+  rating: number;
+  slope: number;
+  holes: HoleSnapshot[];
+  createdAt: string;
+}
+
+export interface HoleSnapshot {
+  number: number;
+  par: number;
+  handicap: number;
+  yardage: number;
+}
+
 export interface CourseHole {
   number: number; // 1-18
   par: number; // 3, 4, or 5

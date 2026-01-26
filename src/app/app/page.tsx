@@ -3,13 +3,15 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserSwitcher } from '@/components/UserSwitcher';
+import { AuthHeader } from '@/components/auth/AuthHeader';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAppStore } from '@/stores';
 import { mockEvent, mockTeethBalances } from '@/lib/mock/data';
 import { formatDate, formatTeeth } from '@/lib/utils';
 import { isMockMode } from '@/lib/env/public';
 
 export default function DashboardPage() {
+  const user = useCurrentUser();
   const mockUser = useAppStore((state) => state.mockUser);
 
   // In mock mode, use demo data
@@ -26,7 +28,7 @@ export default function DashboardPage() {
           <Link href="/" className="text-2xl font-bold text-primary">
             Press!
           </Link>
-          <UserSwitcher />
+          <AuthHeader />
         </div>
       </header>
 
@@ -34,7 +36,7 @@ export default function DashboardPage() {
         {/* Welcome */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold">
-            Welcome, {mockUser?.name ?? 'Guest'}
+            Welcome, {user?.name ?? 'Guest'}
           </h1>
           {userBalance && (
             <p className="text-muted-foreground">

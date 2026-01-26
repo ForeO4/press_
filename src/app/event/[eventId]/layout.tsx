@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UserSwitcher } from '@/components/UserSwitcher';
+import { AuthHeader } from '@/components/auth/AuthHeader';
 import { cn } from '@/lib/utils';
 
 const tabs = [
@@ -34,7 +34,7 @@ export default function EventLayout({
             <Link href="/app" className="text-2xl font-bold text-primary">
               Press!
             </Link>
-            <UserSwitcher />
+            <AuthHeader />
           </div>
         </div>
 

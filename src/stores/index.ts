@@ -11,6 +11,10 @@ interface AppStore {
   mockUser: MockUser | null;
   setMockUser: (user: MockUser | null) => void;
 
+  // Real auth user profile (from profiles table)
+  userProfile: { display_name: string | null } | null;
+  setUserProfile: (profile: { display_name: string | null } | null) => void;
+
   // Current event ID (for navigation context)
   currentEventId: string | null;
   setCurrentEventId: (id: string | null) => void;
@@ -21,22 +25,10 @@ export const useAppStore = create<AppStore>((set) => ({
   mockUser: isMockMode ? defaultMockUser : null,
   setMockUser: (mockUser) => set({ mockUser }),
 
+  // User profile for real auth
+  userProfile: null,
+  setUserProfile: (userProfile) => set({ userProfile }),
+
   currentEventId: null,
   setCurrentEventId: (currentEventId) => set({ currentEventId }),
 }));
-
-/**
- * Get current user (mock or real)
- * In mock mode, returns the mock user
- * In real mode, would return Supabase user
- */
-export function useCurrentUser() {
-  const mockUser = useAppStore((state) => state.mockUser);
-
-  if (isMockMode) {
-    return mockUser;
-  }
-
-  // TODO: Return real Supabase user
-  return null;
-}

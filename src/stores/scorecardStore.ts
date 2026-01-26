@@ -144,14 +144,11 @@ export const useScorecardStore = create<ScorecardStore>((set, get) => ({
   },
 
   loadCourseData: async (eventId) => {
-    console.log('[scorecardStore] loadCourseData called with eventId:', eventId);
     set({ courseDataLoading: true, courseDataError: null });
     try {
       const data = await getEventTeeSnapshot(eventId);
-      console.log('[scorecardStore] courseData loaded:', data);
       set({ courseData: data, courseDataLoading: false });
     } catch (error) {
-      console.error('[scorecardStore] loadCourseData error:', error);
       set({
         courseDataError: error instanceof Error ? error.message : 'Failed to load course data',
         courseDataLoading: false,

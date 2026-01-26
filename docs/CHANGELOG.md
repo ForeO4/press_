@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Demo Mode** - Demo events (`demo-*`) work alongside Supabase with mock data
+- **Scores Service** - `src/lib/services/scores.ts` with upsert/fetch operations
+- **useScoreSync Hook** - Realtime score sync with debounced persistence
+- **CourseSelector Component** - Course/tee selection UI for scorecard
+- **Landing Page Try Demo** - "Try Demo" button for quick scorecard access
 - **Scorecard Components** - Mobile-first score entry system
   - ScorecardTable, ScorecardRow, ScoreCell components
   - ScoreEditorSheet bottom sheet for score editing
@@ -42,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation SSOT system
 
 ### Fixed
+- **Demo Mode with Supabase** - Demo events now work even when Supabase is configured
 - **Dark Theme System Detection** - Theme toggle now uses `resolvedTheme` instead of `theme` to properly detect system dark mode preference
 - **Docs Page Dark Mode** - Added dark mode classes to documentation page background, header, and info box
 - **Landing Page Dark Mode** - Added dark mode background gradient and header with theme toggle

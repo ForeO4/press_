@@ -127,3 +127,44 @@ E1.1 and E1.2 are now complete. Next focus should be E1.3 Scoring or E2.x Games.
 
 ### Notes
 Backlog item added: Add theme toggle to user settings page.
+
+---
+
+## Session: 2025-01-26 (Demo Mode + Score Persistence)
+
+**Duration:** ~2 hours
+**Focus:** Fix demo mode with Supabase, score persistence
+
+### Accomplished
+- Fixed demo mode to work alongside Supabase
+  - Demo events (`demo-*`) now use mock data even when Supabase is configured
+  - Added early return in `initializeEventScores` for demo event IDs
+- Implemented scores service layer
+  - Created `src/lib/services/scores.ts` with upsert/fetch operations
+  - Uses `rpc_upsert_score` for proper permission checking
+  - In-memory mock storage for mock mode persistence
+- Enhanced scorecardStore with persistence
+  - Added `currentEventId`, `playerRoundMap`, `roundToUserMap`
+  - Added `pendingChanges` map for realtime echo detection
+  - Debounced score persistence (300ms)
+  - Optimistic updates with error rollback
+- Added "Try Demo" button to landing page
+- Removed debug console.log statements
+
+### Key Decisions
+- Demo mode detection by event ID prefix (`demo-*`) rather than global mock mode
+- 300ms debounce for score persistence to batch rapid changes
+- 3 second TTL for pending changes to detect own realtime echoes
+
+### Blockers Encountered
+- Demo mode wasn't working when Supabase was configured (fixed)
+
+### Commits
+- `0d77a46` - fix: Enable demo mode to work alongside Supabase
+- `bd29e2c` - chore: Remove debug console.log statements from scorecardStore
+- `5d22eb3` - docs: Add scorecard store, services, and event_tee_snapshots documentation
+- `f021d7f` - feat: Wire scorecard tee sets to store with service layer
+- `87de312` - feat: Implement scorecard components with mobile-first score entry
+
+### Notes
+Branch `feat/fully-baked-press` is ready for PR and deployment.

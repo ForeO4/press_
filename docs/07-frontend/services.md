@@ -52,6 +52,38 @@ Event CRUD operations.
 | `updateEvent(eventId, input)` | Update event |
 | `deleteEvent(eventId)` | Delete event |
 
+### scores.ts
+
+Score CRUD operations with realtime support.
+
+| Function | Description |
+|----------|-------------|
+| `upsertScore(eventId, roundId, userId, holeNumber, strokes)` | Insert or update a hole score |
+| `getScoresForRound(roundId)` | Get all scores for a specific round |
+| `getScoresForEvent(eventId)` | Get all scores grouped by round ID |
+| `getEventRounds(eventId)` | Get rounds with userId/roundId mappings |
+
+#### upsertScore
+
+Uses `rpc_upsert_score` for proper permission checking and audit logging:
+
+```typescript
+await upsertScore(eventId, roundId, userId, holeNumber, strokes);
+// Returns: HoleScore { id, roundId, holeNumber, strokes, createdAt, updatedAt }
+```
+
+In mock mode, maintains an in-memory score store for session persistence.
+
+#### getEventRounds
+
+Returns round mappings needed for score lookups:
+
+```typescript
+const { rounds, userToRound, roundToUser } = await getEventRounds(eventId);
+// userToRound: { [userId]: roundId }
+// roundToUser: { [roundId]: userId }
+```
+
 ### courses.ts
 
 Course and tee set data access.

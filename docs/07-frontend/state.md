@@ -49,6 +49,19 @@ interface ScorecardStore {
   selectedCell: { playerId: string; holeNumber: number } | null;
   isEditorOpen: boolean;
 
+  // Event context
+  currentEventId: string | null;
+  playerRoundMap: Record<string, string>;   // userId -> roundId
+  roundToUserMap: Record<string, string>;   // roundId -> userId (for realtime)
+
+  // Persistence state
+  scoresLoading: boolean;
+  scoresError: string | null;
+  pendingSaves: Map<string, ReturnType<typeof setTimeout>>;
+
+  // Realtime state
+  pendingChanges: Map<string, PendingChange>;  // for echo detection
+
   // Tee selection
   eventDefaultTeeId: string;
   playerTeeOverrides: Record<string, string>; // playerId -> teeSetId
@@ -65,6 +78,10 @@ interface ScorecardStore {
   incrementScore: (playerId: string, holeNumber: number) => void;
   decrementScore: (playerId: string, holeNumber: number) => void;
 
+  // Persistence actions
+  initializeEventScores: (eventId: string) => Promise<void>;
+  handleRemoteScoreChange: (roundId: string, holeNumber: number, strokes: number) => void;
+
   // Tee actions
   setEventDefaultTee: (teeSetId: string) => void;
   setPlayerTee: (playerId: string, teeSetId: string) => void;
@@ -73,6 +90,13 @@ interface ScorecardStore {
   // Course data actions
   loadCourseData: (eventId: string) => Promise<void>;
   clearCourseData: () => void;
+}
+
+interface PendingChange {
+  roundId: string;
+  holeNumber: number;
+  strokes: number;
+  timestamp: number;
 }
 ```
 

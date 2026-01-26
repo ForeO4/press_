@@ -1,12 +1,19 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-green-50 to-white">
+    <main className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-900 dark:to-gray-950">
+      {/* Header */}
+      <header className="container mx-auto flex items-center justify-between px-4 py-4">
+        <span className="text-lg font-bold text-primary">Press!</span>
+        <ThemeToggle />
+      </header>
+
       {/* Hero */}
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-12">
         <div className="text-center">
           <h1 className="mb-4 text-5xl font-bold text-primary">Press!</h1>
           <p className="mb-8 text-xl text-muted-foreground">

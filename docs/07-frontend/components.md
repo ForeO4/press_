@@ -38,10 +38,12 @@ src/components/
 ├── ui/                 # Additional UI components
 │   ├── dialog.tsx
 │   └── select.tsx
-├── scorecard/          # Scoring components
-│   ├── ScorecardGrid.tsx
-│   ├── HoleSelector.tsx
-│   └── StrokeAdjuster.tsx
+├── scorecard/          # Scoring components ✅
+│   ├── ScorecardTable.tsx ✅
+│   ├── ScorecardRow.tsx ✅
+│   ├── ScoreCell.tsx ✅
+│   ├── ScoreEditorSheet.tsx ✅
+│   └── ScoreAdjuster.tsx ✅ (direct input + quick-select)
 ├── games/
 │   └── PressCard.tsx
 ├── settlement/

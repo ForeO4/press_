@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Scorecard Components** - Mobile-first score entry system
+  - ScorecardTable, ScorecardRow, ScoreCell components
+  - ScoreEditorSheet bottom sheet for score editing
+  - ScoreAdjuster with +/- buttons, direct input, and quick-select
+  - Direct score input with numeric keyboard on mobile
 - **E1.1 Authentication** - Supabase Auth integration with email/password
   - AuthProvider context with session management
   - Login/signup pages with form validation

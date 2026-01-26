@@ -29,6 +29,8 @@ TOTAL    36     38      37     40
 
 - Tap cell to select
 - +/- buttons for adjustment
+- Direct score input (tap score to type)
+- Quick-select buttons (par-2 to par+4)
 - Auto-save on change
 - Shows gross strokes
 

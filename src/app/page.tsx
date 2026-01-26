@@ -23,6 +23,11 @@ export default function HomePage() {
             <Link href="/app">
               <Button size="lg">Get Started</Button>
             </Link>
+            <Link href="/event/demo-event/scorecard">
+              <Button size="lg" variant="secondary">
+                Try Demo
+              </Button>
+            </Link>
             <Link href="/docs">
               <Button size="lg" variant="outline">
                 Documentation

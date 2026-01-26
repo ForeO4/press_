@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { CourseSelector } from '@/components/courses';
 import type { CreateEventInput, EventVisibility } from '@/types';
 
 interface EventFormProps {
@@ -11,6 +12,7 @@ interface EventFormProps {
   onCancel?: () => void;
   submitLabel?: string;
   isLoading?: boolean;
+  showCourseSelector?: boolean;
 }
 
 export function EventForm({
@@ -19,11 +21,15 @@ export function EventForm({
   onCancel,
   submitLabel = 'Create Event',
   isLoading = false,
+  showCourseSelector = true,
 }: EventFormProps) {
   const [name, setName] = useState(initialValues?.name ?? '');
   const [date, setDate] = useState(initialValues?.date ?? '');
   const [visibility, setVisibility] = useState<EventVisibility>(
     initialValues?.visibility ?? 'PRIVATE'
+  );
+  const [teeSetId, setTeeSetId] = useState<string | undefined>(
+    initialValues?.teeSetId
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -51,6 +57,7 @@ export function EventForm({
       name: name.trim(),
       date,
       visibility,
+      teeSetId,
     });
   };
 
@@ -116,6 +123,14 @@ export function EventForm({
           <option value="PUBLIC">Public - Discoverable</option>
         </select>
       </div>
+
+      {showCourseSelector && (
+        <CourseSelector
+          value={teeSetId}
+          onChange={setTeeSetId}
+          disabled={isLoading}
+        />
+      )}
 
       <div className="flex gap-3 pt-4">
         {onCancel && (

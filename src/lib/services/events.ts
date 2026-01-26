@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { isMockMode } from '@/lib/env/public';
 import { mockEvent } from '@/lib/mock/data';
+import { createEventTeeSnapshot } from '@/lib/services/courses';
 import type { Event, CreateEventInput, UpdateEventInput } from '@/types';
 
 /**
@@ -13,8 +14,15 @@ export async function createEvent(
   if (isMockMode) {
     // In mock mode, create a fake event
     const now = new Date().toISOString();
+    const eventId = `event-${Date.now()}`;
+
+    // Create tee snapshot if teeSetId provided
+    if (input.teeSetId) {
+      await createEventTeeSnapshot(eventId, input.teeSetId);
+    }
+
     return {
-      id: `event-${Date.now()}`,
+      id: eventId,
       name: input.name,
       date: input.date,
       visibility: input.visibility,
@@ -42,7 +50,19 @@ export async function createEvent(
 
   if (error) throw error;
 
-  return mapEventFromDb(data);
+  const event = mapEventFromDb(data);
+
+  // Create tee snapshot if teeSetId provided
+  if (input.teeSetId) {
+    try {
+      await createEventTeeSnapshot(event.id, input.teeSetId);
+    } catch (snapshotError) {
+      // Log but don't fail event creation
+      console.error('[events] Failed to create tee snapshot:', snapshotError);
+    }
+  }
+
+  return event;
 }
 
 /**

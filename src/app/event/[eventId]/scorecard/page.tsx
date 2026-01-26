@@ -4,18 +4,31 @@ import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScorecardTable } from '@/components/scorecard';
 import { useScorecardStore } from '@/stores/scorecardStore';
+import { useScoreSync } from '@/hooks/useScoreSync';
 
 export default function ScorecardPage({
   params,
 }: {
   params: { eventId: string };
 }) {
-  const { loadCourseData, courseData, courseDataLoading } = useScorecardStore();
+  const {
+    loadCourseData,
+    initializeEventScores,
+    courseData,
+    courseDataLoading,
+    scoresLoading,
+  } = useScorecardStore();
 
-  // Load course data when page mounts
+  // Initialize scores and realtime sync
+  const { status: syncStatus } = useScoreSync({
+    eventId: params.eventId,
+  });
+
+  // Load course data and scores when page mounts
   useEffect(() => {
     loadCourseData(params.eventId);
-  }, [params.eventId, loadCourseData]);
+    initializeEventScores(params.eventId);
+  }, [params.eventId, loadCourseData, initializeEventScores]);
 
   // Calculate totals from course data
   const holes = courseData?.holes ?? [];

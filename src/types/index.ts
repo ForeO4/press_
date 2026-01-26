@@ -36,6 +36,7 @@ export interface CreateEventInput {
   name: string;
   date: string;
   visibility: EventVisibility;
+  teeSetId?: string; // Optional tee set to create snapshot from
 }
 
 export interface UpdateEventInput {

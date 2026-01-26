@@ -4,6 +4,27 @@ import { mockCourse, mockTeeSets } from '@/lib/mock/course';
 import type { Course, TeeSet, TeeSetWithHoles, TeeSnapshot, HoleSnapshot } from '@/types';
 
 /**
+ * Get all courses
+ */
+export async function getCourses(): Promise<Course[]> {
+  if (isMockMode) {
+    return [{ id: mockCourse.id, name: mockCourse.name, city: 'Pine Valley', state: 'NJ' }];
+  }
+
+  const supabase = createClient();
+  if (!supabase) throw new Error('Supabase client not available');
+
+  const { data, error } = await supabase
+    .from('courses')
+    .select('*')
+    .order('name');
+
+  if (error) throw error;
+
+  return (data || []).map(mapCourseFromDb);
+}
+
+/**
  * Get a course by ID
  */
 export async function getCourse(courseId: string): Promise<Course | null> {
@@ -99,6 +120,84 @@ export async function getCourseTeeSets(courseId: string): Promise<TeeSet[]> {
   if (error) throw error;
 
   return (data || []).map(mapTeeSetFromDb);
+}
+
+/**
+ * Create a tee snapshot for an event
+ * This freezes the course/tee data at the time of event creation
+ */
+export async function createEventTeeSnapshot(
+  eventId: string,
+  teeSetId: string
+): Promise<TeeSnapshot> {
+  if (isMockMode) {
+    // In mock mode, create a fake snapshot
+    const mockTee = mockTeeSets.find((t) => t.id === teeSetId);
+    if (!mockTee) {
+      throw new Error(`Tee set not found: ${teeSetId}`);
+    }
+
+    return {
+      id: `snapshot-${eventId}-${Date.now()}`,
+      eventId,
+      teeSetId,
+      courseName: mockCourse.name,
+      teeSetName: mockTee.name,
+      rating: mockTee.rating,
+      slope: mockTee.slope,
+      holes: mockCourse.holes.map((hole, idx) => ({
+        number: hole.number,
+        par: hole.par,
+        handicap: mockTee.handicaps[idx],
+        yardage: mockTee.yardages[idx],
+      })),
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  const supabase = createClient();
+  if (!supabase) throw new Error('Supabase client not available');
+
+  // Fetch the tee set with holes
+  const teeSet = await getTeeSetWithHoles(teeSetId);
+  if (!teeSet) {
+    throw new Error(`Tee set not found: ${teeSetId}`);
+  }
+
+  // Fetch the course info
+  const course = await getCourse(teeSet.courseId);
+  if (!course) {
+    throw new Error(`Course not found: ${teeSet.courseId}`);
+  }
+
+  // Build the holes snapshot
+  const holesSnapshot: HoleSnapshot[] = teeSet.holes
+    .sort((a, b) => a.number - b.number)
+    .map((hole) => ({
+      number: hole.number,
+      par: hole.par,
+      handicap: hole.handicap,
+      yardage: hole.yardage,
+    }));
+
+  // Insert the snapshot
+  const { data, error } = await supabase
+    .from('event_tee_snapshots')
+    .insert({
+      event_id: eventId,
+      tee_set_id: teeSetId,
+      course_name: course.name,
+      tee_set_name: teeSet.name,
+      rating: teeSet.rating,
+      slope: teeSet.slope,
+      holes: holesSnapshot,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return mapTeeSnapshotFromDb(data);
 }
 
 /**

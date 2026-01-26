@@ -54,7 +54,7 @@ describe('validatePress', () => {
     }, parentGame, currentHole);
 
     expect(result.valid).toBe(false);
-    expect(result.error).toContain('positive');
+    expect(result.error).toContain('negative');
   });
 
   it('rejects non-integer stake', () => {

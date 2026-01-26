@@ -49,10 +49,12 @@ export function GameDetailHeader({
         </Link>
         <div className="flex items-center gap-3">
           <GameTypePill type={game.type} isPress={isPress} />
-          <div className="flex items-center gap-1.5 text-primary">
-            <AlligatorIcon size="md" />
-            <span className="font-bold tabular-nums">{game.stakeTeethInt}</span>
-          </div>
+          {game.stakeTeethInt > 0 && (
+            <div className="flex items-center gap-1.5 text-primary">
+              <AlligatorIcon size="md" />
+              <span className="font-bold tabular-nums">{game.stakeTeethInt}</span>
+            </div>
+          )}
         </div>
       </div>
 

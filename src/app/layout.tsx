@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   description:
     'A production-minded web-first PWA for golf events with betting-style games using Alligator Teeth fun currency.',
   keywords: ['golf', 'games', 'match play', 'nassau', 'skins', 'press'],
+  icons: {
+    icon: '/logo.jpg',
+    apple: '/logo.jpg',
+  },
 };
 
 export default function RootLayout({

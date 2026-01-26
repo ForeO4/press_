@@ -192,7 +192,7 @@ Return structured errors:
 return Response.json({
   error: {
     code: 'VALIDATION_ERROR',
-    message: 'Stake must be a positive integer',
+    message: 'Stake cannot be negative',
   }
 }, { status: 400 });
 ```

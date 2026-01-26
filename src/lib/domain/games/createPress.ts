@@ -16,9 +16,9 @@ export function validatePress(
   parentGame: Game,
   currentHole: number
 ): ValidatePressResult {
-  // Stake must be positive
-  if (input.stake <= 0) {
-    return { valid: false, error: 'Stake must be positive' };
+  // Stake cannot be negative
+  if (input.stake < 0) {
+    return { valid: false, error: 'Stake cannot be negative' };
   }
 
   // Stake must be an integer (Alligator Teeth are always integers)

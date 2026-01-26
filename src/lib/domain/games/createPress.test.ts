@@ -25,10 +25,10 @@ describe('validatePress', () => {
     const result = validatePress(input, mockParentGame, 9);
 
     expect(result.valid).toBe(false);
-    expect(result.error).toContain('positive');
+    expect(result.error).toContain('negative');
   });
 
-  it('rejects zero stake', () => {
+  it('accepts zero stake', () => {
     const input: CreatePressInput = {
       parentGameId: 'game-1',
       startHole: 10,
@@ -37,8 +37,7 @@ describe('validatePress', () => {
 
     const result = validatePress(input, mockParentGame, 9);
 
-    expect(result.valid).toBe(false);
-    expect(result.error).toContain('positive');
+    expect(result.valid).toBe(true);
   });
 
   it('rejects non-integer stake', () => {

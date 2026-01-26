@@ -144,11 +144,19 @@ export function ScoreEntry({
               )}
             >
               <div className="flex items-center gap-3">
-                <PlayerAvatar
-                  name={player.name}
-                  size="md"
-                  color={index === 0 ? 'primary' : 'secondary'}
-                />
+                <div className="relative">
+                  <PlayerAvatar
+                    name={player.name}
+                    size="md"
+                    color={index === 0 ? 'primary' : 'secondary'}
+                  />
+                  {player.getsStroke && (
+                    <span className={cn(
+                      'absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background',
+                      index === 0 ? 'bg-primary' : 'bg-blue-400'
+                    )} />
+                  )}
+                </div>
                 <div className="text-left">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{player.name}</span>
@@ -157,10 +165,15 @@ export function ScoreEntry({
                         ({player.handicap})
                       </span>
                     )}
+                    {player.getsStroke && (
+                      <span className={cn(
+                        'text-xs font-medium',
+                        index === 0 ? 'text-primary' : 'text-blue-400'
+                      )}>
+                        •
+                      </span>
+                    )}
                   </div>
-                  {player.getsStroke && (
-                    <span className="text-xs text-primary">Gets stroke</span>
-                  )}
                 </div>
               </div>
               <div

@@ -370,3 +370,56 @@ All 5 phases implemented and documentation updated. TypeScript compiles without 
 
 ### Notes
 All 13 tasks completed. Build passes. Ready for user testing.
+
+---
+
+## Session: 2025-01-26 (UI/UX Fixes Round 4)
+
+**Duration:** ~1.5 hours
+**Focus:** Handicap stroke visualization and scorecard enhancements
+
+### Accomplished
+
+**Handicap Stroke Visualization:**
+- Added "pops" (dots) in top-right corner of score cells where player gets strokes
+- Dots appear on all relevant holes even before scores are entered
+- Primary color for Player A, blue for Player B
+- Added gross/net score display (e.g., "5/4") on stroke holes
+- Score coloring based on net score vs par
+- Player handicaps now shown next to names: "Alex (12)"
+
+**Scorecard Enhancements:**
+- Added Yardage row showing hole distances
+- Replaced simple totals box with Match Stats section
+  - Match Status (e.g., "Alex 13 UP", "All Square")
+  - Player stats (Gross score, Holes Won)
+  - Summary row (Par, Holes Played, Halved count)
+
+**UX Improvements:**
+- Limited ScoreEditorSheet width (max-w-md, centered)
+- Press button updated to Flame icon + "Press!" text
+- "Handicap" label instead of "HCP"
+
+### Key Decisions
+- Handicap strokes calculated as: `holeHandicap <= |playerAHandicap - playerBHandicap|`
+- Higher handicap player receives strokes on hardest holes
+- Mock handicaps (12 vs 8 = 4 strokes) for demo mode
+- Dots positioned at cell level (not inside score circle) for visibility
+
+### Files Modified
+- `src/components/games/GameScorecard.tsx` - Major changes (dots, yardage, stats, handicaps)
+- `src/components/games/PressButton.tsx` - AlligatorIcon → Flame + "Press!"
+- `src/components/games/ScoreEntry.tsx` - Dot indicator on player avatar
+- `src/components/scorecard/ScoreEditorSheet.tsx` - Width constraint
+- `src/app/event/[eventId]/games/[gameId]/page.tsx` - Pass handicap props
+
+### Documentation Updated
+- CHANGELOG.md
+- SESSION_LOG.md
+- NEXT_SESSION.md
+
+### Commits
+- TBD (this session)
+
+### Notes
+Round 4 UI/UX fixes complete. Handicap stroke visualization working. Ready for deployment.

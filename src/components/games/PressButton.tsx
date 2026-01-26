@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Zap, Flame, Sparkles } from 'lucide-react';
+import { Zap, Sparkles } from 'lucide-react';
 import { AlligatorIcon } from '@/components/ui/AlligatorIcon';
 
 interface PressButtonProps {
@@ -97,10 +97,13 @@ export function PressButton({
               'absolute -top-1 -right-1 h-4 w-4 text-amber-300 transition-all',
               isExpanded ? 'opacity-100 animate-bounce' : 'opacity-0'
             )} />
-            <Flame className={cn(
-              'h-7 w-7 transition-all duration-300',
-              isExpanded ? 'text-amber-300 scale-110' : 'text-amber-400'
-            )} />
+            <AlligatorIcon
+              size="lg"
+              className={cn(
+                'transition-all duration-300',
+                isExpanded ? 'text-amber-300 scale-110' : 'text-amber-400'
+              )}
+            />
           </div>
           <div className="text-left">
             <div className={cn(
@@ -178,7 +181,7 @@ export function PressButton({
                 selectedMultiplier && 'animate-pulse'
               )}
             >
-              <Flame className="h-5 w-5" />
+              <AlligatorIcon size="md" className="text-white" />
               {selectedMultiplier ? (
                 <span className="flex items-center gap-2">
                   Press for

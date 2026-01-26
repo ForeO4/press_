@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { Flame } from 'lucide-react';
 import type { Game, HoleScore, HoleSnapshot, GameWithParticipants } from '@/types';
 import {
   computeHoleResults,
@@ -15,10 +16,14 @@ interface GameScorecardProps {
   playerBName: string;
   playerAScores: HoleScore[];
   playerBScores: HoleScore[];
+  playerAHandicap?: number; // Course handicap (e.g., 12)
+  playerBHandicap?: number; // Course handicap (e.g., 8)
   holes: HoleSnapshot[];
   className?: string;
   onCellClick?: (playerId: string, holeNumber: number) => void;
   childGames?: GameWithParticipants[];
+  canPress?: boolean;
+  onPress?: (playerId: string) => void;
 }
 
 export function GameScorecard({
@@ -29,11 +34,33 @@ export function GameScorecard({
   playerBName,
   playerAScores,
   playerBScores,
+  playerAHandicap = 0,
+  playerBHandicap = 0,
   holes,
   className,
   onCellClick,
   childGames = [],
+  canPress = false,
+  onPress,
 }: GameScorecardProps) {
+  // Calculate handicap strokes for each player
+  // In match play, the higher handicap player gets strokes on the hardest holes
+  // The number of strokes = difference in handicaps
+  const handicapDiff = Math.abs(playerAHandicap - playerBHandicap);
+  const playerAGetsStrokes = playerAHandicap > playerBHandicap;
+  const playerBGetsStrokes = playerBHandicap > playerAHandicap;
+
+  // Helper to check if a player gets a stroke on a specific hole
+  const getsStrokeOnHole = (isPlayerA: boolean, holeHandicap: number): boolean => {
+    if (isPlayerA && playerAGetsStrokes) {
+      return holeHandicap <= handicapDiff;
+    }
+    if (!isPlayerA && playerBGetsStrokes) {
+      return holeHandicap <= handicapDiff;
+    }
+    return false;
+  };
+
   const frontNine = holes.filter((h) => h.number <= 9);
   const backNine = holes.filter((h) => h.number > 9);
 
@@ -87,6 +114,9 @@ export function GameScorecard({
   const isHoleInRange = (holeNum: number) =>
     holeNum >= game.startHole && holeNum <= game.endHole;
 
+  // Get game type label for the tracking row
+  const gameTypeLabel = game.type === 'nassau' ? 'Nassau' : game.type === 'skins' ? 'Skins' : 'Match';
+
   return (
     <div className={cn('space-y-6', className)}>
       {/* Front 9 */}
@@ -108,6 +138,12 @@ export function GameScorecard({
         onCellClick={onCellClick}
         childGames={childGames}
         gameStartHole={game.startHole}
+        gameTypeLabel={gameTypeLabel}
+        canPress={canPress}
+        onPress={onPress}
+        getsStrokeOnHole={getsStrokeOnHole}
+        playerAHandicap={playerAHandicap}
+        playerBHandicap={playerBHandicap}
       />
 
       {/* Back 9 */}
@@ -129,30 +165,82 @@ export function GameScorecard({
         onCellClick={onCellClick}
         childGames={childGames}
         gameStartHole={game.startHole}
+        gameTypeLabel={gameTypeLabel}
+        canPress={canPress}
+        onPress={onPress}
+        getsStrokeOnHole={getsStrokeOnHole}
+        playerAHandicap={playerAHandicap}
+        playerBHandicap={playerBHandicap}
       />
 
-      {/* Grand Total */}
-      <div className="flex justify-end gap-4 rounded-lg border border-border/50 bg-muted/20 px-4 py-3">
-        <div className="text-sm text-muted-foreground">Total</div>
-        <div className="flex gap-8">
-          <div className="text-center">
-            <div className="text-xs text-muted-foreground">Par</div>
-            <div className="font-mono font-bold">{totalPar}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-xs text-primary">{playerAName.split(' ')[0]}</div>
-            <div className="font-mono font-bold text-primary">
-              {playerATotal ?? '-'}
+      {/* Match Stats */}
+      {(() => {
+        // Calculate match stats
+        const holesWonA = holeResults.filter(r => r.winner === 'A').length;
+        const holesWonB = holeResults.filter(r => r.winner === 'B').length;
+        const holesTied = holeResults.filter(r => r.winner === 'tie').length;
+        const holesPlayed = holeResults.length;
+        const matchStatus = holesWonA - holesWonB;
+        const matchStatusStr = matchStatus === 0 ? 'All Square' :
+          matchStatus > 0 ? `${playerAName.split(' ')[0]} ${matchStatus} UP` :
+          `${playerBName.split(' ')[0]} ${Math.abs(matchStatus)} UP`;
+
+        return (
+          <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Match Status */}
+              <div className="col-span-2 text-center pb-2 border-b border-border/30">
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">Match Status</div>
+                <div className={cn(
+                  'text-lg font-bold',
+                  matchStatus > 0 && 'text-primary',
+                  matchStatus < 0 && 'text-blue-400',
+                  matchStatus === 0 && 'text-amber-400'
+                )}>
+                  {matchStatusStr}
+                </div>
+              </div>
+
+              {/* Player A Stats */}
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-primary">{playerAName.split(' ')[0]}</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <div className="text-muted-foreground">Gross</div>
+                    <div className="font-mono font-bold">{playerATotal ?? '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Holes Won</div>
+                    <div className="font-mono font-bold">{holesWonA}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Player B Stats */}
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-blue-400">{playerBName.split(' ')[0]}</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <div className="text-muted-foreground">Gross</div>
+                    <div className="font-mono font-bold">{playerBTotal ?? '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Holes Won</div>
+                    <div className="font-mono font-bold">{holesWonB}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="col-span-2 pt-2 border-t border-border/30 flex justify-between text-xs text-muted-foreground">
+                <span>Par: {totalPar}</span>
+                <span>Holes Played: {holesPlayed}</span>
+                <span>Halved: {holesTied}</span>
+              </div>
             </div>
           </div>
-          <div className="text-center">
-            <div className="text-xs text-blue-400">{playerBName.split(' ')[0]}</div>
-            <div className="font-mono font-bold text-blue-400">
-              {playerBTotal ?? '-'}
-            </div>
-          </div>
-        </div>
-      </div>
+        );
+      })()}
     </div>
   );
 }
@@ -175,6 +263,12 @@ interface ScorecardSectionProps {
   onCellClick?: (playerId: string, holeNumber: number) => void;
   childGames?: GameWithParticipants[];
   gameStartHole: number;
+  gameTypeLabel: string;
+  canPress?: boolean;
+  onPress?: (playerId: string) => void;
+  getsStrokeOnHole?: (isPlayerA: boolean, holeHandicap: number) => boolean;
+  playerAHandicap?: number;
+  playerBHandicap?: number;
 }
 
 function ScorecardSection({
@@ -195,6 +289,12 @@ function ScorecardSection({
   onCellClick,
   childGames = [],
   gameStartHole,
+  gameTypeLabel,
+  canPress = false,
+  onPress,
+  getsStrokeOnHole,
+  playerAHandicap,
+  playerBHandicap,
 }: ScorecardSectionProps) {
   const getScore = (scores: HoleScore[], holeNum: number): number | null => {
     const score = scores.find((s) => s.holeNumber === holeNum);
@@ -265,7 +365,7 @@ function ScorecardSection({
           <thead>
             {/* Hole numbers */}
             <tr className="border-b border-border/30">
-              <th className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-2 pl-4 pr-2 text-left font-medium text-muted-foreground min-w-[80px]">
+              <th className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-2 pl-4 pr-2 text-left font-medium text-muted-foreground min-w-[100px]">
                 Hole
               </th>
               {holes.map((hole) => (
@@ -305,10 +405,31 @@ function ScorecardSection({
               </td>
             </tr>
 
-            {/* HCP (Handicap) row */}
+            {/* Yardage row */}
             <tr className="border-b border-border/30 text-xs text-muted-foreground">
               <td className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-1.5 pl-4 pr-2">
-                HCP
+                Yards
+              </td>
+              {holes.map((hole) => (
+                <td
+                  key={hole.number}
+                  className={cn(
+                    'px-2 py-1.5 text-center',
+                    !isHoleInRange(hole.number) && 'opacity-40'
+                  )}
+                >
+                  {hole.yardage}
+                </td>
+              ))}
+              <td className="px-3 py-1.5 text-center font-medium bg-muted/30">
+                {holes.reduce((sum, h) => sum + h.yardage, 0)}
+              </td>
+            </tr>
+
+            {/* Handicap row */}
+            <tr className="border-b border-border/30 text-xs text-muted-foreground">
+              <td className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-1.5 pl-4 pr-2">
+                Handicap
               </td>
               {holes.map((hole) => (
                 <td
@@ -328,32 +449,66 @@ function ScorecardSection({
           <tbody>
             {/* Player A row */}
             <tr className="border-b border-border/30 bg-primary/5">
-              <td className="sticky left-0 z-10 bg-primary/10 backdrop-blur-sm py-2 pl-4 pr-2 font-medium text-primary">
-                {playerAName.split(' ')[0]}
+              <td className="sticky left-0 z-10 bg-primary/10 backdrop-blur-sm py-2 pl-4 pr-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-primary">
+                    {playerAName.split(' ')[0]}
+                    {playerAHandicap !== undefined && (
+                      <span className="text-xs opacity-70 ml-1">({playerAHandicap})</span>
+                    )}
+                  </span>
+                  {canPress && onPress && (
+                    <button
+                      onClick={() => onPress(playerAId)}
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
+                      title="Press"
+                    >
+                      <Flame className="h-3 w-3" />
+                      <span>Press!</span>
+                    </button>
+                  )}
+                </div>
               </td>
               {holes.map((hole) => {
                 const score = getScore(playerAScores, hole.number);
                 const inRange = isHoleInRange(hole.number);
                 const winner = getHoleWinner(hole.number);
                 const isWinner = winner === 'A' && score !== null;
+                const getsStroke = getsStrokeOnHole?.(true, hole.handicap) ?? false;
+                const netScore = score !== null && getsStroke ? score - 1 : null;
                 return (
                   <td
                     key={hole.number}
                     onClick={onCellClick && inRange ? () => onCellClick(playerAId, hole.number) : undefined}
                     className={cn(
-                      'px-1 py-2 text-center font-mono',
+                      'px-0.5 py-2 text-center font-mono relative',
                       !inRange && 'opacity-40',
                       onCellClick && inRange && 'cursor-pointer hover:bg-primary/20 transition-colors'
                     )}
                   >
+                    {/* Stroke dot indicator */}
+                    {getsStroke && inRange && (
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-primary rounded-full border border-background z-10" />
+                    )}
                     <span
                       className={cn(
-                        'inline-flex items-center justify-center w-7 h-7 rounded-full',
-                        getScoreColor(score, hole.par),
+                        'inline-flex items-center justify-center rounded-full',
+                        getsStroke && score !== null ? 'min-w-[38px] h-7 px-1' : 'w-7 h-7',
+                        getScoreColor(getsStroke ? netScore : score, hole.par),
                         isWinner && 'ring-2 ring-amber-400 bg-amber-400/20'
                       )}
                     >
-                      {score ?? '-'}
+                      {score !== null ? (
+                        getsStroke ? (
+                          <span className="text-xs">
+                            <span className="opacity-60">{score}</span>
+                            <span className="opacity-40">/</span>
+                            <span className="font-bold">{netScore}</span>
+                          </span>
+                        ) : (
+                          score
+                        )
+                      ) : '-'}
                     </span>
                   </td>
                 );
@@ -365,32 +520,66 @@ function ScorecardSection({
 
             {/* Player B row */}
             <tr className="border-b border-border/30 bg-blue-500/5">
-              <td className="sticky left-0 z-10 bg-blue-500/10 backdrop-blur-sm py-2 pl-4 pr-2 font-medium text-blue-400">
-                {playerBName.split(' ')[0]}
+              <td className="sticky left-0 z-10 bg-blue-500/10 backdrop-blur-sm py-2 pl-4 pr-2">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-blue-400">
+                    {playerBName.split(' ')[0]}
+                    {playerBHandicap !== undefined && (
+                      <span className="text-xs opacity-70 ml-1">({playerBHandicap})</span>
+                    )}
+                  </span>
+                  {canPress && onPress && (
+                    <button
+                      onClick={() => onPress(playerBId)}
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
+                      title="Press"
+                    >
+                      <Flame className="h-3 w-3" />
+                      <span>Press!</span>
+                    </button>
+                  )}
+                </div>
               </td>
               {holes.map((hole) => {
                 const score = getScore(playerBScores, hole.number);
                 const inRange = isHoleInRange(hole.number);
                 const winner = getHoleWinner(hole.number);
                 const isWinner = winner === 'B' && score !== null;
+                const getsStroke = getsStrokeOnHole?.(false, hole.handicap) ?? false;
+                const netScore = score !== null && getsStroke ? score - 1 : null;
                 return (
                   <td
                     key={hole.number}
                     onClick={onCellClick && inRange ? () => onCellClick(playerBId, hole.number) : undefined}
                     className={cn(
-                      'px-1 py-2 text-center font-mono',
+                      'px-0.5 py-2 text-center font-mono relative',
                       !inRange && 'opacity-40',
                       onCellClick && inRange && 'cursor-pointer hover:bg-blue-500/20 transition-colors'
                     )}
                   >
+                    {/* Stroke dot indicator */}
+                    {getsStroke && inRange && (
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-blue-400 rounded-full border border-background z-10" />
+                    )}
                     <span
                       className={cn(
-                        'inline-flex items-center justify-center w-7 h-7 rounded-full',
-                        getScoreColor(score, hole.par),
+                        'inline-flex items-center justify-center rounded-full',
+                        getsStroke && score !== null ? 'min-w-[38px] h-7 px-1' : 'w-7 h-7',
+                        getScoreColor(getsStroke ? netScore : score, hole.par),
                         isWinner && 'ring-2 ring-amber-400 bg-amber-400/20'
                       )}
                     >
-                      {score ?? '-'}
+                      {score !== null ? (
+                        getsStroke ? (
+                          <span className="text-xs">
+                            <span className="opacity-60">{score}</span>
+                            <span className="opacity-40">/</span>
+                            <span className="font-bold">{netScore}</span>
+                          </span>
+                        ) : (
+                          score
+                        )
+                      ) : '-'}
                     </span>
                   </td>
                 );
@@ -400,10 +589,10 @@ function ScorecardSection({
               </td>
             </tr>
 
-            {/* Winner row with cumulative +/- */}
+            {/* Match/Nassau row with cumulative +/- */}
             <tr className="border-b border-border/30 text-xs bg-amber-500/5">
               <td className="sticky left-0 z-10 bg-amber-500/10 backdrop-blur-sm py-2 pl-4 pr-2 font-semibold text-amber-400">
-                Match
+                {gameTypeLabel}
               </td>
               {holes.map((hole) => {
                 const inRange = isHoleInRange(hole.number);

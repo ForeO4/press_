@@ -7,9 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { GameScorecard } from '@/components/games/GameScorecard';
 import { ScoreEntry } from '@/components/games/ScoreEntry';
-import { GameTrackingRow } from '@/components/games/GameTrackingRow';
-import { PressButton } from '@/components/games/PressButton';
 import { SettleGameModal } from '@/components/games/SettleGameModal';
+import { ScoreEditorSheet } from '@/components/scorecard/ScoreEditorSheet';
 import { useScorecardStore } from '@/stores/scorecardStore';
 import { getGameWithParticipants, createPress, updateGameStatus } from '@/lib/services/games';
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
@@ -19,10 +18,6 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAppStore } from '@/stores';
 import { isMockMode } from '@/lib/env/public';
 import { cn } from '@/lib/utils';
-import {
-  computeHoleResults,
-  computeMatchPlayResult,
-} from '@/lib/domain/settlement/computeSettlement';
 import {
   ArrowLeft,
   Check,
@@ -148,6 +143,9 @@ export default function GameDetailPage({
     : null;
   const playerAName = playerAUser?.name ?? 'Player A';
   const playerBName = playerBUser?.name ?? 'Player B';
+  // Mock handicaps for demo - in real app, these would come from user/round data
+  const playerAHandicap = 12;
+  const playerBHandicap = 8;
   // Use store scores for live updates, fall back to loaded scores
   const playerAScores = playerA ? getPlayerScoresFromStore(playerA.userId) : [];
   const playerBScores = playerB ? getPlayerScoresFromStore(playerB.userId) : [];
@@ -256,56 +254,27 @@ export default function GameDetailPage({
     );
   }
 
-  // Calculate match status for tracking row
-  const getMatchStatus = () => {
-    if (!playerA || !playerB) return { text: 'All Square', color: 'text-amber-400' };
+  // Build score entry players with proper handicap stroke calculation
+  const handicapDiff = Math.abs(playerAHandicap - playerBHandicap);
+  const playerAGetsStrokes = playerAHandicap > playerBHandicap;
+  const playerBGetsStrokes = playerBHandicap > playerAHandicap;
 
-    const holeResults = computeHoleResults(
-      game,
-      playerA.userId,
-      playerB.userId,
-      playerAScores,
-      playerBScores
-    );
-
-    if (holeResults.length === 0) return { text: 'All Square', color: 'text-amber-400' };
-
-    const matchResult = computeMatchPlayResult(
-      playerA.userId,
-      playerB.userId,
-      holeResults
-    );
-
-    if (matchResult.holesUp === 0) return { text: 'All Square', color: 'text-amber-400' };
-
-    const winnerName = matchResult.winnerId === playerA.userId
-      ? playerAName.split(' ')[0]
-      : playerBName.split(' ')[0];
-
-    return {
-      text: `${winnerName} +${matchResult.holesUp}`,
-      color: matchResult.winnerId === playerA.userId ? 'text-primary' : 'text-blue-400',
-    };
-  };
-
-  const matchStatus = getMatchStatus();
-  const holeResults = playerA && playerB
-    ? computeHoleResults(game, playerA.userId, playerB.userId, playerAScores, playerBScores)
-    : [];
-
-  // Build score entry players
   const scoreEntryPlayers = [
     {
       id: playerA?.userId ?? '',
       name: playerAName,
-      getsStroke: currentHoleData?.handicap
-        ? currentHoleData.handicap <= 9 // Simplified stroke logic
+      handicap: playerAHandicap,
+      getsStroke: currentHoleData?.handicap && playerAGetsStrokes
+        ? currentHoleData.handicap <= handicapDiff
         : false,
     },
     {
       id: playerB?.userId ?? '',
       name: playerBName,
-      getsStroke: false,
+      handicap: playerBHandicap,
+      getsStroke: currentHoleData?.handicap && playerBGetsStrokes
+        ? currentHoleData.handicap <= handicapDiff
+        : false,
     },
   ];
 
@@ -373,9 +342,13 @@ export default function GameDetailPage({
             playerBName={playerBName}
             playerAScores={playerAScores}
             playerBScores={playerBScores}
+            playerAHandicap={playerAHandicap}
+            playerBHandicap={playerBHandicap}
             holes={courseData.holes}
             onCellClick={handleCellClick}
             childGames={game.childGames}
+            canPress={canPress && game.status === 'active'}
+            onPress={() => handlePress(1)}
           />
         </div>
       )}
@@ -396,59 +369,6 @@ export default function GameDetailPage({
             />
           </CardContent>
         </Card>
-      )}
-
-      {/* Game Tracking Row */}
-      <GameTrackingRow
-        type={game.type}
-        label={game.type === 'match_play' ? 'MATCH PLAY' : game.type === 'nassau' ? 'NASSAU' : 'SKINS'}
-        startHole={game.startHole}
-        endHole={game.endHole}
-        holeResults={holeResults}
-        currentStatus={matchStatus.text}
-        statusColor={matchStatus.color}
-      />
-
-      {/* Presses as tracking rows */}
-      {game.childGames && game.childGames.map((press) => {
-        const pressResults = playerA && playerB
-          ? computeHoleResults(press, playerA.userId, playerB.userId, playerAScores, playerBScores)
-          : [];
-        const pressMatchResult = playerA && playerB
-          ? computeMatchPlayResult(playerA.userId, playerB.userId, pressResults)
-          : { holesUp: 0, winnerId: null };
-
-        let pressStatus = 'All Square';
-        let pressColor = 'text-amber-400';
-        if (pressMatchResult.holesUp > 0) {
-          const winnerName = pressMatchResult.winnerId === playerA?.userId
-            ? playerAName.split(' ')[0]
-            : playerBName.split(' ')[0];
-          pressStatus = `${winnerName} +${pressMatchResult.holesUp}`;
-          pressColor = pressMatchResult.winnerId === playerA?.userId ? 'text-primary' : 'text-blue-400';
-        }
-
-        return (
-          <GameTrackingRow
-            key={press.id}
-            type={press.type}
-            label={`PRESS (H${press.startHole})`}
-            startHole={press.startHole}
-            endHole={press.endHole}
-            holeResults={pressResults}
-            currentStatus={pressStatus}
-            statusColor={pressColor}
-            isPress
-          />
-        );
-      })}
-
-      {/* Press Button */}
-      {canPress && game.status === 'active' && (
-        <PressButton
-          baseStake={game.stakeTeethInt}
-          onPress={handlePress}
-        />
       )}
 
       {/* Navigation and Actions */}
@@ -504,6 +424,9 @@ export default function GameDetailPage({
           onClose={() => setShowSettleModal(false)}
         />
       )}
+
+      {/* Score Editor Sheet for inline editing */}
+      <ScoreEditorSheet />
     </div>
   );
 }

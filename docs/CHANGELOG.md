@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **UI/UX Fixes Round 4** - Scorecard enhancements based on user testing
+  - **Handicap Stroke Dots** - Visual indicators (pops) on holes where player gets strokes
+    - Dots appear in top-right corner of each relevant score cell
+    - Primary color for Player A, blue for Player B
+    - Shows on all stroke holes even before scores entered
+  - **Gross/Net Score Display** - Shows "5/4" format on stroke holes
+    - Gross score (dimmed), Net score (bold)
+    - Score color based on net score vs par
+  - **Player Handicaps in Scorecard** - Shows "(12)" next to player names
+  - **Yardage Row** - Added hole yardages to scorecard header
+  - **Match Stats Box** - Replaced simple totals with rich stats
+    - Match Status (e.g., "Alex 13 UP")
+    - Player stats (Gross score, Holes Won)
+    - Summary (Par, Holes Played, Halved)
+  - **Score Entry Width** - Limited modal width for better mobile UX
+  - **Press Button Updates** - Flame icon with "Press!" text
 - **UI/UX Fixes Round 3** - Based on user testing feedback from Round 2
   - **Score Persistence Bug Fix** (CRITICAL)
     - Fixed race condition in ScoreEntry where scores disappeared when switching players

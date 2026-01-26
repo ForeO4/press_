@@ -69,7 +69,7 @@ export function ScoreEditorSheet() {
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50 animate-in fade-in-0" />
         <Dialog.Content
           className={cn(
-            'fixed bottom-0 left-0 right-0 z-50',
+            'fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-md',
             'bg-background rounded-t-xl shadow-lg',
             'animate-in slide-in-from-bottom duration-300',
             'focus:outline-none'

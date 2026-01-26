@@ -96,3 +96,34 @@ First session using the new tracking system. Future sessions should follow the e
 
 ### Notes
 E1.1 and E1.2 are now complete. Next focus should be E1.3 Scoring or E2.x Games.
+
+---
+
+## Session: 2025-01-26 (Dark Theme Bug Fix)
+
+**Duration:** ~30 minutes
+**Focus:** Fix dark theme system preference detection
+
+### Accomplished
+- Fixed dark theme system preference detection bug
+  - Changed `theme` to `resolvedTheme` in ThemeToggle component
+  - When `defaultTheme="system"`, `theme` returns "system" while `resolvedTheme` returns actual "dark" or "light"
+- Added dark mode support to landing page
+  - Added header with ThemeToggle button
+  - Added dark mode gradient classes (`dark:from-gray-900 dark:to-gray-950`)
+- Added dark mode support to docs page
+  - Added dark classes to background, header, and info box
+
+### Key Decisions
+- Theme toggle to be moved to user settings page (backlogged)
+- Using `resolvedTheme` from next-themes for accurate system preference detection
+
+### Blockers Encountered
+- None
+
+### Commits
+- `5544018` - fix: Use resolvedTheme for proper system dark mode detection
+- `b8f3cbb` - fix: Add dark mode support to docs page
+
+### Notes
+Backlog item added: Add theme toggle to user settings page.

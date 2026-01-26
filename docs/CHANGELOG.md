@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Cloudflare R2 media proxy worker
 - Documentation SSOT system
 
+### Fixed
+- **Dark Theme System Detection** - Theme toggle now uses `resolvedTheme` instead of `theme` to properly detect system dark mode preference
+- **Docs Page Dark Mode** - Added dark mode classes to documentation page background, header, and info box
+- **Landing Page Dark Mode** - Added dark mode background gradient and header with theme toggle
+
 ### Security
 - RLS policies for all tables
 - Event visibility controls (private, unlisted, public)

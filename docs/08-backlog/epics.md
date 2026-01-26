@@ -22,24 +22,24 @@
 ## E1: Core Platform
 
 ### E1.1: Authentication
-**Priority:** P0 | **Status:** Not Started
+**Priority:** P0 | **Status:** Complete ✅
 
 | Feature | Status |
 |---------|--------|
-| User registration | Not Started |
-| Email/password sign in | Not Started |
-| Session management | Not Started |
-| Mock mode for development | Not Started |
+| User registration | Complete ✅ |
+| Email/password sign in | Complete ✅ |
+| Session management | Complete ✅ |
+| Mock mode for development | Complete ✅ |
 
 ### E1.2: Event Management
-**Priority:** P0 | **Status:** Not Started
+**Priority:** P0 | **Status:** Complete ✅
 
 | Feature | Status |
 |---------|--------|
-| Create events | Not Started |
-| Event settings | Not Started |
+| Create events | Complete ✅ |
+| Event settings | Complete ✅ |
 | Member invitations | Not Started |
-| Event visibility controls | Not Started |
+| Event visibility controls | Complete ✅ |
 
 ### E1.3: Scoring
 **Priority:** P0 | **Status:** Not Started
@@ -198,6 +198,7 @@
 
 | Priority | Epics | Status |
 |----------|-------|--------|
-| P0 | E1.1, E1.2, E1.3, E2.1, E2.2, E2.4, E3.1, E3.2 | Not Started |
+| P0 | E1.1, E1.2 | Complete ✅ |
+| P0 | E1.3, E2.1, E2.2, E2.4, E3.1, E3.2 | Not Started |
 | P1 | E2.3, E4.1, E4.2, E4.3, E5.1, E6.1 | Not Started |
 | P2 | E5.2, E6.2 | Not Started |

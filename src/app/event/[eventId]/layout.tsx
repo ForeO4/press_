@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AuthHeader } from '@/components/auth/AuthHeader';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 
 const tabs = [
@@ -13,6 +14,7 @@ const tabs = [
   { name: 'Feed', href: '/feed' },
   { name: 'Chat', href: '/chat' },
   { name: 'Admin', href: '/admin' },
+  { name: 'Settings', href: '/settings' },
 ];
 
 export default function EventLayout({
@@ -26,15 +28,18 @@ export default function EventLayout({
   const baseUrl = `/event/${params.eventId}`;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-white">
+      <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/app" className="text-2xl font-bold text-primary">
               Press!
             </Link>
-            <AuthHeader />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <AuthHeader />
+            </div>
           </div>
         </div>
 
@@ -55,7 +60,7 @@ export default function EventLayout({
                     'whitespace-nowrap border-b-2 py-4 text-sm font-medium transition-colors',
                     isActive
                       ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground'
+                      : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
                   )}
                 >
                   {tab.name}

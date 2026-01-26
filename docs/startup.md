@@ -23,6 +23,7 @@
 
 | Document | Purpose |
 |----------|---------|
+| [DOCS_OVERVIEW.md](./DOCS_OVERVIEW.md) | Documentation structure summary and quick reference |
 | [DOCS_RULES.md](./DOCS_RULES.md) | Documentation governance and standards |
 | [DOCS_MANIFEST.yml](./DOCS_MANIFEST.yml) | Machine-readable doc registry |
 | [CHANGELOG.md](./CHANGELOG.md) | Version history |
@@ -62,6 +63,18 @@
 | [SECURITY_BOUNDARIES.md](./SECURITY_BOUNDARIES.md) | Security perimeter definitions |
 | [OPERATIONS.md](./OPERATIONS.md) | Deployment, monitoring, runbooks |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | How to contribute |
+
+## Current Status
+
+**Completed Epics:**
+- E1.1 Authentication - Supabase Auth with email/password, session management
+- E1.2 Event Management - Create/edit/delete events, settings page
+
+**In Progress:**
+- Dark theme support with next-themes
+- Semantic color system (success/warning/info tokens)
+
+See [NEXT_SESSION.md](./NEXT_SESSION.md) for detailed current state.
 
 ## Getting Started
 

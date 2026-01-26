@@ -32,6 +32,18 @@ export interface EventSettings {
   updatedAt: string;
 }
 
+export interface CreateEventInput {
+  name: string;
+  date: string;
+  visibility: EventVisibility;
+}
+
+export interface UpdateEventInput {
+  name?: string;
+  date?: string;
+  visibility?: EventVisibility;
+}
+
 // ============================================
 // MEMBERSHIPS
 // ============================================

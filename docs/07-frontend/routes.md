@@ -12,6 +12,7 @@
 /event/[eventId]/feed       # Social feed
 /event/[eventId]/chat       # Group chat
 /event/[eventId]/admin      # Admin settings
+/event/[eventId]/settings   # Event settings (owner)
 /docs                       # Documentation map
 ```
 
@@ -82,6 +83,14 @@ Admin settings:
 - Press rules
 - Member management
 
+### /event/[eventId]/settings
+
+Event settings (owner only):
+- Edit event name
+- Edit event date
+- Change visibility
+- Delete event (with confirmation)
+
 ## Route Protection
 
 ```typescript
@@ -126,5 +135,6 @@ app/
         ├── settlement/page.tsx
         ├── feed/page.tsx
         ├── chat/page.tsx
-        └── admin/page.tsx
+        ├── admin/page.tsx
+        └── settings/page.tsx
 ```

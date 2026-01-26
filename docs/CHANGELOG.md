@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **E1.1 Authentication** - Supabase Auth integration with email/password
+  - AuthProvider context with session management
+  - Login/signup pages with form validation
+  - AuthHeader component with user display and logout
+  - Mock mode authentication support
+  - Middleware for protected routes
+- **E1.2 Event Management** - Full event CRUD functionality
+  - Event service layer (`src/lib/services/events.ts`)
+  - CreateEventModal with form validation
+  - EventForm reusable component (create/edit)
+  - Event settings page with edit and delete
+  - Settings tab added to event navigation
+- **Dark Theme Support** - Full light/dark mode theming
+  - ThemeProvider with next-themes integration
+  - ThemeToggle component (sun/moon icons)
+  - System preference detection with localStorage persistence
+  - Enhanced dark mode color palette
+- **Semantic Status Colors** - success, warning, info color tokens
+  - Added to globals.css and tailwind.config.ts
+  - Replaced hardcoded colors with semantic tokens
 - Initial project setup with Next.js 14 App Router
 - Supabase schema with core tables (events, games, scores)
 - Alligator Teeth ledger system (double-entry accounting)

@@ -55,3 +55,44 @@ Chronological log of coding sessions for Press! development.
 
 ### Notes
 First session using the new tracking system. Future sessions should follow the established workflow.
+
+---
+
+## Session: 2025-01-25 (E1.2 Implementation)
+
+**Duration:** ~2 hours
+**Focus:** E1.2 Event Management + Dark Theme
+
+### Accomplished
+- Implemented E1.2 Event Management epic
+  - Created event service layer with CRUD operations
+  - Built EventForm component (reusable for create/edit)
+  - Built CreateEventModal component
+  - Created event settings page with edit/delete
+  - Added Settings tab to event navigation
+- Added dark theme support
+  - Installed and configured next-themes
+  - Created ThemeProvider wrapper
+  - Created ThemeToggle component with sun/moon icons
+  - Updated root layout with ThemeProvider
+- Enhanced color system
+  - Added semantic status colors (success, warning, info)
+  - Updated globals.css with enhanced dark mode palette
+  - Updated tailwind.config.ts with new color tokens
+  - Replaced hardcoded colors with semantic tokens
+- Fixed pre-existing TypeScript build issue
+  - Excluded vitest.config.ts and workers from tsconfig
+
+### Key Decisions
+- Used next-themes for dark mode (class-based, system preference detection)
+- Created service layer pattern for database operations with mock fallback
+- Used semantic color tokens instead of hardcoded Tailwind colors
+
+### Blockers Encountered
+- Pre-existing vite/vitest version mismatch causing build failures (fixed by excluding from tsconfig)
+
+### Commits
+- TBD (this session)
+
+### Notes
+E1.1 and E1.2 are now complete. Next focus should be E1.3 Scoring or E2.x Games.

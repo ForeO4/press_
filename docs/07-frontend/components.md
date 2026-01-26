@@ -13,7 +13,15 @@ src/components/
 ├── ui/                 # Base UI components (shadcn)
 │   ├── button.tsx      ✅
 │   ├── card.tsx        ✅
-│   └── input.tsx       ✅
+│   ├── input.tsx       ✅
+│   └── theme-toggle.tsx ✅ (dark/light mode toggle)
+├── providers/          # Context providers
+│   └── ThemeProvider.tsx ✅ (next-themes wrapper)
+├── auth/               # Authentication components
+│   └── AuthHeader.tsx  ✅ (user display + logout)
+├── events/             # Event management components
+│   ├── EventForm.tsx   ✅ (reusable create/edit form)
+│   └── CreateEventModal.tsx ✅ (create event dialog)
 ├── games/              # Games components
 │   ├── GamesList.tsx   ✅
 │   ├── GameCard.tsx    ✅
@@ -128,14 +136,37 @@ Use Tailwind CSS utilities:
 
 ### Color System
 
-Using CSS variables for theming:
+Using CSS variables for theming with dark mode support via `next-themes`:
 
 ```css
 :root {
   --primary: 142.1 76.2% 36.3%;
   --primary-foreground: 355.7 100% 97.3%;
+  --success: 142.1 76.2% 36.3%;
+  --success-foreground: 355.7 100% 97.3%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 38 92% 10%;
+  --info: 199 89% 48%;
+  --info-foreground: 199 89% 10%;
   /* ... */
 }
+
+.dark {
+  /* Enhanced dark mode palette */
+  --background: 224 71% 4%;
+  --foreground: 213 31% 91%;
+  /* ... */
+}
+```
+
+Use semantic tokens instead of hardcoded colors:
+```tsx
+// Good - uses semantic tokens
+<span className="bg-success/20 text-success">PUBLIC</span>
+<span className="bg-warning/10 text-warning-foreground">Warning</span>
+
+// Bad - hardcoded colors
+<span className="bg-green-100 text-green-800">PUBLIC</span>
 ```
 
 ### Responsive Design

@@ -6,36 +6,52 @@
 
 ## Current Focus Area
 
-**Phase:** Foundation / Project Setup
+**Phase:** Core Platform Development
 **Branch:** `feat/fully-baked-press`
 
-Setting up project infrastructure and tracking systems for AI-assisted development.
+E1.1 (Authentication) and E1.2 (Event Management) are complete. Dark theme support has been added.
+
+## Completed Recently
+
+- [x] E1.1 Authentication - Supabase Auth with email/password, AuthProvider, login/signup pages
+- [x] E1.2 Event Management - Create/edit/delete events, event service layer, settings page
+- [x] Dark Theme - ThemeProvider, ThemeToggle, system preference detection
+- [x] Semantic colors - success/warning/info tokens in globals.css and tailwind.config.ts
 
 ## Immediate Next Tasks
 
-1. [ ] Review and familiarize with the full documentation structure
-2. [ ] Set up local development environment per [09-dev/local-setup.md](./09-dev/local-setup.md)
-3. [ ] Review the current [08-backlog/epics.md](./08-backlog/epics.md) priorities
-4. [ ] Begin work on E1.1 Authentication epic
-5. [ ] Address any items in [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md)
+1. [ ] E1.3 Scoring - 18-hole scorecard, multi-player grid view
+2. [ ] E2.1 Match Play - Head-to-head tracking, hole-by-hole results
+3. [ ] E2.2 Nassau - Front/back/total tracking
+4. [ ] E2.4 Presses - Mid-game press creation, parent-child hierarchy
 
 ## Active Blockers
 
 None currently.
 
-## Key Files Being Worked On
+## Key Files Recently Modified
 
 | File | Purpose | Notes |
 |------|---------|-------|
-| `docs/` | Documentation | Project tracking setup complete |
-| `.claude/commands/` | AI workflow commands | Custom commands created |
+| `src/components/providers/ThemeProvider.tsx` | Dark mode wrapper | NEW - next-themes integration |
+| `src/components/ui/theme-toggle.tsx` | Theme toggle button | NEW - sun/moon icons |
+| `src/lib/services/events.ts` | Event CRUD service | NEW - Supabase + mock fallback |
+| `src/components/events/EventForm.tsx` | Reusable event form | NEW - create/edit modes |
+| `src/components/events/CreateEventModal.tsx` | Create event dialog | NEW |
+| `src/app/event/[eventId]/settings/page.tsx` | Event settings | NEW - edit/delete |
+| `src/app/layout.tsx` | Root layout | Modified - ThemeProvider added |
+| `src/app/globals.css` | Global styles | Modified - status colors, dark mode |
+| `tailwind.config.ts` | Tailwind config | Modified - status color tokens |
+| `src/app/app/page.tsx` | Dashboard | Modified - real events, modal, theme toggle |
+| `src/app/event/[eventId]/layout.tsx` | Event layout | Modified - Settings tab, theme toggle |
 
 ## Recent Decisions Affecting Current Work
 
 | Decision | Date | Impact |
 |----------|------|--------|
-| AI tracking system adopted | 2025-01-25 | Use SESSION_LOG, NEXT_SESSION, TECH_DEBT, AI_CONTEXT for continuity |
-| Epic prioritization added | 2025-01-25 | Epics now have priority (P0-P2) and status columns |
+| Dark theme via next-themes | 2025-01-25 | Uses class-based dark mode, persists to localStorage |
+| Semantic status colors | 2025-01-25 | success/warning/info tokens for consistent styling |
+| Event service layer pattern | 2025-01-25 | Centralized CRUD with mock fallback |
 
 ## Quick Links
 

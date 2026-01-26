@@ -1,38 +1,30 @@
-# Next Session - Deployment & Features
+# Next Session - Deploy & Add Games
 
 > **Last Updated:** 2025-01-26
-> **Branch:** `feat/fully-baked-press`
-> **Status:** Ready for PR
+> **Branch:** `feat/fully-baked-press` (default)
+> **Status:** Ready for deployment
 
 ## Session Goals
 
-1. **Create PR** - Merge `feat/fully-baked-press` to main
-2. **Deploy** - Push to production (Vercel)
-3. **Add Games** - E2.x Match Play, Nassau, Presses
+1. **Deploy to Vercel** - Set up and deploy production
+2. **Add Games** - Start E2.1 Match Play
 
-## What's Ready
+## Deployment Steps
+
+1. Run `vercel` CLI or link repo in Vercel dashboard
+2. Set environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+3. Deploy and verify demo at `/event/demo-event/scorecard`
+
+## What's Complete
 
 - E1.1 Authentication (Supabase Auth)
 - E1.2 Event Management (CRUD)
-- E1.3 Scoring (mobile scorecard, demo mode)
+- E1.3 Scoring (mobile scorecard, realtime sync)
 - Dark theme support
-- Demo mode works with Supabase configured
-
-## Recent Commits
-
-- `0d77a46` - fix: Enable demo mode to work alongside Supabase
-- `bd29e2c` - chore: Remove debug console.log statements
-- `5d22eb3` - docs: Add scorecard store, services documentation
-- `f021d7f` - feat: Wire scorecard tee sets to store
-- `87de312` - feat: Implement scorecard components
-
-## PR Checklist
-
-- [ ] Run `npm run build` - verify no errors
-- [ ] Run `npm run lint` - verify no warnings
-- [ ] Test demo scorecard at `/event/demo-event/scorecard`
-- [ ] Create PR with description
-- [ ] Merge and deploy
+- Demo mode (works with Supabase configured)
 
 ## Next Features (Priority Order)
 
@@ -49,10 +41,3 @@
 | `src/lib/services/scores.ts` | Score CRUD service |
 | `src/lib/services/courses.ts` | Course/tee data |
 | `src/components/scorecard/` | Scorecard UI components |
-
-## Quick Links
-
-- [Session Log](./SESSION_LOG.md) - Recent session history
-- [Tech Debt](./TECH_DEBT.md) - Known issues to address
-- [AI Context](./AI_CONTEXT.md) - Project overview for Claude
-- [Epics](./08-backlog/epics.md) - Feature backlog

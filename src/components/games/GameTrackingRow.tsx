@@ -46,12 +46,11 @@ export function GameTrackingRow({
     return '-'; // Changed from "=" to "-" per spec
   };
 
-  // Get color for hole result
+  // Get color for hole result - gold for winner
   const getHoleColor = (holeNum: number): string => {
     const result = getHoleResult(holeNum);
     if (!result) return 'text-muted-foreground';
-    if (result.winner === 'A') return 'text-green-500';
-    if (result.winner === 'B') return 'text-red-500';
+    if (result.winner === 'A' || result.winner === 'B') return 'text-amber-400';
     return 'text-muted-foreground';
   };
 

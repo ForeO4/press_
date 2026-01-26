@@ -23,7 +23,7 @@ let mockParticipantStore: GameParticipant[] = [...mockGameParticipants];
  * Demo events use mock data even when Supabase is configured
  */
 function shouldUseMockData(eventId: string): boolean {
-  return isMockMode || eventId === 'demo-event';
+  return isMockMode || eventId.startsWith('demo-');
 }
 
 /**

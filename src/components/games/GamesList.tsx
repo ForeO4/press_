@@ -6,7 +6,8 @@ import { RecentGameCard } from './RecentGameCard';
 import { GameSummaryHeader } from './GameSummaryHeader';
 import { cn } from '@/lib/utils';
 import type { GameWithParticipants, HoleScore } from '@/types';
-import { Flame, Trophy, ChevronDown, Swords, History } from 'lucide-react';
+import { Flame, Trophy, ChevronDown, History } from 'lucide-react';
+import { GolfClubsIcon } from '@/components/ui/GolfClubsIcon';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -41,7 +42,7 @@ export function GamesList({ games, eventId, scores = {} }: GamesListProps) {
 
         <div className="relative">
           <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-primary/20">
-            <Swords className="h-10 w-10 text-primary/60" />
+            <GolfClubsIcon size="lg" className="text-primary/60" />
           </div>
           <h3 className="mb-2 text-xl font-semibold">No games yet</h3>
           <p className="max-w-xs text-sm text-muted-foreground">

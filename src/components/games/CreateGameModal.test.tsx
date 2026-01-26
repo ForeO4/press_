@@ -27,7 +27,7 @@ describe('CreateGameModal', () => {
       expect(screen.getByRole('heading', { name: 'Create Game' })).toBeInTheDocument();
     });
 
-    it('renders contest type checkboxes', () => {
+    it('renders game type radio buttons', () => {
       render(<CreateGameModal {...defaultProps} />);
       expect(screen.getByText('Match Play')).toBeInTheDocument();
       expect(screen.getByText('Nassau')).toBeInTheDocument();
@@ -68,25 +68,22 @@ describe('CreateGameModal', () => {
     });
   });
 
-  describe('contest type selection', () => {
-    it('defaults to Match Play enabled', () => {
+  describe('game type selection', () => {
+    it('defaults to Match Play selected', () => {
       render(<CreateGameModal {...defaultProps} />);
-      // Match Play should show Net/Gross toggle (indicating it's enabled)
-      const netButtons = screen.getAllByText('Net');
-      expect(netButtons.length).toBeGreaterThan(0);
+      // Match Play should show Net/Gross toggle (indicating it's selected)
+      const netButton = screen.getByText('Net');
+      expect(netButton).toBeInTheDocument();
     });
 
-    it('can toggle multiple contest types', () => {
+    it('only allows one game type to be selected (radio behavior)', () => {
       render(<CreateGameModal {...defaultProps} />);
-      // Click on Nassau text to toggle it
+      // Click on Nassau row to select it
       const nassauLabel = screen.getByText('Nassau');
-      const nassauCheckbox = nassauLabel.closest('div')?.querySelector('button');
-      if (nassauCheckbox) {
-        fireEvent.click(nassauCheckbox);
-      }
-      // After clicking, Nassau should now show a Net/Gross toggle
-      const netButtons = screen.getAllByText('Net');
-      expect(netButtons.length).toBeGreaterThanOrEqual(2);
+      fireEvent.click(nassauLabel.closest('div[class*="cursor-pointer"]')!);
+      // There should only be one Net button (for the selected type)
+      const netButtons = screen.queryAllByText('Net');
+      expect(netButtons.length).toBe(1);
     });
 
     it('can toggle scoring basis between net and gross', () => {
@@ -95,6 +92,20 @@ describe('CreateGameModal', () => {
       fireEvent.click(netButton);
       // Should now show Gross
       expect(screen.getByText('Gross')).toBeInTheDocument();
+    });
+
+    it('changes selected type when clicking another option', () => {
+      const onSubmit = vi.fn();
+      render(<CreateGameModal {...defaultProps} onSubmit={onSubmit} />);
+      // Click on Skins row to select it
+      const skinsLabel = screen.getByText('Skins');
+      fireEvent.click(skinsLabel.closest('div[class*="cursor-pointer"]')!);
+      // Submit the form
+      fireEvent.click(screen.getByRole('button', { name: 'Create Game' }));
+      // Should have skins as the type
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'skins' })
+      );
     });
   });
 
@@ -241,13 +252,9 @@ describe('CreateGameModal', () => {
       const onSubmit = vi.fn();
       render(<CreateGameModal {...defaultProps} onSubmit={onSubmit} />);
 
-      // Fill in form - toggle Nassau on (Match Play is already on by default)
+      // Fill in form - select Nassau (Match Play is the default)
       const nassauLabel = screen.getByText('Nassau');
-      const nassauRow = nassauLabel.closest('.flex.items-center.justify-between');
-      const nassauCheckbox = nassauRow?.querySelector('button');
-      if (nassauCheckbox) {
-        fireEvent.click(nassauCheckbox);
-      }
+      fireEvent.click(nassauLabel.closest('div[class*="cursor-pointer"]')!);
       fireEvent.change(screen.getByLabelText('Stake'), { target: { value: '20' } });
       fireEvent.change(screen.getByLabelText('Player 1'), { target: { value: 'player-1' } });
       fireEvent.change(screen.getByLabelText('Player 2'), { target: { value: 'player-2' } });
@@ -257,7 +264,7 @@ describe('CreateGameModal', () => {
 
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'match_play', // Primary type is first enabled
+          type: 'nassau', // Selected type
           stake: 20,
           playerAId: 'player-1',
           playerBId: 'player-2',

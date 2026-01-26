@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { GamesList } from '@/components/games/GamesList';
-import { Plus, Swords } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { GolfClubsIcon } from '@/components/ui/GolfClubsIcon';
 import { CreateGameModal, type CreateGameData } from '@/components/games/CreateGameModal';
 import { getGamesForEvent, createGame } from '@/lib/services/games';
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
@@ -107,7 +108,7 @@ export default function GamesPage({
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-primary/20">
-              <Swords className="h-5 w-5 text-primary" />
+              <GolfClubsIcon className="h-5 w-5 text-primary" />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Games</h1>

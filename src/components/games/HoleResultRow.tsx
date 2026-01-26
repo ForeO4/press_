@@ -28,8 +28,7 @@ export function HoleResultRow({
 
   const getWinnerColor = (result: HoleResult | undefined): string => {
     if (!result) return 'text-muted-foreground';
-    if (result.winner === 'A') return 'text-green-500 font-bold';
-    if (result.winner === 'B') return 'text-red-500 font-bold';
+    if (result.winner === 'A' || result.winner === 'B') return 'text-amber-400 font-bold';
     return 'text-gray-400';
   };
 
@@ -67,9 +66,9 @@ export function HoleResultRow({
       <td className="px-3 py-1.5 text-center bg-muted/30">
         {(() => {
           const diff = playerAWins - playerBWins;
-          if (diff === 0) return <span className="text-amber-400">AS</span>;
-          if (diff > 0) return <span className="text-green-500">+{diff}</span>;
-          return <span className="text-red-500">{diff}</span>;
+          if (diff === 0) return <span className="text-muted-foreground">AS</span>;
+          // Gold highlight for winner (either direction)
+          return <span className="text-amber-400 font-bold">{diff > 0 ? `+${diff}` : diff}</span>;
         })()}
       </td>
     </tr>

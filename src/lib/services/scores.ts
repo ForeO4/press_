@@ -11,7 +11,7 @@ let mockScoreStore: Map<string, HoleScore> = new Map();
  * Demo events use mock data even when Supabase is configured
  */
 function shouldUseMockData(eventId: string): boolean {
-  return isMockMode || eventId === 'demo-event';
+  return isMockMode || eventId.startsWith('demo-');
 }
 
 // Initialize mock store from mock data

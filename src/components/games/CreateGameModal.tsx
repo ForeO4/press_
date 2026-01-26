@@ -63,12 +63,9 @@ export function CreateGameModal({
   onClose,
   onAddPlayer,
 }: CreateGameModalProps) {
-  // Contest configuration - multiple can be selected
-  const [contests, setContests] = useState<ContestConfig[]>([
-    { type: 'match_play', enabled: true, scoringBasis: 'net' },
-    { type: 'nassau', enabled: false, scoringBasis: 'net' },
-    { type: 'skins', enabled: false, scoringBasis: 'net' },
-  ]);
+  // Game type configuration - single selection (radio buttons)
+  const [selectedType, setSelectedType] = useState<GameType>('match_play');
+  const [scoringBasis, setScoringBasis] = useState<ScoringBasis>('net');
   const [stakeInput, setStakeInput] = useState('10');
   const [playerAId, setPlayerAId] = useState(players[0]?.id ?? '');
   const [playerBId, setPlayerBId] = useState(players[1]?.id ?? '');
@@ -92,28 +89,9 @@ export function CreateGameModal({
   const playersForA = localPlayers;
   const playersForB = localPlayers.filter((p) => p.id !== playerAId);
 
-  // Get enabled contests
-  const enabledContests = contests.filter((c) => c.enabled);
-  const primaryType = enabledContests[0]?.type ?? 'match_play';
-
-  // Toggle contest selection
-  const toggleContest = (type: GameType) => {
-    setContests((prev) =>
-      prev.map((c) =>
-        c.type === type ? { ...c, enabled: !c.enabled } : c
-      )
-    );
-  };
-
-  // Toggle scoring basis for a contest
-  const toggleScoringBasis = (type: GameType) => {
-    setContests((prev) =>
-      prev.map((c) =>
-        c.type === type
-          ? { ...c, scoringBasis: c.scoringBasis === 'net' ? 'gross' : 'net' }
-          : c
-      )
-    );
+  // Toggle scoring basis
+  const toggleScoringBasis = () => {
+    setScoringBasis((prev) => (prev === 'net' ? 'gross' : 'net'));
   };
 
   // Handle adding a new player
@@ -177,21 +155,16 @@ export function CreateGameModal({
       return;
     }
 
-    if (enabledContests.length === 0) {
-      setError('Please select at least one contest type');
-      return;
-    }
-
     setError(null);
     onSubmit({
-      type: primaryType,
-      contests: enabledContests,
+      type: selectedType,
+      contests: [{ type: selectedType, enabled: true, scoringBasis }],
       stake,
       playerAId,
       playerBId,
       startHole,
       endHole,
-      scoringBasis: enabledContests[0]?.scoringBasis ?? 'net',
+      scoringBasis,
     });
   };
 
@@ -217,58 +190,61 @@ export function CreateGameModal({
           <CardTitle>Create Game</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          {/* Contest Types - Multi-select with Gross/Net toggle */}
+          {/* Game Types - Single selection (radio buttons) */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-muted-foreground">
-              Contest Types
+              Game Type
             </label>
             <div className="space-y-2">
               {gameTypes.map((gt) => {
                 const styles = gameTypePillStyles[gt.value];
-                const contest = contests.find((c) => c.type === gt.value);
-                const isEnabled = contest?.enabled ?? false;
+                const isSelected = selectedType === gt.value;
                 return (
                   <div
                     key={gt.value}
                     className={cn(
-                      'flex items-center justify-between p-3 rounded-lg border transition-all duration-200',
-                      isEnabled
+                      'flex items-center justify-between p-3 rounded-lg border transition-all duration-200 cursor-pointer',
+                      isSelected
                         ? cn(styles.background, styles.border)
-                        : 'bg-muted/10 border-muted/20'
+                        : 'bg-muted/10 border-muted/20 hover:border-muted/40'
                     )}
+                    onClick={() => setSelectedType(gt.value)}
                   >
                     <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => toggleContest(gt.value)}
+                      <div
                         className={cn(
-                          'flex h-5 w-5 items-center justify-center rounded border-2 transition-colors',
-                          isEnabled
-                            ? cn(styles.border, styles.text, 'bg-current/20')
+                          'flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors',
+                          isSelected
+                            ? cn(styles.border, styles.text)
                             : 'border-muted-foreground/30'
                         )}
                       >
-                        {isEnabled && <Check className="h-3 w-3 text-current" />}
-                      </button>
+                        {isSelected && (
+                          <div className={cn('h-2.5 w-2.5 rounded-full', styles.background, styles.text, 'bg-current')} />
+                        )}
+                      </div>
                       <div>
-                        <div className={cn('font-medium text-sm', isEnabled ? styles.text : 'text-muted-foreground')}>
+                        <div className={cn('font-medium text-sm', isSelected ? styles.text : 'text-muted-foreground')}>
                           {gt.label}
                         </div>
                         <div className="text-xs text-muted-foreground">{gt.description}</div>
                       </div>
                     </div>
-                    {isEnabled && (
+                    {isSelected && (
                       <button
                         type="button"
-                        onClick={() => toggleScoringBasis(gt.value)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleScoringBasis();
+                        }}
                         className={cn(
                           'px-2 py-1 text-xs rounded font-medium transition-colors',
-                          contest?.scoringBasis === 'net'
+                          scoringBasis === 'net'
                             ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                             : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                         )}
                       >
-                        {contest?.scoringBasis === 'net' ? 'Net' : 'Gross'}
+                        {scoringBasis === 'net' ? 'Net' : 'Gross'}
                       </button>
                     )}
                   </div>

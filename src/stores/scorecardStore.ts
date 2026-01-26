@@ -95,7 +95,7 @@ const SAVE_DEBOUNCE_MS = 300;
 const PENDING_CHANGE_TTL_MS = 3000;
 
 export const useScorecardStore = create<ScorecardStore>((set, get) => ({
-  scores: initializeScores(),
+  scores: {}, // Start with empty scores - populated via initializeEventScores
   selectedCell: null,
   isEditorOpen: false,
 

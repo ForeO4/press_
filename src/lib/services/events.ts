@@ -69,8 +69,8 @@ export async function createEvent(
  * Get a single event by ID
  */
 export async function getEvent(eventId: string): Promise<Event | null> {
-  if (isMockMode) {
-    return eventId === 'demo-event' ? mockEvent : null;
+  if (isMockMode || eventId.startsWith('demo-')) {
+    return eventId.startsWith('demo-') ? { ...mockEvent, id: eventId } : null;
   }
 
   const supabase = createClient();

@@ -168,3 +168,35 @@ Backlog item added: Add theme toggle to user settings page.
 
 ### Notes
 Branch `feat/fully-baked-press` is ready for PR and deployment.
+
+---
+
+## Session: 2025-01-26 (Settlement Modal)
+
+**Duration:** ~1 hour
+**Focus:** Implement settlement modal for match play games
+
+### Accomplished
+- Created SettleGameModal component
+  - Shows match result status (e.g., "Alex 3 UP with 2 to play")
+  - Displays teeth calculation breakdown (stake × holes up)
+  - Handles tied matches with "No teeth exchanged" state
+  - Shows dormie and match-already-won conditions
+- Integrated modal into game detail page
+  - Wired "Settle Game" button to open modal
+  - Confirm settlement updates game status to 'complete'
+  - Refreshes page data after settlement
+
+### Key Decisions
+- Settlement modal is game-level (not event-level settlement)
+- Uses existing `computeMatchPlaySettlement` from settlement domain logic
+- No ledger entries yet (future feature)
+
+### Blockers Encountered
+- `.next` cache corruption causing 404 errors (fixed by clearing cache)
+
+### Commits
+- `601eb6a` - feat: Add settlement modal for match play games
+
+### Notes
+Settlement modal is basic implementation. Future work: ledger entries, Nassau settlement, event-level settlement view.

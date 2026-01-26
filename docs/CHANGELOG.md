@@ -8,6 +8,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Game Detail Page** - Full game view at `/event/[eventId]/games/[gameId]`
+  - `GameDetailHeader` - Hero section with players, avatars, match status, back navigation
+  - `GameScorecard` - Mini 2-player scorecard with par-relative coloring
+  - `HoleResultRow` - Winner indicators (A/B/tie) for each hole
+  - Press creation from detail page
+  - Placeholder for settlement modal
+- **GameCard Navigation** - "Details" button now navigates to game detail page
+- **Design System Overhaul** - Premium dark theme with glassmorphism effects
+  - New color palette with semantic tokens (`src/lib/design/colors.ts`)
+  - Bottom navigation with 4 main tabs (Home, Scores, Games, Social)
+  - Admin/Settings moved to header icon buttons
+- **New UI Components**
+  - `BottomNav` - Mobile-first tab navigation with active state feedback
+  - `PlayerAvatar` - Initials avatar with size/color variants
+  - `PlayerAvatarGroup` - Overlapping avatar display with overflow indicator
+  - `StatusPill` - Game type badges (Match Play, Nassau, Skins, Press)
+  - `GameTypePill` - Convenience wrapper for game type display
+  - `GameStatusBadge` - Active/completed/pending status indicator
+  - `GameSummaryHeader` - Stats bar (active games, completed, total teeth)
+  - `MatchProgress` - Hole-by-hole progress bar visualization
+  - `MatchProgressCompact` - Inline compact version for cards
+  - `MatchProgressDots` - Numbered hole circle visualization
+- **Enhanced Games Page**
+  - Redesigned `GameCard` with match status borders (winning/losing/tied)
+  - Player rows with avatars and progress visualization
+  - Nested press game display with purple accent
+  - Redesigned `GamesList` with status grouping (Active/Complete sections)
+  - Collapsible completed games section
+  - Empty state with helpful messaging
 - **Demo Mode** - Demo events (`demo-*`) work alongside Supabase with mock data
 - **Scores Service** - `src/lib/services/scores.ts` with upsert/fetch operations
 - **useScoreSync Hook** - Realtime score sync with debounced persistence

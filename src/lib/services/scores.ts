@@ -6,6 +6,14 @@ import type { HoleScore, Round } from '@/types';
 // In-memory mock storage for mock mode persistence within session
 let mockScoreStore: Map<string, HoleScore> = new Map();
 
+/**
+ * Check if we should use mock data for this event
+ * Demo events use mock data even when Supabase is configured
+ */
+function shouldUseMockData(eventId: string): boolean {
+  return isMockMode || eventId === 'demo-event';
+}
+
 // Initialize mock store from mock data
 function initMockStore() {
   if (mockScoreStore.size === 0) {
@@ -27,7 +35,7 @@ export async function upsertScore(
   holeNumber: number,
   strokes: number
 ): Promise<HoleScore> {
-  if (isMockMode) {
+  if (shouldUseMockData(eventId)) {
     initMockStore();
     const key = `${roundId}-${holeNumber}`;
     const now = new Date().toISOString();
@@ -95,7 +103,7 @@ export async function getScoresForRound(roundId: string): Promise<HoleScore[]> {
 export async function getScoresForEvent(
   eventId: string
 ): Promise<Record<string, HoleScore[]>> {
-  if (isMockMode) {
+  if (shouldUseMockData(eventId)) {
     initMockStore();
     const result: Record<string, HoleScore[]> = {};
     const eventRounds = mockRounds.filter((r) => r.eventId === eventId);
@@ -158,7 +166,7 @@ export async function getScoresForEvent(
 export async function getEventRounds(
   eventId: string
 ): Promise<{ rounds: Round[]; userToRound: Record<string, string>; roundToUser: Record<string, string> }> {
-  if (isMockMode) {
+  if (shouldUseMockData(eventId)) {
     const eventRounds = mockRounds.filter((r) => r.eventId === eventId);
     const userToRound: Record<string, string> = {};
     const roundToUser: Record<string, string> = {};

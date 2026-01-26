@@ -8,6 +8,7 @@
 /event/[eventId]            # Event home
 /event/[eventId]/scorecard  # Scorecard
 /event/[eventId]/games      # Games + presses
+/event/[eventId]/games/[gameId] # Game detail with scorecard
 /event/[eventId]/settlement # Settlement
 /event/[eventId]/feed       # Social feed
 /event/[eventId]/chat       # Group chat
@@ -53,6 +54,19 @@ Games and presses:
 - Nested presses
 - Create game (admin)
 - Press button (if allowed)
+
+### /event/[eventId]/games/[gameId]
+
+Game detail page:
+- Back navigation to games list
+- Game type pill and stake display
+- Player avatars and names (large)
+- Match status progress bar
+- Mini scorecard for both players
+- Par-relative score coloring
+- Hole winner indicators (A/B/tie)
+- Presses section (nested games)
+- Press and Settle action buttons
 
 ### /event/[eventId]/settlement
 
@@ -131,7 +145,9 @@ app/
         ├── layout.tsx  # Event layout (tabs)
         ├── page.tsx    # Event home
         ├── scorecard/page.tsx
-        ├── games/page.tsx
+        ├── games/
+        │   ├── page.tsx          # Games list
+        │   └── [gameId]/page.tsx # Game detail
         ├── settlement/page.tsx
         ├── feed/page.tsx
         ├── chat/page.tsx

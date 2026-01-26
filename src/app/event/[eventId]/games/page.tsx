@@ -1,13 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { GamesList } from '@/components/games/GamesList';
+import { Plus, Swords } from 'lucide-react';
 import { CreatePressModal } from '@/components/games/CreatePressModal';
-import { getGamesWithParticipants, mockGames } from '@/lib/mock/data';
+import { CreateGameModal, type CreateGameData } from '@/components/games/CreateGameModal';
+import { getGamesForEvent, createGame, createPress } from '@/lib/services/games';
+import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
 import { useAppStore } from '@/stores';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { isMockMode } from '@/lib/env/public';
-import type { Game, CreatePressInput } from '@/types';
+import { mockUsers } from '@/lib/mock/users';
+import type { Game, GameWithParticipants, CreatePressInput, HoleScore } from '@/types';
 
 export default function GamesPage({
   params,
@@ -15,51 +20,186 @@ export default function GamesPage({
   params: { eventId: string };
 }) {
   const mockUser = useAppStore((state) => state.mockUser);
+  const currentUser = useCurrentUser();
+  const [games, setGames] = useState<GameWithParticipants[]>([]);
+  const [scores, setScores] = useState<Record<string, HoleScore[]>>({});
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // In mock mode, use demo data
-  const gamesWithParticipants = isMockMode ? getGamesWithParticipants() : [];
+  // Load games and scores
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Fetch games and rounds/scores in parallel
+      const [gamesData, roundsData, scoresData] = await Promise.all([
+        getGamesForEvent(params.eventId),
+        getEventRounds(params.eventId),
+        getScoresForEvent(params.eventId),
+      ]);
+
+      setGames(gamesData);
+
+      // Convert roundId -> scores to userId -> scores
+      const userScores: Record<string, HoleScore[]> = {};
+      for (const [roundId, roundScores] of Object.entries(scoresData)) {
+        const userId = roundsData.roundToUser[roundId];
+        if (userId) {
+          userScores[userId] = roundScores;
+        }
+      }
+      setScores(userScores);
+    } catch (error) {
+      console.error('[GamesPage] Failed to load data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [params.eventId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Check if user can create presses
-  const canPress =
-    mockUser?.role === 'OWNER' ||
-    mockUser?.role === 'ADMIN' ||
-    mockUser?.role === 'PLAYER';
+  // In mock mode, check role. In real auth, allow any authenticated user for now.
+  const canPress = isMockMode
+    ? mockUser?.role === 'OWNER' ||
+      mockUser?.role === 'ADMIN' ||
+      mockUser?.role === 'PLAYER'
+    : !!currentUser;
+
+  const canCreateGame = isMockMode
+    ? mockUser?.role === 'OWNER' || mockUser?.role === 'ADMIN'
+    : !!currentUser;
 
   const handlePress = (gameId: string) => {
-    const game = mockGames.find((g) => g.id === gameId);
+    const game = games.find((g) => g.id === gameId);
     if (game) {
       setSelectedGame(game);
     }
   };
 
-  const handleCreatePress = (input: CreatePressInput) => {
-    // In a real app, this would call the API
-    console.log('Creating press:', input);
-    alert(`Press created! Starting hole ${input.startHole}, stake ${input.stake} Teeth`);
-    setSelectedGame(null);
+  const handleCreatePress = async (input: CreatePressInput) => {
+    try {
+      const parentGame = games.find((g) => g.id === input.parentGameId);
+      if (!parentGame) return;
+
+      await createPress(parentGame, input.stake, input.startHole);
+      setSelectedGame(null);
+
+      // Reload games to get the new press
+      await loadData();
+    } catch (error) {
+      console.error('[GamesPage] Failed to create press:', error);
+      alert('Failed to create press');
+    }
   };
+
+  const handleCreateGame = async (data: CreateGameData) => {
+    try {
+      console.log('[GamesPage] Creating game:', { eventId: params.eventId, data });
+      const newGame = await createGame(
+        params.eventId,
+        data.type,
+        data.stake,
+        data.playerAId,
+        data.playerBId,
+        data.startHole,
+        data.endHole
+      );
+      console.log('[GamesPage] Game created:', newGame);
+      setShowCreateModal(false);
+
+      // Reload games
+      await loadData();
+    } catch (error) {
+      console.error('[GamesPage] Failed to create game:', error);
+      alert('Failed to create game');
+    }
+  };
+
+  // Find current hole for press modal (simple heuristic: max hole with scores)
+  const getCurrentHole = (game: Game): number => {
+    const participants = games.find((g) => g.id === game.id)?.participants ?? [];
+    let maxHole = 0;
+
+    for (const participant of participants) {
+      const userScores = scores[participant.userId] ?? [];
+      for (const score of userScores) {
+        if (score.holeNumber >= game.startHole && score.holeNumber <= game.endHole) {
+          maxHole = Math.max(maxHole, score.holeNumber);
+        }
+      }
+    }
+
+    return maxHole || game.startHole - 1;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <span>Loading games...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Games</h1>
-        {(mockUser?.role === 'OWNER' || mockUser?.role === 'ADMIN') && (
-          <Button>Create Game</Button>
-        )}
+      {/* Page Header */}
+      <div className="relative">
+        {/* Subtle glow effect behind header */}
+        <div className="absolute -inset-x-4 -top-4 h-32 bg-gradient-to-b from-primary/5 via-primary/2 to-transparent blur-xl" />
+
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 ring-1 ring-primary/20">
+              <Swords className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Games</h1>
+              <p className="text-sm text-muted-foreground">Head-to-head matches & side bets</p>
+            </div>
+          </div>
+          {canCreateGame && (
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              size="sm"
+              className="gap-1.5 shadow-lg shadow-primary/20 transition-all hover:shadow-primary/30"
+            >
+              <Plus className="h-4 w-4" />
+              New Game
+            </Button>
+          )}
+        </div>
       </div>
 
       <GamesList
-        games={gamesWithParticipants}
+        games={games}
+        eventId={params.eventId}
         canPress={canPress}
         onPress={handlePress}
+        scores={scores}
       />
+
+      {/* Create Game Modal */}
+      {showCreateModal && (
+        <CreateGameModal
+          eventId={params.eventId}
+          players={mockUsers}
+          onSubmit={handleCreateGame}
+          onClose={() => setShowCreateModal(false)}
+        />
+      )}
 
       {/* Press Modal */}
       {selectedGame && (
         <CreatePressModal
           parentGame={selectedGame}
-          currentHole={9} // Mock: assume through 9 holes
+          currentHole={getCurrentHole(selectedGame)}
           onSubmit={handleCreatePress}
           onClose={() => setSelectedGame(null)}
         />

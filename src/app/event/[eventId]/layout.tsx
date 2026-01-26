@@ -4,17 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AuthHeader } from '@/components/auth/AuthHeader';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { BottomNav } from '@/components/nav/BottomNav';
 import { cn } from '@/lib/utils';
+import { Settings, Shield } from 'lucide-react';
 
-const tabs = [
-  { name: 'Overview', href: '' },
-  { name: 'Scorecard', href: '/scorecard' },
-  { name: 'Games', href: '/games' },
-  { name: 'Settlement', href: '/settlement' },
-  { name: 'Feed', href: '/feed' },
-  { name: 'Chat', href: '/chat' },
-  { name: 'Admin', href: '/admin' },
-  { name: 'Settings', href: '/settings' },
+// Header menu items (Settings, Admin moved here)
+const headerMenuItems = [
+  { name: 'Admin', href: '/admin', icon: Shield },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export default function EventLayout({
@@ -28,51 +25,51 @@ export default function EventLayout({
   const baseUrl = `/event/${params.eventId}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
+      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <Link href="/app" className="text-2xl font-bold text-primary">
               Press!
             </Link>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <AuthHeader />
+            <div className="flex items-center gap-1">
+              {/* Header navigation items */}
+              {headerMenuItems.map((item) => {
+                const href = `${baseUrl}${item.href}`;
+                const isActive = pathname === href || pathname.startsWith(href);
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={href}
+                    className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-lg transition-colors',
+                      isActive
+                        ? 'bg-primary/15 text-primary'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    )}
+                    title={item.name}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </Link>
+                );
+              })}
+              <div className="ml-2 flex items-center gap-2 border-l border-border/50 pl-3">
+                <ThemeToggle />
+                <AuthHeader />
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="container mx-auto px-4">
-          <nav className="-mb-px flex space-x-8 overflow-x-auto">
-            {tabs.map((tab) => {
-              const href = `${baseUrl}${tab.href}`;
-              const isActive =
-                pathname === href ||
-                (tab.href === '' && pathname === baseUrl);
-
-              return (
-                <Link
-                  key={tab.name}
-                  href={href}
-                  className={cn(
-                    'whitespace-nowrap border-b-2 py-4 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
-                  )}
-                >
-                  {tab.name}
-                </Link>
-              );
-            })}
-          </nav>
         </div>
       </header>
 
       {/* Content */}
-      <main className="container mx-auto px-4 py-8">{children}</main>
+      <main className="container mx-auto px-4 py-6">{children}</main>
+
+      {/* Bottom Navigation */}
+      <BottomNav eventId={params.eventId} />
     </div>
   );
 }

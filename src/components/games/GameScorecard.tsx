@@ -1,8 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { HoleResultRow } from './HoleResultRow';
-import type { Game, HoleScore, HoleSnapshot } from '@/types';
+import type { Game, HoleScore, HoleSnapshot, GameWithParticipants } from '@/types';
 import {
   computeHoleResults,
   type HoleResult,
@@ -19,6 +18,7 @@ interface GameScorecardProps {
   holes: HoleSnapshot[];
   className?: string;
   onCellClick?: (playerId: string, holeNumber: number) => void;
+  childGames?: GameWithParticipants[];
 }
 
 export function GameScorecard({
@@ -32,6 +32,7 @@ export function GameScorecard({
   holes,
   className,
   onCellClick,
+  childGames = [],
 }: GameScorecardProps) {
   const frontNine = holes.filter((h) => h.number <= 9);
   const backNine = holes.filter((h) => h.number > 9);
@@ -105,6 +106,8 @@ export function GameScorecard({
         isHoleInRange={isHoleInRange}
         totalLabel="OUT"
         onCellClick={onCellClick}
+        childGames={childGames}
+        gameStartHole={game.startHole}
       />
 
       {/* Back 9 */}
@@ -124,6 +127,8 @@ export function GameScorecard({
         isHoleInRange={isHoleInRange}
         totalLabel="IN"
         onCellClick={onCellClick}
+        childGames={childGames}
+        gameStartHole={game.startHole}
       />
 
       {/* Grand Total */}
@@ -168,6 +173,8 @@ interface ScorecardSectionProps {
   isHoleInRange: (holeNum: number) => boolean;
   totalLabel: string;
   onCellClick?: (playerId: string, holeNumber: number) => void;
+  childGames?: GameWithParticipants[];
+  gameStartHole: number;
 }
 
 function ScorecardSection({
@@ -186,6 +193,8 @@ function ScorecardSection({
   isHoleInRange,
   totalLabel,
   onCellClick,
+  childGames = [],
+  gameStartHole,
 }: ScorecardSectionProps) {
   const getScore = (scores: HoleScore[], holeNum: number): number | null => {
     const score = scores.find((s) => s.holeNumber === holeNum);
@@ -202,6 +211,49 @@ function ScorecardSection({
     return 'text-red-600 dark:text-red-500 font-bold'; // Double+
   };
 
+  // Get winner for a hole
+  const getHoleWinner = (holeNum: number): 'A' | 'B' | 'tie' | null => {
+    const result = holeResults.find((r) => r.hole === holeNum);
+    return result?.winner ?? null;
+  };
+
+  // Calculate cumulative match status up to and including each hole
+  const getCumulativeStatus = (upToHole: number): number => {
+    let status = 0;
+    for (const result of holeResults) {
+      if (result.hole <= upToHole) {
+        if (result.winner === 'A') status += 1;
+        else if (result.winner === 'B') status -= 1;
+      }
+    }
+    return status;
+  };
+
+  // Calculate cumulative for a specific range (for presses)
+  const getCumulativeForRange = (startHole: number, upToHole: number): number => {
+    let status = 0;
+    for (const result of holeResults) {
+      if (result.hole >= startHole && result.hole <= upToHole) {
+        if (result.winner === 'A') status += 1;
+        else if (result.winner === 'B') status -= 1;
+      }
+    }
+    return status;
+  };
+
+  // Format cumulative status
+  const formatStatus = (status: number): string => {
+    if (status === 0) return 'AS';
+    return status > 0 ? `+${status}` : `${status}`;
+  };
+
+  // Calculate section total for cumulative
+  const sectionHoles = holes.filter((h) => isHoleInRange(h.number));
+  const lastSectionHole = sectionHoles.length > 0
+    ? Math.max(...sectionHoles.map(h => h.number))
+    : 0;
+  const sectionCumulative = lastSectionHole > 0 ? getCumulativeStatus(lastSectionHole) : 0;
+
   return (
     <div className="rounded-xl border border-border/50 bg-gradient-to-br from-card/80 to-card/40 overflow-hidden">
       <div className="border-b border-border/30 bg-muted/30 px-4 py-2">
@@ -213,21 +265,21 @@ function ScorecardSection({
           <thead>
             {/* Hole numbers */}
             <tr className="border-b border-border/30">
-              <th className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-2 pl-4 pr-2 text-left font-medium text-muted-foreground min-w-[60px]">
+              <th className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-2 pl-4 pr-2 text-left font-medium text-muted-foreground min-w-[80px]">
                 Hole
               </th>
               {holes.map((hole) => (
                 <th
                   key={hole.number}
                   className={cn(
-                    'px-2 py-2 text-center font-medium min-w-[36px]',
+                    'px-2 py-2 text-center font-medium min-w-[40px]',
                     !isHoleInRange(hole.number) && 'opacity-40'
                   )}
                 >
                   {hole.number}
                 </th>
               ))}
-              <th className="px-3 py-2 text-center font-bold bg-muted/30 min-w-[44px]">
+              <th className="px-3 py-2 text-center font-bold bg-muted/30 min-w-[50px]">
                 {totalLabel}
               </th>
             </tr>
@@ -252,6 +304,25 @@ function ScorecardSection({
                 {parTotal}
               </td>
             </tr>
+
+            {/* HCP (Handicap) row */}
+            <tr className="border-b border-border/30 text-xs text-muted-foreground">
+              <td className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-1.5 pl-4 pr-2">
+                HCP
+              </td>
+              {holes.map((hole) => (
+                <td
+                  key={hole.number}
+                  className={cn(
+                    'px-2 py-1.5 text-center',
+                    !isHoleInRange(hole.number) && 'opacity-40'
+                  )}
+                >
+                  {hole.handicap}
+                </td>
+              ))}
+              <td className="px-3 py-1.5 text-center bg-muted/30">-</td>
+            </tr>
           </thead>
 
           <tbody>
@@ -263,18 +334,27 @@ function ScorecardSection({
               {holes.map((hole) => {
                 const score = getScore(playerAScores, hole.number);
                 const inRange = isHoleInRange(hole.number);
+                const winner = getHoleWinner(hole.number);
+                const isWinner = winner === 'A' && score !== null;
                 return (
                   <td
                     key={hole.number}
                     onClick={onCellClick && inRange ? () => onCellClick(playerAId, hole.number) : undefined}
                     className={cn(
-                      'px-2 py-2 text-center font-mono',
+                      'px-1 py-2 text-center font-mono',
                       !inRange && 'opacity-40',
-                      getScoreColor(score, hole.par),
                       onCellClick && inRange && 'cursor-pointer hover:bg-primary/20 transition-colors'
                     )}
                   >
-                    {score ?? '-'}
+                    <span
+                      className={cn(
+                        'inline-flex items-center justify-center w-7 h-7 rounded-full',
+                        getScoreColor(score, hole.par),
+                        isWinner && 'ring-2 ring-amber-400 bg-amber-400/20'
+                      )}
+                    >
+                      {score ?? '-'}
+                    </span>
                   </td>
                 );
               })}
@@ -291,18 +371,27 @@ function ScorecardSection({
               {holes.map((hole) => {
                 const score = getScore(playerBScores, hole.number);
                 const inRange = isHoleInRange(hole.number);
+                const winner = getHoleWinner(hole.number);
+                const isWinner = winner === 'B' && score !== null;
                 return (
                   <td
                     key={hole.number}
                     onClick={onCellClick && inRange ? () => onCellClick(playerBId, hole.number) : undefined}
                     className={cn(
-                      'px-2 py-2 text-center font-mono',
+                      'px-1 py-2 text-center font-mono',
                       !inRange && 'opacity-40',
-                      getScoreColor(score, hole.par),
                       onCellClick && inRange && 'cursor-pointer hover:bg-blue-500/20 transition-colors'
                     )}
                   >
-                    {score ?? '-'}
+                    <span
+                      className={cn(
+                        'inline-flex items-center justify-center w-7 h-7 rounded-full',
+                        getScoreColor(score, hole.par),
+                        isWinner && 'ring-2 ring-amber-400 bg-amber-400/20'
+                      )}
+                    >
+                      {score ?? '-'}
+                    </span>
                   </td>
                 );
               })}
@@ -311,12 +400,120 @@ function ScorecardSection({
               </td>
             </tr>
 
-            {/* Winner row */}
-            <HoleResultRow
-              holes={holes}
-              holeResults={holeResults}
-              isHoleInRange={isHoleInRange}
-            />
+            {/* Winner row with cumulative +/- */}
+            <tr className="border-b border-border/30 text-xs bg-amber-500/5">
+              <td className="sticky left-0 z-10 bg-amber-500/10 backdrop-blur-sm py-2 pl-4 pr-2 font-semibold text-amber-400">
+                Match
+              </td>
+              {holes.map((hole) => {
+                const inRange = isHoleInRange(hole.number);
+                if (!inRange) {
+                  return (
+                    <td key={hole.number} className="px-2 py-2 text-center opacity-40">
+                      -
+                    </td>
+                  );
+                }
+                const cumulative = getCumulativeStatus(hole.number);
+                const hasResult = holeResults.some(r => r.hole === hole.number);
+                if (!hasResult) {
+                  return (
+                    <td key={hole.number} className="px-2 py-2 text-center text-muted-foreground">
+                      -
+                    </td>
+                  );
+                }
+                return (
+                  <td
+                    key={hole.number}
+                    className={cn(
+                      'px-2 py-2 text-center font-bold',
+                      cumulative > 0 && 'text-primary',
+                      cumulative < 0 && 'text-blue-400',
+                      cumulative === 0 && 'text-amber-400'
+                    )}
+                  >
+                    {formatStatus(cumulative)}
+                  </td>
+                );
+              })}
+              <td className={cn(
+                'px-3 py-2 text-center font-bold bg-muted/30',
+                sectionCumulative > 0 && 'text-primary',
+                sectionCumulative < 0 && 'text-blue-400',
+                sectionCumulative === 0 && 'text-amber-400'
+              )}>
+                {formatStatus(sectionCumulative)}
+              </td>
+            </tr>
+
+            {/* Press rows */}
+            {childGames.map((press, index) => {
+              const pressStartHole = press.startHole;
+              const pressEndHole = press.endHole;
+
+              return (
+                <tr key={press.id} className="border-b border-border/30 text-xs bg-purple-500/5">
+                  <td className="sticky left-0 z-10 bg-purple-500/10 backdrop-blur-sm py-2 pl-4 pr-2 font-semibold text-purple-400">
+                    Press {index + 1}
+                  </td>
+                  {holes.map((hole) => {
+                    const inPressRange = hole.number >= pressStartHole && hole.number <= pressEndHole;
+                    const inSection = holes.some(h => h.number === hole.number);
+
+                    if (!inPressRange || !inSection) {
+                      return (
+                        <td key={hole.number} className="px-2 py-2 text-center text-muted-foreground/30">
+                          -
+                        </td>
+                      );
+                    }
+
+                    const cumulative = getCumulativeForRange(pressStartHole, hole.number);
+                    const hasResult = holeResults.some(r => r.hole === hole.number);
+
+                    if (!hasResult) {
+                      return (
+                        <td key={hole.number} className="px-2 py-2 text-center text-muted-foreground">
+                          -
+                        </td>
+                      );
+                    }
+
+                    return (
+                      <td
+                        key={hole.number}
+                        className={cn(
+                          'px-2 py-2 text-center font-bold',
+                          cumulative > 0 && 'text-primary',
+                          cumulative < 0 && 'text-blue-400',
+                          cumulative === 0 && 'text-purple-400'
+                        )}
+                      >
+                        {formatStatus(cumulative)}
+                      </td>
+                    );
+                  })}
+                  {(() => {
+                    const lastPressHoleInSection = Math.min(
+                      pressEndHole,
+                      Math.max(...holes.map(h => h.number))
+                    );
+                    const pressCumulative = getCumulativeForRange(pressStartHole, lastPressHoleInSection);
+                    return (
+                      <td className={cn(
+                        'px-3 py-2 text-center font-bold bg-muted/30',
+                        pressCumulative > 0 && 'text-primary',
+                        pressCumulative < 0 && 'text-blue-400',
+                        pressCumulative === 0 && 'text-purple-400'
+                      )}>
+                        {formatStatus(pressCumulative)}
+                      </td>
+                    );
+                  })()}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

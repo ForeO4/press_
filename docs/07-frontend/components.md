@@ -327,8 +327,6 @@ Redesigned game card with match status borders and player avatars.
 interface GameCardProps {
   game: GameWithParticipants;
   eventId?: string;  // Enables navigation to detail page
-  canPress: boolean;
-  onPress: () => void;
   isNested?: boolean;  // For nested press games
   scores?: Record<string, HoleScore[]>;
 }
@@ -338,8 +336,9 @@ interface GameCardProps {
 - Left border color indicates match status (winning/losing/tied/not started)
 - Header row with game type pill and teeth stake
 - Player section with avatars and match progress
-- Footer with hole range and action buttons
+- Footer with hole range and "Details" button
 - Nested display for child press games (purple left border)
+- **Note:** Press button removed from card - only on game detail page
 
 ### GamesList (Updated)
 
@@ -349,8 +348,6 @@ Status-grouped game list with collapsible sections.
 interface GamesListProps {
   games: GameWithParticipants[];
   eventId?: string;
-  canPress: boolean;
-  onPress: (gameId: string) => void;
   scores?: Record<string, HoleScore[]>;
 }
 ```
@@ -358,8 +355,10 @@ interface GamesListProps {
 **Features:**
 - GameSummaryHeader at top
 - "Active Games" section with Flame icon
-- "Completed" section with collapsible toggle
+- "Recent" section with collapsible toggle
+- "View All History" link for more than 3 completed games
 - Empty state with helpful message
+- **Note:** No press functionality on list - press only on game detail
 
 ---
 
@@ -403,18 +402,23 @@ interface GameScorecardProps {
   holes: HoleSnapshot[];
   className?: string;
   onCellClick?: (playerId: string, holeNumber: number) => void;
+  childGames?: GameWithParticipants[];  // Press games for tracking rows
 }
 ```
 
 **Features:**
 - Front 9 and Back 9 sections
 - Par row with totals
+- **HCP row** showing hole handicaps (renamed from SI/Stroke Index)
 - Player score rows with par-relative coloring (eagle, birdie, par, bogey, double+)
-- HoleResultRow showing winner for each hole
+- **Golden circle** (ring-2 ring-amber-400) around winning scores for each hole
+- **Winner row** showing cumulative +/- status (+1, AS, -2) from Player A's POV
+- **Press rows** (Press 1, Press 2) showing cumulative status starting at initiation hole
 - Grayed out holes outside game's range
 - Total scores summary
 - **Inline Score Editing** - Tap any score cell to open ScoreEditorSheet
 - Hover states indicate clickable cells
+- **Visible by default** (not hidden behind toggle)
 
 ### HoleResultRow
 
@@ -452,19 +456,21 @@ interface ScoreEntryProps {
     handicap?: number;
     getsStroke?: boolean;
   }>;
-  scores: Record<string, number | null>;
+  scores: Record<string, number | null>;  // Prop scores (fallback)
   onScoreChange: (playerId: string, score: number) => void;
   onComplete?: () => void;
 }
 ```
 
 **Features:**
+- **Uses Zustand store directly** for score display (fixes persistence bug)
 - Tap player name to select for score entry
 - Number pad with 0-9, backspace, and Enter
 - Supports double-digit scores (10+)
 - Par-relative coloring on entered scores
 - Auto-advance to next player after entry
-- Keyboard support for desktop
+- Keyboard support for desktop (Enter key saves)
+- **Visible "Save Score" button** below number pad
 
 ### GameTrackingRow
 
@@ -493,7 +499,7 @@ interface GameTrackingRowProps {
 
 ### PressButton
 
-Press action button with multiplier selection.
+Bold, animated press action button with multiplier selection.
 
 ```tsx
 interface PressButtonProps {
@@ -504,11 +510,15 @@ interface PressButtonProps {
 ```
 
 **Features:**
-- Expandable interface with flame icon
+- **Bold, exciting design** - This is the "drama moment" of the game!
+- Amber/gold gradient theme (from-amber-500 via-orange-500 to-red-500)
+- Flame icon with "PRESS!" label
+- Animated sparkle effects when expanded
+- Pulsing glow animation when selecting multiplier
 - 1x, 2x, 3x, 4x multiplier options
 - Shows calculated teeth amount for each option
-- Confirmation button after multiplier selection
-- Gradient styling (orange to red)
+- Scale animation on confirm
+- **Only on game detail page** (removed from games list)
 
 ---
 

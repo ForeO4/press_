@@ -97,17 +97,20 @@ Event settings can configure defaults.
 
 ### Press Button (Game Detail Page)
 
-On game detail page, prominent `PressButton` component when:
+On game detail page, bold, animated `PressButton` component when:
 - Game is active
 - Current hole < end hole
 - User has permission
 
-**Features:**
+**Features (Bold & Exciting Design):**
+- Amber/gold gradient theme (from-amber-500 via-orange-500 to-red-500)
 - Flame icon with "PRESS!" label
-- Expandable interface showing multiplier options
+- Animated sparkle effects when expanded
+- Pulsing glow animation when selecting multiplier
 - 1x, 2x, 3x, 4x multiplier selection
 - Shows calculated teeth amount for each option
-- Confirmation button after selection
+- Scale animation on confirm
+- This is the "drama moment" of the game!
 
 **Note:** Press button removed from games list. Press is only available from game detail page.
 

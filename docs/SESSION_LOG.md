@@ -306,3 +306,67 @@ All three improvements are code-complete. Documentation updated to reflect chang
 
 ### Notes
 All 5 phases implemented and documentation updated. TypeScript compiles without errors.
+
+---
+
+## Session: 2025-01-26 (UI/UX Fixes Round 3)
+
+**Duration:** ~2 hours
+**Focus:** UI/UX fixes based on Round 2 user testing feedback
+
+### Accomplished
+
+**Critical Bug Fix:**
+- Fixed score persistence bug in ScoreEntry
+  - Scores were disappearing when switching to next player
+  - Root cause: Race condition between store update and React re-render
+  - Fix: ScoreEntry now uses useScorecardStore directly for score display
+
+**Scorecard Redesign:**
+- Renamed SI (Stroke Index) to HCP (Handicap) throughout app
+- Added HCP row in scorecard showing hole handicaps
+- Made scorecard visible by default (not behind toggle)
+- Added golden circle ring (ring-2 ring-amber-400) around winning scores
+- Winner row now shows cumulative +/- status (+1, AS, -2)
+- Added support for press rows (Press 1, Press 2) starting at initiation hole
+
+**Press Button Redesign:**
+- Complete redesign with amber/gold gradient theme
+- Animated sparkle effects and pulsing glow
+- Flame icon replacing Zap
+- Scale animation on confirm
+- Removed from Games list (GameCard) - only on game detail page
+
+**Score Entry UX:**
+- Added prominent "Save Score" button below number pad
+- Enter key already implemented
+- Scorecard cells clickable for inline editing
+
+### Key Decisions
+- Use store directly in ScoreEntry to avoid prop timing issues
+- Golden circle (ring-2 ring-amber-400) is golf-standard for highlighting winners
+- Press button should be a "drama moment" with bold, exciting styling
+- Press only makes sense in game context, not on list view
+
+### Files Modified
+- `src/components/games/ScoreEntry.tsx` - Bug fix + Save button
+- `src/components/games/GameScorecard.tsx` - Golden circles, HCP row, winner tracking, press rows
+- `src/components/games/PressButton.tsx` - Bold animated redesign
+- `src/components/games/GameCard.tsx` - Removed press button
+- `src/components/games/GamesList.tsx` - Cleaned up props
+- `src/app/event/[eventId]/games/[gameId]/page.tsx` - SI→HCP, scorecard visible, childGames prop
+
+### Documentation Updated
+- CHANGELOG.md
+- SESSION_LOG.md
+- components.md
+- games.md
+- presses.md
+- scoring.md
+- NEXT_SESSION.md
+
+### Commits
+- TBD (this session)
+
+### Notes
+All 13 tasks completed. Build passes. Ready for user testing.

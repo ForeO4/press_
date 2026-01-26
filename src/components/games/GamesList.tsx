@@ -6,7 +6,7 @@ import { RecentGameCard } from './RecentGameCard';
 import { GameSummaryHeader } from './GameSummaryHeader';
 import { cn } from '@/lib/utils';
 import type { GameWithParticipants, HoleScore } from '@/types';
-import { Flame, Trophy, ChevronDown, History } from 'lucide-react';
+import { Flame, ChevronDown, History } from 'lucide-react';
 import { GolfClubsIcon } from '@/components/ui/GolfClubsIcon';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,6 @@ import { Button } from '@/components/ui/button';
 interface GamesListProps {
   games: GameWithParticipants[];
   eventId?: string;
-  canPress?: boolean;
-  onPress?: (gameId: string) => void;
   scores?: Record<string, HoleScore[]>;
 }
 

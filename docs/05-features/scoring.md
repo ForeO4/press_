@@ -28,11 +28,13 @@ TOTAL    36     38      37     40
 ### Score Entry
 
 - Tap cell to select
-- +/- buttons for adjustment
-- Direct score input (tap score to type)
-- Quick-select buttons (par-2 to par+4)
-- Auto-save on change
+- Number pad with 0-9, backspace, Enter
+- Auto-advance to next player after entry
+- Auto-save on change (debounced 300ms)
+- **Visible "Save Score" button** below number pad
+- Par-relative coloring on entered scores
 - Shows gross strokes
+- **Uses Zustand store directly** for display (fixes persistence bug)
 
 ### Inline Editing from Game Detail
 

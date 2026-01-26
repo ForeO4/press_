@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar';
-import { Delete, Check } from 'lucide-react';
+import { Delete, Check, Save } from 'lucide-react';
+import { useScorecardStore } from '@/stores/scorecardStore';
 import type { HoleSnapshot } from '@/types';
 
 interface Player {
@@ -25,14 +26,29 @@ interface ScoreEntryProps {
 export function ScoreEntry({
   hole,
   players,
-  scores,
+  scores: propScores,
   onScoreChange,
   onComplete,
 }: ScoreEntryProps) {
+  // Use store directly for score display to avoid race conditions
+  const storeScores = useScorecardStore((state) => state.scores);
+
   const [activePlayerId, setActivePlayerId] = useState<string | null>(
     players[0]?.id ?? null
   );
   const [inputValue, setInputValue] = useState('');
+
+  // Combine prop scores with store scores, preferring store for latest values
+  const scores = useMemo(() => {
+    const combined: Record<string, number | null> = { ...propScores };
+    for (const player of players) {
+      const storeScore = storeScores[player.id]?.[hole.number];
+      if (storeScore !== undefined) {
+        combined[player.id] = storeScore;
+      }
+    }
+    return combined;
+  }, [propScores, storeScores, players, hole.number]);
 
   // When active player changes, load their current score
   useEffect(() => {
@@ -162,7 +178,7 @@ export function ScoreEntry({
       </div>
 
       {/* Number pad */}
-      <div className="rounded-xl border border-border/30 bg-card/50 p-3">
+      <div className="rounded-xl border border-border/30 bg-card/50 p-3 space-y-2">
         <div className="grid grid-cols-3 gap-2">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
             <Button
@@ -201,6 +217,16 @@ export function ScoreEntry({
             <Check className="h-6 w-6" />
           </Button>
         </div>
+
+        {/* Visible Save button */}
+        <Button
+          onClick={handleEnter}
+          disabled={!inputValue}
+          className="w-full h-12 gap-2 text-base font-semibold bg-primary hover:bg-primary/90"
+        >
+          <Save className="h-5 w-5" />
+          Save Score
+        </Button>
       </div>
     </div>
   );

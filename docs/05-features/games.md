@@ -125,11 +125,21 @@ Shows games organized by status:
 - `ActiveGameCard` for each in-progress game
 - Shows current hole, live match status
 - "Continue" button to resume
+- **No press button** (press only on game detail page)
 
 **Recent Section (collapsible):**
 - `RecentGameCard` for completed games (up to 3)
 - Shows date, result, teeth won/lost
 - "View All History" link
+
+### Game Detail Scorecard
+
+Full scorecard view when viewing a game:
+- **HCP row** showing hole handicaps
+- **Golden circle** around winning scores
+- **Winner row** with cumulative +/- status
+- **Press rows** (Press 1, Press 2) starting at initiation hole
+- **Visible by default** (not behind toggle)
 
 ### ActiveGameCard
 

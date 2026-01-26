@@ -8,6 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **UI/UX Fixes Round 3** - Based on user testing feedback from Round 2
+  - **Score Persistence Bug Fix** (CRITICAL)
+    - Fixed race condition in ScoreEntry where scores disappeared when switching players
+    - ScoreEntry now uses Zustand store directly for real-time score display
+  - **Scorecard Redesign**
+    - Renamed SI (Stroke Index) to HCP (Handicap) throughout
+    - Added HCP row in scorecard showing hole handicaps
+    - Scorecard now visible by default (not hidden behind toggle)
+    - Golden circle ring around winning scores for each hole
+    - Winner row shows cumulative +/- status (e.g., +1, AS, -2)
+    - Press rows (Press 1, Press 2) that start at their initiation hole
+  - **Press Button Redesign** - Bold, animated, exciting
+    - Amber/gold gradient theme with Flame icon
+    - Animated sparkle effects and pulsing glow when expanded
+    - Scale animation on confirm
+    - Removed from Games list (only on game detail page)
+  - **Score Entry UX**
+    - Added prominent "Save Score" button below number pad
+    - Enter key already saves
+    - Cells clickable when scorecard is visible
 - **UI/UX Overhaul** - Comprehensive improvements based on user testing feedback
   - **Create Game Modal Enhancements**
     - Multi-select contest types (Match Play, Nassau, Skins can be combined)

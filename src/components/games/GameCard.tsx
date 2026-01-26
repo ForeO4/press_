@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { matchStatusStyles } from '@/lib/design/colors';
 import type { GameWithParticipants, HoleScore } from '@/types';
 import { mockUsers } from '@/lib/mock/users';
-import { ChevronRight, Zap } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import {
   computeHoleResults,
   computeMatchPlayResult,
@@ -20,8 +20,6 @@ import {
 interface GameCardProps {
   game: GameWithParticipants;
   eventId?: string;
-  canPress: boolean;
-  onPress: () => void;
   isNested?: boolean;
   scores?: Record<string, HoleScore[]>;
 }
@@ -29,8 +27,6 @@ interface GameCardProps {
 export function GameCard({
   game,
   eventId,
-  canPress,
-  onPress,
   isNested = false,
   scores = {},
 }: GameCardProps) {
@@ -110,10 +106,12 @@ export function GameCard({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1.5 text-primary">
-            <AlligatorIcon size="md" />
-            <span className="font-bold tabular-nums">{game.stakeTeethInt}</span>
-          </div>
+          {game.stakeTeethInt > 0 && (
+            <div className="flex items-center gap-1.5 text-primary">
+              <AlligatorIcon size="md" />
+              <span className="font-bold tabular-nums">{game.stakeTeethInt}</span>
+            </div>
+          )}
         </div>
 
         {/* Players section */}
@@ -141,17 +139,6 @@ export function GameCard({
         <div className="flex items-center justify-between border-t border-border/30 bg-black/10 px-4 py-2.5">
           <span className="text-xs font-medium text-muted-foreground">{holeRange}</span>
           <div className="flex items-center gap-2">
-            {canPress && game.status === 'active' && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onPress}
-                className="h-7 gap-1 border-purple-500/30 bg-purple-500/10 text-xs font-medium text-purple-400 transition-all hover:bg-purple-500/20 hover:text-purple-300 hover:shadow-md hover:shadow-purple-500/10"
-              >
-                <Zap className="h-3 w-3" />
-                Press
-              </Button>
-            )}
             {eventId ? (
               <Link href={`/event/${eventId}/games/${game.id}`}>
                 <Button
@@ -184,8 +171,6 @@ export function GameCard({
                 key={childGame.id}
                 game={childGame}
                 eventId={eventId}
-                canPress={canPress}
-                onPress={() => {}}
                 isNested
                 scores={scores}
               />

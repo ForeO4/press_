@@ -54,7 +54,7 @@ export default function GameDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [showSettleModal, setShowSettleModal] = useState(false);
   const [currentHole, setCurrentHole] = useState(1);
-  const [showFullScorecard, setShowFullScorecard] = useState(false);
+  const [showFullScorecard, setShowFullScorecard] = useState(true); // Default to visible
 
   // Scorecard store for inline editing
   const selectCell = useScorecardStore((state) => state.selectCell);
@@ -357,7 +357,7 @@ export default function GameDetailPage({
           <div className="flex items-center justify-center gap-4 mt-2 text-sm text-muted-foreground">
             <span>Par {currentHoleData.par}</span>
             <span>{currentHoleData.yardage} yds</span>
-            <span>SI: {currentHoleData.handicap}</span>
+            <span>HCP: {currentHoleData.handicap}</span>
           </div>
         )}
       </div>
@@ -375,6 +375,7 @@ export default function GameDetailPage({
             playerBScores={playerBScores}
             holes={courseData.holes}
             onCellClick={handleCellClick}
+            childGames={game.childGames}
           />
         </div>
       )}

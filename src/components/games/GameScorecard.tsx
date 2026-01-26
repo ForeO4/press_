@@ -18,6 +18,7 @@ interface GameScorecardProps {
   playerBScores: HoleScore[];
   holes: HoleSnapshot[];
   className?: string;
+  onCellClick?: (playerId: string, holeNumber: number) => void;
 }
 
 export function GameScorecard({
@@ -30,6 +31,7 @@ export function GameScorecard({
   playerBScores,
   holes,
   className,
+  onCellClick,
 }: GameScorecardProps) {
   const frontNine = holes.filter((h) => h.number <= 9);
   const backNine = holes.filter((h) => h.number > 9);
@@ -91,6 +93,8 @@ export function GameScorecard({
         title="Front 9"
         holes={frontNine}
         parTotal={frontPar}
+        playerAId={playerAId}
+        playerBId={playerBId}
         playerAName={playerAName}
         playerBName={playerBName}
         playerAScores={playerAScores}
@@ -100,6 +104,7 @@ export function GameScorecard({
         holeResults={holeResults}
         isHoleInRange={isHoleInRange}
         totalLabel="OUT"
+        onCellClick={onCellClick}
       />
 
       {/* Back 9 */}
@@ -107,6 +112,8 @@ export function GameScorecard({
         title="Back 9"
         holes={backNine}
         parTotal={backPar}
+        playerAId={playerAId}
+        playerBId={playerBId}
         playerAName={playerAName}
         playerBName={playerBName}
         playerAScores={playerAScores}
@@ -116,6 +123,7 @@ export function GameScorecard({
         holeResults={holeResults}
         isHoleInRange={isHoleInRange}
         totalLabel="IN"
+        onCellClick={onCellClick}
       />
 
       {/* Grand Total */}
@@ -148,6 +156,8 @@ interface ScorecardSectionProps {
   title: string;
   holes: HoleSnapshot[];
   parTotal: number;
+  playerAId: string;
+  playerBId: string;
   playerAName: string;
   playerBName: string;
   playerAScores: HoleScore[];
@@ -157,12 +167,15 @@ interface ScorecardSectionProps {
   holeResults: HoleResult[];
   isHoleInRange: (holeNum: number) => boolean;
   totalLabel: string;
+  onCellClick?: (playerId: string, holeNumber: number) => void;
 }
 
 function ScorecardSection({
   title,
   holes,
   parTotal,
+  playerAId,
+  playerBId,
   playerAName,
   playerBName,
   playerAScores,
@@ -172,6 +185,7 @@ function ScorecardSection({
   holeResults,
   isHoleInRange,
   totalLabel,
+  onCellClick,
 }: ScorecardSectionProps) {
   const getScore = (scores: HoleScore[], holeNum: number): number | null => {
     const score = scores.find((s) => s.holeNumber === holeNum);
@@ -248,13 +262,16 @@ function ScorecardSection({
               </td>
               {holes.map((hole) => {
                 const score = getScore(playerAScores, hole.number);
+                const inRange = isHoleInRange(hole.number);
                 return (
                   <td
                     key={hole.number}
+                    onClick={onCellClick && inRange ? () => onCellClick(playerAId, hole.number) : undefined}
                     className={cn(
                       'px-2 py-2 text-center font-mono',
-                      !isHoleInRange(hole.number) && 'opacity-40',
-                      getScoreColor(score, hole.par)
+                      !inRange && 'opacity-40',
+                      getScoreColor(score, hole.par),
+                      onCellClick && inRange && 'cursor-pointer hover:bg-primary/20 transition-colors'
                     )}
                   >
                     {score ?? '-'}
@@ -273,13 +290,16 @@ function ScorecardSection({
               </td>
               {holes.map((hole) => {
                 const score = getScore(playerBScores, hole.number);
+                const inRange = isHoleInRange(hole.number);
                 return (
                   <td
                     key={hole.number}
+                    onClick={onCellClick && inRange ? () => onCellClick(playerBId, hole.number) : undefined}
                     className={cn(
                       'px-2 py-2 text-center font-mono',
-                      !isHoleInRange(hole.number) && 'opacity-40',
-                      getScoreColor(score, hole.par)
+                      !inRange && 'opacity-40',
+                      getScoreColor(score, hole.par),
+                      onCellClick && inRange && 'cursor-pointer hover:bg-blue-500/20 transition-colors'
                     )}
                   >
                     {score ?? '-'}

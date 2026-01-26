@@ -1,13 +1,13 @@
-# Next Session - Settlement Flow
+# Next Session - Deployment & Nassau
 
 > **Last Updated:** 2025-01-26
 > **Branch:** `feat/fully-baked-press` (default)
-> **Status:** Game detail page complete, settlement modal next
+> **Status:** Core game features complete, ready for deployment
 
 ## Session Goals
 
-1. **Implement Settlement Modal** - Game settlement flow with teeth calculation
-2. **Score Editing** - Enable score editing from game detail page
+1. **Deploy to Vercel** - Production deployment
+2. **E2.2 Nassau** - Implement Nassau game type
 
 ## What's Complete
 
@@ -28,81 +28,54 @@
 - Redesigned GameCard with match status borders
 - GamesList with Active/Completed sections
 - Press creation flow
-- **Game Detail Page** (NEW)
+- **Game Detail Page**
   - `/event/[eventId]/games/[gameId]` route
   - GameDetailHeader with player info and match status
-  - GameScorecard with hole-by-hole scores
+  - GameScorecard with hole-by-hole scores + inline editing
   - HoleResultRow showing winner indicators
-  - Press and Settle action buttons (Settle is placeholder)
+  - Press and End Match action buttons
+- **End Match Modal** - Settlement flow with teeth calculation
+- **Inline Score Editing** - Tap cells in GameScorecard to edit scores
+- **Scalable IDs** - Uses `crypto.randomUUID()` in mock mode
 
 ## Immediate Next Tasks
 
-### 1. Settlement Modal (`SettleGameModal.tsx`)
+### 1. Deploy to Vercel
 
-Create modal that appears when clicking "Settle Game" on game detail page:
+Production deployment checklist:
+- Configure environment variables
+- Set up Supabase production project
+- Enable RLS policies
+- Configure custom domain (optional)
 
-```
-┌────────────────────────────────────────┐
-│ Settle Game                        [X] │
-├────────────────────────────────────────┤
-│                                        │
-│  Final Result                          │
-│  Alex is 3 UP with 2 to play           │
-│  (Match is dormie)                     │
-│                                        │
-│  Settlement                            │
-│  ┌────────────────────────────────────┐│
-│  │ Blake owes Alex                    ││
-│  │        🦷 30                        ││
-│  │ (10 teeth × 3 holes up)            ││
-│  └────────────────────────────────────┘│
-│                                        │
-│  [Cancel]           [Confirm Settlement]│
-└────────────────────────────────────────┘
-```
+### 2. E2.2 Nassau Game Type
 
-**Implementation:**
-- Use existing `computeMatchPlaySettlement` from `computeSettlement.ts`
-- Show final match result and calculation breakdown
-- Update game status to 'complete' on confirm
-- Eventually: Create teeth ledger entries
+Nassau = 3 match play bets in one:
+- Front 9 (holes 1-9)
+- Back 9 (holes 10-18)
+- Overall 18
 
-### 2. Score Editing from Game Detail
-
-Allow players to tap scores in GameScorecard to edit:
-- Reuse existing `ScoreEditorSheet` component
-- Wire up score cell clicks to open editor
-- Update scores service and refresh scorecard
+**Implementation needs:**
+- Settlement calculation for Nassau (3 separate results)
+- UI to show front/back/overall status
+- End Match modal update for Nassau
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
 | `src/app/event/[eventId]/games/[gameId]/page.tsx` | Game detail page |
-| `src/components/games/GameDetailHeader.tsx` | Detail page header |
-| `src/components/games/GameScorecard.tsx` | Mini 2-player scorecard |
-| `src/components/games/HoleResultRow.tsx` | Winner indicators |
+| `src/components/games/GameScorecard.tsx` | Mini scorecard with inline editing |
+| `src/components/games/SettleGameModal.tsx` | End Match modal |
 | `src/lib/domain/settlement/computeSettlement.ts` | Settlement calculation |
 | `src/lib/services/games.ts` | Game CRUD + status updates |
-
-## Settlement Calculation Reference
-
-Already implemented in `computeSettlement.ts`:
-
-```typescript
-// Match Play: stake × holes up
-computeMatchPlaySettlement(game, playerAId, playerBId, scoresA, scoresB)
-// Returns: { payerId, payeeId, amountInt, ... }
-```
-
-Future settlement types (not yet implemented):
-- **Nassau**: 3 separate bets (front, back, overall)
-- **Skins**: Each hole won = stake, carryover on ties
+| `src/lib/services/events.ts` | Event CRUD |
+| `src/lib/services/courses.ts` | Course/tee data |
 
 ## Future Features (Priority Order)
 
-1. **E2.2 Nassau** - Front/back/total bets
-2. **E2.4 Presses** - Multiple presses per game
-3. **E3.1 Alligator Teeth** - Full ledger system
-4. **Tags System** - Game/event tagging for AI-generated synopses
-5. **Deploy to Vercel** - Production deployment
+1. **Deploy to Vercel** - Production deployment
+2. **E2.2 Nassau** - Front/back/total bets
+3. **E2.4 Presses** - Multiple presses per game
+4. **E3.1 Alligator Teeth** - Full ledger system
+5. **Tags System** - Game/event tagging for AI-generated synopses

@@ -9,6 +9,8 @@ import { GameScorecard } from '@/components/games/GameScorecard';
 import { GameCard } from '@/components/games/GameCard';
 import { CreatePressModal } from '@/components/games/CreatePressModal';
 import { SettleGameModal } from '@/components/games/SettleGameModal';
+import { ScoreEditorSheet } from '@/components/scorecard/ScoreEditorSheet';
+import { useScorecardStore } from '@/stores/scorecardStore';
 import { getGameWithParticipants, createPress, updateGameStatus } from '@/lib/services/games';
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
 import { getEventTeeSnapshot } from '@/lib/services/courses';
@@ -40,6 +42,11 @@ export default function GameDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [showPressModal, setShowPressModal] = useState(false);
   const [showSettleModal, setShowSettleModal] = useState(false);
+
+  // Scorecard store for inline editing
+  const selectCell = useScorecardStore((state) => state.selectCell);
+  const initializeEventScores = useScorecardStore((state) => state.initializeEventScores);
+  const scorecardScores = useScorecardStore((state) => state.scores);
 
   // Load game data
   const loadData = useCallback(async () => {
@@ -83,6 +90,33 @@ export default function GameDetailPage({
     loadData();
   }, [loadData]);
 
+  // Initialize scorecard store for editing
+  useEffect(() => {
+    initializeEventScores(params.eventId);
+  }, [params.eventId, initializeEventScores]);
+
+  // Convert scorecard store format to HoleScore[] for display
+  // This allows us to show live updates from the editor
+  const getPlayerScoresFromStore = useCallback((playerId: string): HoleScore[] => {
+    const playerScores = scorecardScores[playerId];
+    if (!playerScores) return scores[playerId] ?? [];
+
+    const now = new Date().toISOString();
+    return Object.entries(playerScores).map(([holeNum, strokes]) => ({
+      id: `${playerId}-${holeNum}`,
+      roundId: '',
+      holeNumber: parseInt(holeNum, 10),
+      strokes,
+      createdAt: now,
+      updatedAt: now,
+    }));
+  }, [scorecardScores, scores]);
+
+  // Handle score cell click
+  const handleCellClick = useCallback((playerId: string, holeNumber: number) => {
+    selectCell(playerId, holeNumber);
+  }, [selectCell]);
+
   // Permission checks
   const canPress = isMockMode
     ? mockUser?.role === 'OWNER' ||
@@ -101,8 +135,9 @@ export default function GameDetailPage({
     : null;
   const playerAName = playerAUser?.name ?? 'Player A';
   const playerBName = playerBUser?.name ?? 'Player B';
-  const playerAScores = playerA ? (scores[playerA.userId] ?? []) : [];
-  const playerBScores = playerB ? (scores[playerB.userId] ?? []) : [];
+  // Use store scores for live updates, fall back to loaded scores
+  const playerAScores = playerA ? getPlayerScoresFromStore(playerA.userId) : [];
+  const playerBScores = playerB ? getPlayerScoresFromStore(playerB.userId) : [];
 
   // Find current hole for press modal
   const getCurrentHole = (): number => {
@@ -207,6 +242,7 @@ export default function GameDetailPage({
             playerAScores={playerAScores}
             playerBScores={playerBScores}
             holes={courseData.holes}
+            onCellClick={handleCellClick}
           />
         </div>
       )}
@@ -251,7 +287,7 @@ export default function GameDetailPage({
               className="gap-2"
             >
               <Check className="h-4 w-4" />
-              Settle Game
+              End Match
             </Button>
           )}
           {game.status === 'complete' && (
@@ -286,6 +322,9 @@ export default function GameDetailPage({
           onClose={() => setShowSettleModal(false)}
         />
       )}
+
+      {/* Score Editor Sheet */}
+      <ScoreEditorSheet />
     </div>
   );
 }

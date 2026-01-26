@@ -382,7 +382,7 @@ interface GameDetailHeaderProps {
 
 ### GameScorecard
 
-Mini 2-player scorecard for game detail view.
+Mini 2-player scorecard for game detail view with inline editing support.
 
 ```tsx
 interface GameScorecardProps {
@@ -395,6 +395,7 @@ interface GameScorecardProps {
   playerBScores: HoleScore[];
   holes: HoleSnapshot[];
   className?: string;
+  onCellClick?: (playerId: string, holeNumber: number) => void;
 }
 ```
 
@@ -405,6 +406,8 @@ interface GameScorecardProps {
 - HoleResultRow showing winner for each hole
 - Grayed out holes outside game's range
 - Total scores summary
+- **Inline Score Editing** - Tap any score cell to open ScoreEditorSheet
+- Hover states indicate clickable cells
 
 ### HoleResultRow
 

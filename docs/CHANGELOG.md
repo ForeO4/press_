@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Inline Score Editing** - Tap score cells in GameScorecard to edit directly from game detail page
+  - Integrated ScoreEditorSheet with scorecard cells
+  - Live score updates reflect immediately in match status
 - **Game Detail Page** - Full game view at `/event/[eventId]/games/[gameId]`
   - `GameDetailHeader` - Hero section with players, avatars, match status, back navigation
   - `GameScorecard` - Mini 2-player scorecard with par-relative coloring
@@ -74,6 +77,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Mock mode for development without backend
 - Cloudflare R2 media proxy worker
 - Documentation SSOT system
+
+### Changed
+- **"Settle Game" → "End Match"** - Renamed button and modal for clearer terminology
+- **Mock Mode IDs** - Replaced `Date.now()` with `crypto.randomUUID()` for collision-free ID generation
 
 ### Fixed
 - **Demo Mode with Supabase** - Demo events now work even when Supabase is configured

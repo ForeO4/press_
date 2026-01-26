@@ -34,6 +34,13 @@ TOTAL    36     38      37     40
 - Auto-save on change
 - Shows gross strokes
 
+### Inline Editing from Game Detail
+
+Score cells in the GameScorecard component on game detail pages are also tappable:
+- Opens ScoreEditorSheet bottom sheet
+- Supports prev/next hole navigation
+- Changes persist to store and update match status in real-time
+
 ### Mobile Interaction
 
 - Swipe between holes

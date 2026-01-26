@@ -14,7 +14,7 @@ export async function createEvent(
   if (isMockMode) {
     // In mock mode, create a fake event
     const now = new Date().toISOString();
-    const eventId = `event-${Date.now()}`;
+    const eventId = crypto.randomUUID();
 
     // Create tee snapshot if teeSetId provided
     if (input.teeSetId) {

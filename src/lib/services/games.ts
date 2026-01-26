@@ -40,7 +40,7 @@ export async function createGame(
 ): Promise<GameWithParticipants> {
   console.log('[games service] createGame called:', { eventId, type, stake, playerAId, playerBId, shouldUseMock: shouldUseMockData(eventId) });
   if (shouldUseMockData(eventId)) {
-    const gameId = `game-${Date.now()}`;
+    const gameId = crypto.randomUUID();
     const now = new Date().toISOString();
     console.log('[games service] Creating mock game:', gameId);
 
@@ -262,7 +262,7 @@ export async function createPress(
   startHole: number
 ): Promise<GameWithParticipants> {
   if (shouldUseMockData(parentGame.eventId)) {
-    const gameId = `press-${Date.now()}`;
+    const gameId = crypto.randomUUID();
     const now = new Date().toISOString();
 
     // Get parent participants

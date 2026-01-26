@@ -148,3 +148,13 @@ When `NEXT_PUBLIC_SUPABASE_URL` is not set:
 - `isMockMode` returns `true`
 - Services return data from `/lib/mock/` modules
 - No database queries are made
+
+### ID Generation
+
+In mock mode, services use `crypto.randomUUID()` for generating unique IDs:
+- Event IDs: `crypto.randomUUID()` (was `event-${Date.now()}`)
+- Game IDs: `crypto.randomUUID()` (was `game-${Date.now()}`)
+- Press IDs: `crypto.randomUUID()` (was `press-${Date.now()}`)
+- Snapshot IDs: `crypto.randomUUID()` (was `snapshot-${eventId}-${Date.now()}`)
+
+This prevents ID collisions when creating multiple entities in rapid succession.

@@ -62,11 +62,11 @@ Game detail page:
 - Game type pill and stake display
 - Player avatars and names (large)
 - Match status progress bar
-- Mini scorecard for both players
+- Mini scorecard for both players (with inline editing)
 - Par-relative score coloring
 - Hole winner indicators (A/B/tie)
 - Presses section (nested games)
-- Press and Settle action buttons
+- Press and End Match action buttons
 
 ### /event/[eventId]/settlement
 

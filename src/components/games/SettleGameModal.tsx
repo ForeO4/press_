@@ -106,7 +106,7 @@ export function SettleGameModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <Card className="w-full max-w-md mx-4">
         <CardHeader>
-          <CardTitle>Settle Game</CardTitle>
+          <CardTitle>End Match</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Final Result */}
@@ -152,7 +152,7 @@ export function SettleGameModal({
             Cancel
           </Button>
           <Button onClick={handleConfirm} disabled={isSubmitting}>
-            {isSubmitting ? 'Settling...' : 'Confirm Settlement'}
+            {isSubmitting ? 'Ending...' : 'End Match'}
           </Button>
         </CardFooter>
       </Card>

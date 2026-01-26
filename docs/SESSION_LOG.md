@@ -200,3 +200,39 @@ Branch `feat/fully-baked-press` is ready for PR and deployment.
 
 ### Notes
 Settlement modal is basic implementation. Future work: ledger entries, Nassau settlement, event-level settlement view.
+
+---
+
+## Session: 2025-01-26 (Game Detail Improvements)
+
+**Duration:** ~1 hour
+**Focus:** ID generation, inline score editing, UI terminology
+
+### Accomplished
+- **Scalable ID Generation** - Replaced `Date.now()` with `crypto.randomUUID()` in mock mode
+  - events.ts - event IDs
+  - games.ts - game and press IDs
+  - courses.ts - tee snapshot IDs
+- **Inline Score Editing** - Added score editing to game detail page
+  - Added `onCellClick` prop to GameScorecard component
+  - Made score cells tappable with hover states
+  - Integrated ScoreEditorSheet on game detail page
+  - Live updates via scorecardStore
+- **Renamed "Settle Game" to "End Match"** - Better terminology
+  - Game detail page button
+  - SettleGameModal title
+  - Confirm button text
+
+### Key Decisions
+- Used `crypto.randomUUID()` over custom ID generation for built-in collision resistance
+- Reused existing ScoreEditorSheet and scorecardStore for consistency
+- "End Match" terminology clearer than "Settle Game" for users
+
+### Blockers Encountered
+- None
+
+### Commits
+- TBD (this session)
+
+### Notes
+All three improvements are code-complete. Documentation updated to reflect changes.

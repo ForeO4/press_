@@ -138,7 +138,7 @@ export async function createEventTeeSnapshot(
     }
 
     return {
-      id: `snapshot-${eventId}-${Date.now()}`,
+      id: crypto.randomUUID(),
       eventId,
       teeSetId,
       courseName: mockCourse.name,

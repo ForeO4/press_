@@ -63,7 +63,7 @@ export const mockRounds: Round[] = mockUsers.map((user) => ({
   createdAt: '2024-04-15T08:00:00Z',
 }));
 
-// Sample scores (front 9 for demo)
+// Sample scores (full 18 holes)
 const createScores = (roundId: string, scores: number[]): HoleScore[] =>
   scores.map((strokes, index) => ({
     id: `score-${roundId}-${index + 1}`,
@@ -75,10 +75,15 @@ const createScores = (roundId: string, scores: number[]): HoleScore[] =>
   }));
 
 export const mockScores: HoleScore[] = [
-  ...createScores('round-demo-owner', [4, 4, 3, 5, 3, 4, 5, 4, 4]), // 36
-  ...createScores('round-demo-admin', [5, 4, 4, 4, 4, 5, 6, 4, 5]), // 41
-  ...createScores('round-demo-player1', [5, 5, 3, 5, 4, 4, 5, 5, 4]), // 40
-  ...createScores('round-demo-player2', [4, 5, 4, 6, 3, 5, 6, 4, 5]), // 42
+  // Front 9 + Back 9 for each player
+  // prettier-ignore
+  ...createScores('round-demo-owner', [4, 4, 3, 5, 3, 4, 5, 4, 4, 4, 3, 5, 4, 4, 3, 4, 5, 4]),   // 36+36=72
+  // prettier-ignore
+  ...createScores('round-demo-admin', [5, 4, 4, 4, 4, 5, 6, 4, 5, 5, 4, 6, 5, 4, 4, 5, 6, 5]),   // 41+44=85
+  // prettier-ignore
+  ...createScores('round-demo-player1', [5, 5, 3, 5, 4, 4, 5, 5, 4, 4, 4, 5, 5, 4, 4, 4, 5, 5]), // 40+40=80
+  // prettier-ignore
+  ...createScores('round-demo-player2', [4, 5, 4, 6, 3, 5, 6, 4, 5, 5, 3, 6, 4, 5, 4, 5, 6, 4]), // 42+42=84
 ];
 
 // ============================================

@@ -127,6 +127,39 @@ export interface CreatePressResult {
 }
 
 // ============================================
+// COURSES
+// ============================================
+
+export interface Course {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+}
+
+export interface TeeSet {
+  id: string;
+  courseId: string;
+  name: string; // "Blue", "White", "Red"
+  rating: number; // 72.1
+  slope: number; // 131
+}
+
+export interface Hole {
+  id: string;
+  teeSetId: string;
+  number: number; // 1-18
+  par: number; // 3, 4, or 5
+  handicap: number; // 1-18 (difficulty ranking)
+  yardage: number;
+}
+
+export interface CourseHole {
+  number: number; // 1-18
+  par: number; // 3, 4, or 5
+}
+
+// ============================================
 // SCORING
 // ============================================
 

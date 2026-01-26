@@ -73,7 +73,7 @@ interface CreatePressInput {
 
 1. `startHole` must be > current completed hole
 2. `startHole` must be <= parent's `endHole`
-3. `stake` must be positive integer
+3. `stake` must be a non-negative integer (0 allowed for friendly games)
 4. Event must not be locked
 5. User must have permission (player in game + settings allow)
 
@@ -95,33 +95,48 @@ Event settings can configure defaults.
 
 ## UI Flow
 
-### Press Button
+### Press Button (Game Detail Page)
 
-On game card, shows "Press" button when:
+On game detail page, prominent `PressButton` component when:
 - Game is active
 - Current hole < end hole
 - User has permission
 
-### Press Modal
+**Features:**
+- Flame icon with "PRESS!" label
+- Expandable interface showing multiplier options
+- 1x, 2x, 3x, 4x multiplier selection
+- Shows calculated teeth amount for each option
+- Confirmation button after selection
 
-1. Shows parent game info
-2. Confirms start hole (current + 1)
-3. Shows stake (defaults to parent stake)
-4. Allows stake adjustment
-5. Confirm creates press
+**Note:** Press button removed from games list. Press is only available from game detail page.
+
+### Press Creation Flow
+
+1. Tap PRESS! button on game detail page
+2. Select multiplier (1x/2x/3x/4x)
+3. See calculated stake (base × multiplier)
+4. Confirm to create press
 
 ### Press Display
 
-Presses shown nested under parent:
+Presses shown as `GameTrackingRow` components:
 
 ```
-Match Play vs Blake (10 Teeth)
-Holes 1-18 | 3 down
-├── Press (10 Teeth)
-│   Holes 10-18 | 1 down
-└── Press (10 Teeth)
-    Holes 14-18 | 1 up
+MATCH PLAY                      Blake +2
+1   2   3   4   5   6   7   8   9
+-  +1  +1   -  +1   -   _   _   _
+
+PRESS (H10)                     All Square
+10  11  12  13  14  15  16  17  18
+ -   -   _   _   _   _   _   _   _
 ```
+
+**Display format:**
+- "-" for ties (not "=")
+- Cumulative status ("+2", "All Square")
+- Tap row to toggle per-hole breakdown
+- Purple styling for press rows
 
 ## Domain Logic
 
@@ -147,8 +162,8 @@ function validatePress(
   parentGame: Game,
   currentHole: number
 ): { valid: boolean; error?: string } {
-  if (input.stake <= 0) {
-    return { valid: false, error: 'Stake must be positive' };
+  if (input.stake < 0) {
+    return { valid: false, error: 'Stake cannot be negative' };
   }
 
   if (!Number.isInteger(input.stake)) {

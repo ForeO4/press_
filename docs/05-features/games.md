@@ -70,19 +70,28 @@ interface GameParticipant {
 
 Admin creates games before or during round:
 
-1. Select game type
-2. Enter stake (in Alligator Teeth)
-3. Select participants
-4. Optionally set start/end holes (default 1-18)
+1. **Select contest types** - Multi-select checkboxes for Match Play, Nassau, Skins
+2. **Toggle scoring basis** - Net (uses handicaps) or Gross per contest type
+3. **Enter stake** - Text input allowing deletion and numeric-only input
+4. **Select participants** - Dropdown with "Add New Player" button for inline player creation
+5. **Set hole range** - Front 9, Back 9, Full 18 presets or custom range
 
 ```typescript
 interface CreateGameInput {
   eventId: string;
-  type: GameType;
+  type: GameType;                    // Primary contest type
+  contests: ContestConfig[];         // All enabled contests
   stake: number;
   participantIds: string[];
-  startHole?: number;
-  endHole?: number;
+  startHole?: number;                // default 1
+  endHole?: number;                  // default 18
+  scoringBasis: 'net' | 'gross';     // Primary scoring basis
+}
+
+interface ContestConfig {
+  type: GameType;
+  enabled: boolean;
+  scoringBasis: 'net' | 'gross';
 }
 ```
 
@@ -110,28 +119,43 @@ See [presses.md](./presses.md) for details.
 
 ### Games List
 
-Shows all games for event:
-- Game type and stake
-- Participants
-- Current status
-- Nested presses indented
+Shows games organized by status:
 
-### Game Card
+**Active Games Section:**
+- `ActiveGameCard` for each in-progress game
+- Shows current hole, live match status
+- "Continue" button to resume
 
-Individual game display:
-- Type badge (Match/Nassau/Skins)
-- Stake in Teeth
-- Hole range
-- Current standing
-- Press button (if allowed)
+**Recent Section (collapsible):**
+- `RecentGameCard` for completed games (up to 3)
+- Shows date, result, teeth won/lost
+- "View All History" link
+
+### ActiveGameCard
+
+For in-progress games:
+- Green pulsing live indicator
+- Current hole number (e.g., "Hole 7 of 18")
+- Player names with avatars
+- Match status (e.g., "Blake +2")
+- "Continue" button
+
+### RecentGameCard
+
+Compact completed game display:
+- Date and game type
+- Player avatars
+- Result in +X/-X format
+- Teeth won/lost
 
 ### Create Game Modal
 
-Form for new game:
-- Type selector
-- Stake input
-- Participant selector
-- Hole range (optional)
+Enhanced form:
+- **Contest types** - Multi-select checkboxes (Match Play, Nassau, Skins)
+- **Net/Gross toggle** - Per contest type
+- **Stake input** - Text input with numeric validation
+- **Player selection** - Dropdowns with "+" button to add new players inline
+- **Hole presets** - Front 9, Back 9, Full 18, or custom range
 
 ## Settlement Integration
 

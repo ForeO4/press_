@@ -8,6 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **UI/UX Overhaul** - Comprehensive improvements based on user testing feedback
+  - **Create Game Modal Enhancements**
+    - Multi-select contest types (Match Play, Nassau, Skins can be combined)
+    - Net/Gross toggle per contest type
+    - Fixed stake input to allow deleting first digit
+    - Add New Player button with inline form
+  - **Games Page Redesign**
+    - `ActiveGameCard` component showing current hole, live status, "Continue" button
+    - `RecentGameCard` component with date, result, teeth won/lost
+    - Collapsible sections for Active Games and Recent
+    - "View All History" link for completed games
+    - Removed Press button from list view (moved to game detail)
+  - **Scorecard Overhaul**
+    - Sticky header with course info (par, yardage, stroke index)
+    - `ScoreEntry` component with number pad and tap-to-select players
+    - `GameTrackingRow` for live contest status with per-hole breakdown
+    - `PressButton` with 1x/2x/3x/4x multiplier options
+    - Prev/Next hole navigation
+    - Toggle to show/hide full scorecard view
+  - **End Game Screen**
+    - Renamed "End Match" to "End Game" throughout
+    - Player stats section (eagles, birdies, pars, bogeys, double+)
+  - **Quick Fixes**
+    - Draws now display as "-" instead of "="
+    - Match results show as "+X" or "-X" instead of "W/T/L" format
 - **Inline Score Editing** - Tap score cells in GameScorecard to edit directly from game detail page
   - Integrated ScoreEditorSheet with scorecard cells
   - Live score updates reflect immediately in match status

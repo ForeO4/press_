@@ -57,16 +57,42 @@ Games and presses:
 
 ### /event/[eventId]/games/[gameId]
 
-Game detail page:
+Game detail page with current hole view:
+
+**Sticky Header:**
 - Back navigation to games list
-- Game type pill and stake display
-- Player avatars and names (large)
-- Match status progress bar
-- Mini scorecard for both players (with inline editing)
+- Course name
+- Current hole number (e.g., "Hole 7 of 18")
+- Par, yardage, stroke index for current hole
+- Toggle button for full scorecard view
+
+**Score Entry Section:**
+- Player list with tap-to-select
+- Number pad (0-9, backspace, Enter)
+- Supports double-digit scores
+- Auto-advance to next player
+
+**Game Tracking Rows:**
+- One row per contest (Match Play, Skins, etc.)
+- Shows cumulative status (e.g., "Blake +2")
+- Tap to toggle per-hole breakdown
+- "-" for ties (not "=")
+- Press rows shown with purple styling
+
+**Press Button:**
+- Prominent PRESS! button with flame icon
+- 1x/2x/3x/4x multiplier options
+- Shows calculated teeth for each option
+
+**Navigation:**
+- Prev/Next hole buttons
+- End Game button (renamed from "End Match")
+
+**Full Scorecard (toggle):**
+- Mini scorecard for both players
 - Par-relative score coloring
-- Hole winner indicators (A/B/tie)
-- Presses section (nested games)
-- Press and End Match action buttons
+- Hole winner indicators (A/B/-)
+- Click cells to edit scores
 
 ### /event/[eventId]/settlement
 

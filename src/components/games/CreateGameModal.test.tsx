@@ -4,9 +4,9 @@ import { CreateGameModal, type CreateGameData } from './CreateGameModal';
 import type { MockUser, MembershipRole } from '@/types';
 
 const mockPlayers: MockUser[] = [
-  { id: 'player-1', name: 'John Doe', email: 'john@test.com', role: 'member' as MembershipRole },
-  { id: 'player-2', name: 'Jane Smith', email: 'jane@test.com', role: 'member' as MembershipRole },
-  { id: 'player-3', name: 'Bob Wilson', email: 'bob@test.com', role: 'member' as MembershipRole },
+  { id: 'player-1', name: 'John Doe', email: 'john@test.com', role: 'PLAYER' as MembershipRole },
+  { id: 'player-2', name: 'Jane Smith', email: 'jane@test.com', role: 'PLAYER' as MembershipRole },
+  { id: 'player-3', name: 'Bob Wilson', email: 'bob@test.com', role: 'PLAYER' as MembershipRole },
 ];
 
 describe('CreateGameModal', () => {
@@ -27,9 +27,9 @@ describe('CreateGameModal', () => {
       expect(screen.getByRole('heading', { name: 'Create Game' })).toBeInTheDocument();
     });
 
-    it('renders game type buttons', () => {
+    it('renders contest type checkboxes', () => {
       render(<CreateGameModal {...defaultProps} />);
-      expect(screen.getByText('Match')).toBeInTheDocument();
+      expect(screen.getByText('Match Play')).toBeInTheDocument();
       expect(screen.getByText('Nassau')).toBeInTheDocument();
       expect(screen.getByText('Skins')).toBeInTheDocument();
     });
@@ -68,46 +68,63 @@ describe('CreateGameModal', () => {
     });
   });
 
-  describe('game type selection', () => {
-    it('defaults to Match Play', () => {
+  describe('contest type selection', () => {
+    it('defaults to Match Play enabled', () => {
       render(<CreateGameModal {...defaultProps} />);
-      const matchButton = screen.getByText('Match');
-      // Check it has the selected styling (ring class)
-      expect(matchButton.className).toContain('ring-2');
+      // Match Play should show Net/Gross toggle (indicating it's enabled)
+      const netButtons = screen.getAllByText('Net');
+      expect(netButtons.length).toBeGreaterThan(0);
     });
 
-    it('can select Nassau', () => {
+    it('can toggle multiple contest types', () => {
       render(<CreateGameModal {...defaultProps} />);
-      const nassauButton = screen.getByText('Nassau');
-      fireEvent.click(nassauButton);
-      expect(nassauButton.className).toContain('ring-2');
+      // Click on Nassau text to toggle it
+      const nassauLabel = screen.getByText('Nassau');
+      const nassauCheckbox = nassauLabel.closest('div')?.querySelector('button');
+      if (nassauCheckbox) {
+        fireEvent.click(nassauCheckbox);
+      }
+      // After clicking, Nassau should now show a Net/Gross toggle
+      const netButtons = screen.getAllByText('Net');
+      expect(netButtons.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('can select Skins', () => {
+    it('can toggle scoring basis between net and gross', () => {
       render(<CreateGameModal {...defaultProps} />);
-      const skinsButton = screen.getByText('Skins');
-      fireEvent.click(skinsButton);
-      expect(skinsButton.className).toContain('ring-2');
+      const netButton = screen.getByText('Net');
+      fireEvent.click(netButton);
+      // Should now show Gross
+      expect(screen.getByText('Gross')).toBeInTheDocument();
     });
   });
 
   describe('stake validation', () => {
-    it('rejects zero stake', () => {
-      render(<CreateGameModal {...defaultProps} />);
+    it('accepts zero stake', () => {
+      const onSubmit = vi.fn();
+      render(<CreateGameModal {...defaultProps} onSubmit={onSubmit} />);
       const stakeInput = screen.getByLabelText('Stake');
       fireEvent.change(stakeInput, { target: { value: '0' } });
       fireEvent.click(screen.getByRole('button', { name: 'Create Game' }));
-      expect(screen.getByText('Stake must be positive')).toBeInTheDocument();
-      expect(defaultProps.onSubmit).not.toHaveBeenCalled();
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ stake: 0 })
+      );
     });
 
-    it('rejects negative stake', () => {
+    it('allows deleting all digits', () => {
       render(<CreateGameModal {...defaultProps} />);
-      const stakeInput = screen.getByLabelText('Stake');
-      fireEvent.change(stakeInput, { target: { value: '-5' } });
-      fireEvent.click(screen.getByRole('button', { name: 'Create Game' }));
-      expect(screen.getByText('Stake must be positive')).toBeInTheDocument();
-      expect(defaultProps.onSubmit).not.toHaveBeenCalled();
+      const stakeInput = screen.getByLabelText('Stake') as HTMLInputElement;
+      // Clear the input
+      fireEvent.change(stakeInput, { target: { value: '' } });
+      expect(stakeInput.value).toBe('');
+    });
+
+    it('only accepts numeric input', () => {
+      render(<CreateGameModal {...defaultProps} />);
+      const stakeInput = screen.getByLabelText('Stake') as HTMLInputElement;
+      // Try entering non-numeric
+      fireEvent.change(stakeInput, { target: { value: 'abc' } });
+      // Should keep old value since abc is invalid
+      expect(stakeInput.value).toBe('10');
     });
   });
 
@@ -224,8 +241,13 @@ describe('CreateGameModal', () => {
       const onSubmit = vi.fn();
       render(<CreateGameModal {...defaultProps} onSubmit={onSubmit} />);
 
-      // Fill in form
-      fireEvent.click(screen.getByText('Nassau'));
+      // Fill in form - toggle Nassau on (Match Play is already on by default)
+      const nassauLabel = screen.getByText('Nassau');
+      const nassauRow = nassauLabel.closest('.flex.items-center.justify-between');
+      const nassauCheckbox = nassauRow?.querySelector('button');
+      if (nassauCheckbox) {
+        fireEvent.click(nassauCheckbox);
+      }
       fireEvent.change(screen.getByLabelText('Stake'), { target: { value: '20' } });
       fireEvent.change(screen.getByLabelText('Player 1'), { target: { value: 'player-1' } });
       fireEvent.change(screen.getByLabelText('Player 2'), { target: { value: 'player-2' } });
@@ -233,14 +255,17 @@ describe('CreateGameModal', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Create Game' }));
 
-      expect(onSubmit).toHaveBeenCalledWith({
-        type: 'nassau',
-        stake: 20,
-        playerAId: 'player-1',
-        playerBId: 'player-2',
-        startHole: 1,
-        endHole: 9,
-      } satisfies CreateGameData);
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'match_play', // Primary type is first enabled
+          stake: 20,
+          playerAId: 'player-1',
+          playerBId: 'player-2',
+          startHole: 1,
+          endHole: 9,
+          scoringBasis: 'net',
+        })
+      );
     });
 
     it('calls onSubmit with default values', () => {
@@ -249,14 +274,17 @@ describe('CreateGameModal', () => {
 
       fireEvent.click(screen.getByRole('button', { name: 'Create Game' }));
 
-      expect(onSubmit).toHaveBeenCalledWith({
-        type: 'match_play',
-        stake: 10,
-        playerAId: 'player-1',
-        playerBId: 'player-2',
-        startHole: 1,
-        endHole: 18,
-      } satisfies CreateGameData);
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'match_play',
+          stake: 10,
+          playerAId: 'player-1',
+          playerBId: 'player-2',
+          startHole: 1,
+          endHole: 18,
+          scoringBasis: 'net',
+        })
+      );
     });
   });
 
@@ -308,6 +336,26 @@ describe('CreateGameModal', () => {
       // Default selects player 2, so we should see JS initials
       const avatars = document.querySelectorAll('[title="Jane Smith"]');
       expect(avatars.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('add player functionality', () => {
+    it('shows add player button for each player selection', () => {
+      render(<CreateGameModal {...defaultProps} />);
+      // There should be two + buttons (one for each player)
+      const addButtons = screen.getAllByRole('button').filter(
+        btn => btn.querySelector('svg.lucide-plus')
+      );
+      expect(addButtons.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('shows add player form when + button is clicked', () => {
+      render(<CreateGameModal {...defaultProps} />);
+      const addButtons = screen.getAllByRole('button').filter(
+        btn => btn.querySelector('svg.lucide-plus')
+      );
+      fireEvent.click(addButtons[0]);
+      expect(screen.getByPlaceholderText('Player name...')).toBeInTheDocument();
     });
   });
 });

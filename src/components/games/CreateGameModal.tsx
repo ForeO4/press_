@@ -14,6 +14,7 @@ import { PlayerAvatar } from '@/components/ui/PlayerAvatar';
 import { AlligatorIcon } from '@/components/ui/AlligatorIcon';
 import { cn } from '@/lib/utils';
 import { gameTypePillStyles } from '@/lib/design/colors';
+import { Plus, Check, X } from 'lucide-react';
 import type { MockUser, GameType } from '@/types';
 
 interface CreateGameModalProps {
@@ -21,21 +22,32 @@ interface CreateGameModalProps {
   players: MockUser[];
   onSubmit: (data: CreateGameData) => void;
   onClose: () => void;
+  onAddPlayer?: (name: string) => void;
+}
+
+export type ScoringBasis = 'net' | 'gross';
+
+export interface ContestConfig {
+  type: GameType;
+  enabled: boolean;
+  scoringBasis: ScoringBasis;
 }
 
 export interface CreateGameData {
   type: GameType;
+  contests: ContestConfig[];
   stake: number;
   playerAId: string;
   playerBId: string;
   startHole: number;
   endHole: number;
+  scoringBasis: ScoringBasis;
 }
 
-const gameTypes: { value: GameType; label: string }[] = [
-  { value: 'match_play', label: 'Match' },
-  { value: 'nassau', label: 'Nassau' },
-  { value: 'skins', label: 'Skins' },
+const gameTypes: { value: GameType; label: string; description: string }[] = [
+  { value: 'match_play', label: 'Match Play', description: 'Win holes, not strokes' },
+  { value: 'nassau', label: 'Nassau', description: 'Front 9 + Back 9 + Overall' },
+  { value: 'skins', label: 'Skins', description: 'Win skin per hole' },
 ];
 
 const holePresets = [
@@ -49,26 +61,94 @@ export function CreateGameModal({
   players,
   onSubmit,
   onClose,
+  onAddPlayer,
 }: CreateGameModalProps) {
-  const [type, setType] = useState<GameType>('match_play');
-  const [stake, setStake] = useState(10);
+  // Contest configuration - multiple can be selected
+  const [contests, setContests] = useState<ContestConfig[]>([
+    { type: 'match_play', enabled: true, scoringBasis: 'net' },
+    { type: 'nassau', enabled: false, scoringBasis: 'net' },
+    { type: 'skins', enabled: false, scoringBasis: 'net' },
+  ]);
+  const [stakeInput, setStakeInput] = useState('10');
   const [playerAId, setPlayerAId] = useState(players[0]?.id ?? '');
   const [playerBId, setPlayerBId] = useState(players[1]?.id ?? '');
   const [startHole, setStartHole] = useState(1);
   const [endHole, setEndHole] = useState(18);
   const [error, setError] = useState<string | null>(null);
 
-  const playerA = players.find((p) => p.id === playerAId);
-  const playerB = players.find((p) => p.id === playerBId);
+  // Add player form state
+  const [showAddPlayer, setShowAddPlayer] = useState(false);
+  const [newPlayerName, setNewPlayerName] = useState('');
+  const [addingFor, setAddingFor] = useState<'A' | 'B' | null>(null);
+  const [localPlayers, setLocalPlayers] = useState<MockUser[]>(players);
+
+  // Parse stake as integer, allowing empty input
+  const stake = stakeInput === '' ? 0 : parseInt(stakeInput, 10) || 0;
+
+  const playerA = localPlayers.find((p) => p.id === playerAId);
+  const playerB = localPlayers.find((p) => p.id === playerBId);
 
   // Filter players for dropdowns
-  const playersForA = players;
-  const playersForB = players.filter((p) => p.id !== playerAId);
+  const playersForA = localPlayers;
+  const playersForB = localPlayers.filter((p) => p.id !== playerAId);
+
+  // Get enabled contests
+  const enabledContests = contests.filter((c) => c.enabled);
+  const primaryType = enabledContests[0]?.type ?? 'match_play';
+
+  // Toggle contest selection
+  const toggleContest = (type: GameType) => {
+    setContests((prev) =>
+      prev.map((c) =>
+        c.type === type ? { ...c, enabled: !c.enabled } : c
+      )
+    );
+  };
+
+  // Toggle scoring basis for a contest
+  const toggleScoringBasis = (type: GameType) => {
+    setContests((prev) =>
+      prev.map((c) =>
+        c.type === type
+          ? { ...c, scoringBasis: c.scoringBasis === 'net' ? 'gross' : 'net' }
+          : c
+      )
+    );
+  };
+
+  // Handle adding a new player
+  const handleAddPlayer = () => {
+    if (!newPlayerName.trim()) return;
+
+    const newPlayer: MockUser = {
+      id: `temp-${Date.now()}`,
+      name: newPlayerName.trim(),
+      email: `${newPlayerName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      role: 'PLAYER',
+    };
+
+    setLocalPlayers((prev) => [...prev, newPlayer]);
+
+    // Auto-select for the appropriate dropdown
+    if (addingFor === 'A') {
+      setPlayerAId(newPlayer.id);
+    } else if (addingFor === 'B') {
+      setPlayerBId(newPlayer.id);
+    }
+
+    // Notify parent if callback provided
+    onAddPlayer?.(newPlayerName.trim());
+
+    // Reset form
+    setNewPlayerName('');
+    setShowAddPlayer(false);
+    setAddingFor(null);
+  };
 
   const handleSubmit = () => {
     // Validate
-    if (stake <= 0) {
-      setError('Stake must be positive');
+    if (stake < 0) {
+      setError('Stake cannot be negative');
       return;
     }
 
@@ -97,14 +177,21 @@ export function CreateGameModal({
       return;
     }
 
+    if (enabledContests.length === 0) {
+      setError('Please select at least one contest type');
+      return;
+    }
+
     setError(null);
     onSubmit({
-      type,
+      type: primaryType,
+      contests: enabledContests,
       stake,
       playerAId,
       playerBId,
       startHole,
       endHole,
+      scoringBasis: enabledContests[0]?.scoringBasis ?? 'net',
     });
   };
 
@@ -123,43 +210,74 @@ export function CreateGameModal({
       onClick={onClose}
     >
       <Card
-        className="w-full max-w-md mx-4 border-border/50 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/90"
+        className="w-full max-w-md mx-4 border-border/50 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/90 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <CardHeader>
           <CardTitle>Create Game</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          {/* Game Type Pills */}
-          <div className="space-y-2">
+          {/* Contest Types - Multi-select with Gross/Net toggle */}
+          <div className="space-y-3">
             <label className="text-sm font-medium text-muted-foreground">
-              Game Type
+              Contest Types
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-2">
               {gameTypes.map((gt) => {
                 const styles = gameTypePillStyles[gt.value];
-                const isSelected = type === gt.value;
+                const contest = contests.find((c) => c.type === gt.value);
+                const isEnabled = contest?.enabled ?? false;
                 return (
-                  <button
+                  <div
                     key={gt.value}
-                    type="button"
-                    onClick={() => setType(gt.value)}
                     className={cn(
-                      'px-4 py-2 rounded-full text-sm font-medium border transition-all duration-200',
-                      isSelected
-                        ? cn(styles.background, styles.text, styles.border, 'ring-2 ring-offset-2 ring-offset-background')
-                        : 'bg-muted/20 text-muted-foreground border-muted/30 hover:bg-muted/30'
+                      'flex items-center justify-between p-3 rounded-lg border transition-all duration-200',
+                      isEnabled
+                        ? cn(styles.background, styles.border)
+                        : 'bg-muted/10 border-muted/20'
                     )}
-                    style={isSelected ? { '--tw-ring-color': 'currentColor' } as React.CSSProperties : undefined}
                   >
-                    {gt.label}
-                  </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => toggleContest(gt.value)}
+                        className={cn(
+                          'flex h-5 w-5 items-center justify-center rounded border-2 transition-colors',
+                          isEnabled
+                            ? cn(styles.border, styles.text, 'bg-current/20')
+                            : 'border-muted-foreground/30'
+                        )}
+                      >
+                        {isEnabled && <Check className="h-3 w-3 text-current" />}
+                      </button>
+                      <div>
+                        <div className={cn('font-medium text-sm', isEnabled ? styles.text : 'text-muted-foreground')}>
+                          {gt.label}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{gt.description}</div>
+                      </div>
+                    </div>
+                    {isEnabled && (
+                      <button
+                        type="button"
+                        onClick={() => toggleScoringBasis(gt.value)}
+                        className={cn(
+                          'px-2 py-1 text-xs rounded font-medium transition-colors',
+                          contest?.scoringBasis === 'net'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        )}
+                      >
+                        {contest?.scoringBasis === 'net' ? 'Net' : 'Gross'}
+                      </button>
+                    )}
+                  </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Stake */}
+          {/* Stake - Fixed to allow deleting */}
           <div className="space-y-2">
             <label htmlFor="stake" className="text-sm font-medium text-muted-foreground">
               Stake
@@ -170,11 +288,19 @@ export function CreateGameModal({
               </div>
               <Input
                 id="stake"
-                type="number"
-                min={1}
-                value={stake}
-                onChange={(e) => setStake(parseInt(e.target.value, 10) || 0)}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={stakeInput}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // Allow empty or numeric only
+                  if (val === '' || /^\d+$/.test(val)) {
+                    setStakeInput(val);
+                  }
+                }}
                 className="pl-10"
+                placeholder="0"
               />
             </div>
           </div>
@@ -201,6 +327,18 @@ export function CreateGameModal({
                   </option>
                 ))}
               </select>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 shrink-0"
+                onClick={() => {
+                  setAddingFor('A');
+                  setShowAddPlayer(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
@@ -226,8 +364,66 @@ export function CreateGameModal({
                   </option>
                 ))}
               </select>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-10 w-10 shrink-0"
+                onClick={() => {
+                  setAddingFor('B');
+                  setShowAddPlayer(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
+
+          {/* Add Player Inline Form */}
+          {showAddPlayer && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-primary">
+                  Add New Player {addingFor ? `(Player ${addingFor === 'A' ? '1' : '2'})` : ''}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => {
+                    setShowAddPlayer(false);
+                    setNewPlayerName('');
+                    setAddingFor(null);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Player name..."
+                  value={newPlayerName}
+                  onChange={(e) => setNewPlayerName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddPlayer();
+                    }
+                  }}
+                  className="flex-1"
+                  autoFocus
+                />
+                <Button
+                  type="button"
+                  onClick={handleAddPlayer}
+                  disabled={!newPlayerName.trim()}
+                  size="sm"
+                >
+                  Add
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Hole Presets */}
           <div className="space-y-2">

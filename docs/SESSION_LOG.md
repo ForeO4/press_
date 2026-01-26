@@ -236,3 +236,73 @@ Settlement modal is basic implementation. Future work: ledger entries, Nassau se
 
 ### Notes
 All three improvements are code-complete. Documentation updated to reflect changes.
+
+---
+
+## Session: 2025-01-26 (UI/UX Overhaul)
+
+**Duration:** ~2 hours
+**Focus:** Comprehensive UI/UX improvements based on user testing feedback
+
+### Accomplished
+
+**Phase 1: Create Game Modal Fixes**
+- Fixed stake input - Changed to text input allowing deletion of first digit
+- Added "Create New Player" button with inline form
+- Made contest types multi-select with checkboxes
+- Added Net/Gross toggle per contest type
+
+**Phase 2: Games Page Redesign**
+- Created `ActiveGameCard` - Shows current hole, live status, "Continue" button
+- Created `RecentGameCard` - Compact card with date, result, teeth won/lost
+- Removed Press button from games list (moved to game detail only)
+- Added collapsible "Recent" section with "View All History" link
+
+**Phase 3: Scorecard Overhaul**
+- Added sticky header with course info (par, yardage, stroke index)
+- Created `ScoreEntry` component with number pad
+- Created `GameTrackingRow` for contest status display
+- Created `PressButton` with 1x/2x/3x/4x multiplier options
+- Added Prev/Next hole navigation
+- Toggle to show/hide full scorecard view
+
+**Phase 4: End Game Screen**
+- Renamed "End Match" to "End Game" throughout
+- Added player stats section (eagles, birdies, pars, bogeys, double+)
+
+**Phase 5: Quick Fixes**
+- Changed draws from "=" to "-"
+- Changed results format from "W/T/L" to "+X"/"-X"
+
+### Key Decisions
+- Press button only on game detail page (better UX for focused action)
+- Multiplier options (1x-4x) for press stake flexibility
+- Number pad over virtual keyboard for score entry
+- "-" for ties is clearer than "=" (golf convention)
+
+### Files Modified
+- `CreateGameModal.tsx` - Multi-select contests, stake fix, add player
+- `GamesList.tsx` - New card components, no Press button
+- `ActiveGameCard.tsx` - New component
+- `RecentGameCard.tsx` - New component
+- `ScoreEntry.tsx` - New component
+- `GameTrackingRow.tsx` - New component
+- `PressButton.tsx` - New component
+- `SettleGameModal.tsx` - Rename to End Game, add stats
+- `HoleResultRow.tsx` - "-" for draws, +X/-X format
+- Game detail page - Complete overhaul with new layout
+
+### Documentation Updated
+- CHANGELOG.md
+- components.md
+- routes.md
+- games.md
+- presses.md
+- API_CONTRACTS.md
+- SESSION_LOG.md
+
+### Commits
+- TBD (this session)
+
+### Notes
+All 5 phases implemented and documentation updated. TypeScript compiles without errors.

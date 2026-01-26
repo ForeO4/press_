@@ -23,7 +23,7 @@ export function HoleResultRow({
     if (!result) return '-';
     if (result.winner === 'A') return 'A';
     if (result.winner === 'B') return 'B';
-    return '=';
+    return '-'; // Changed from "=" to "-" for halved holes
   };
 
   const getWinnerColor = (result: HoleResult | undefined): string => {
@@ -65,11 +65,12 @@ export function HoleResultRow({
         );
       })}
       <td className="px-3 py-1.5 text-center bg-muted/30">
-        <span className="text-green-500">{playerAWins}</span>
-        <span className="text-muted-foreground">/</span>
-        <span className="text-gray-400">{ties}</span>
-        <span className="text-muted-foreground">/</span>
-        <span className="text-red-500">{playerBWins}</span>
+        {(() => {
+          const diff = playerAWins - playerBWins;
+          if (diff === 0) return <span className="text-amber-400">AS</span>;
+          if (diff > 0) return <span className="text-green-500">+{diff}</span>;
+          return <span className="text-red-500">{diff}</span>;
+        })()}
       </td>
     </tr>
   );

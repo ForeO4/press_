@@ -27,14 +27,21 @@ src/components/
 │   ├── EventForm.tsx   ✅ (reusable create/edit form)
 │   └── CreateEventModal.tsx ✅ (create event dialog)
 ├── games/              # Games components
-│   ├── GamesList.tsx   ✅ (status-grouped game list)
+│   ├── GamesList.tsx   ✅ (status-grouped game list, no Press button)
 │   ├── GameCard.tsx    ✅ (redesigned with match status)
+│   ├── ActiveGameCard.tsx ✅ (current hole, status, Continue button)
+│   ├── RecentGameCard.tsx ✅ (date, result, teeth won/lost)
 │   ├── GameSummaryHeader.tsx ✅ (stats bar)
 │   ├── MatchProgress.tsx ✅ (hole-by-hole progress)
 │   ├── CreatePressModal.tsx ✅
+│   ├── CreateGameModal.tsx ✅ (multi-select contests, Net/Gross, add player)
 │   ├── GameDetailHeader.tsx ✅ (detail page hero)
 │   ├── GameScorecard.tsx ✅ (2-player mini scorecard)
-│   └── HoleResultRow.tsx ✅ (winner indicators)
+│   ├── HoleResultRow.tsx ✅ (winner indicators, "-" for draws)
+│   ├── ScoreEntry.tsx  ✅ (number pad score entry)
+│   ├── GameTrackingRow.tsx ✅ (contest status display)
+│   ├── PressButton.tsx ✅ (1x/2x/3x/4x multiplier press)
+│   └── SettleGameModal.tsx ✅ (End Game with player stats)
 ├── settlement/         # Settlement components
 │   └── SettlementLedger.tsx ✅
 └── UserSwitcher.tsx    ✅ (dev tool for mock mode)
@@ -424,9 +431,163 @@ interface HoleResultRowProps {
 **Display:**
 - "A" for Player A wins (green)
 - "B" for Player B wins (red)
-- "=" for ties (gray)
+- "-" for ties/halved holes (gray)
 - "-" for unplayed holes
-- Summary in total column (A wins / ties / B wins)
+- Summary in total column shows "+X" (Player A up) or "-X" (Player B up) or "AS" (All Square)
+
+---
+
+## New Scorecard Components
+
+### ScoreEntry
+
+Number pad-based score entry for mobile-first experience.
+
+```tsx
+interface ScoreEntryProps {
+  hole: HoleSnapshot;
+  players: Array<{
+    id: string;
+    name: string;
+    handicap?: number;
+    getsStroke?: boolean;
+  }>;
+  scores: Record<string, number | null>;
+  onScoreChange: (playerId: string, score: number) => void;
+  onComplete?: () => void;
+}
+```
+
+**Features:**
+- Tap player name to select for score entry
+- Number pad with 0-9, backspace, and Enter
+- Supports double-digit scores (10+)
+- Par-relative coloring on entered scores
+- Auto-advance to next player after entry
+- Keyboard support for desktop
+
+### GameTrackingRow
+
+Displays contest status with per-hole breakdown.
+
+```tsx
+interface GameTrackingRowProps {
+  type: GameType;
+  label: string;
+  startHole: number;
+  endHole: number;
+  holeResults: HoleResult[];
+  currentStatus: string;
+  statusColor?: string;
+  isPress?: boolean;
+  pressMultiplier?: number;
+}
+```
+
+**Features:**
+- Shows cumulative status by default ("+2", "All Square")
+- Tap to toggle per-hole breakdown view
+- Color-coded results (green = A won, red = B won, gray = tie)
+- "-" for ties/halved holes (not "=")
+- Purple styling for press games
+
+### PressButton
+
+Press action button with multiplier selection.
+
+```tsx
+interface PressButtonProps {
+  baseStake: number;
+  onPress: (multiplier: number) => void;
+  disabled?: boolean;
+}
+```
+
+**Features:**
+- Expandable interface with flame icon
+- 1x, 2x, 3x, 4x multiplier options
+- Shows calculated teeth amount for each option
+- Confirmation button after multiplier selection
+- Gradient styling (orange to red)
+
+---
+
+## Active/Recent Game Cards
+
+### ActiveGameCard
+
+Card for in-progress games on the games list page.
+
+```tsx
+interface ActiveGameCardProps {
+  game: GameWithParticipants;
+  eventId: string;
+  scores?: Record<string, HoleScore[]>;
+}
+```
+
+**Features:**
+- Green pulsing indicator for active status
+- Current hole number (e.g., "Hole 7 of 18")
+- Player names with avatars
+- Live match status (e.g., "Blake +2")
+- Skins carry count if applicable
+- "Continue" button linking to game detail
+
+### RecentGameCard
+
+Compact card for completed games.
+
+```tsx
+interface RecentGameCardProps {
+  game: GameWithParticipants;
+  eventId: string;
+  scores?: Record<string, HoleScore[]>;
+}
+```
+
+**Features:**
+- Date display with calendar icon
+- Game type pill
+- Player avatars
+- Result text (e.g., "Blake wins 3&2")
+- Teeth won/lost indicator
+- Tap to navigate to game detail
+
+---
+
+## End Game Components
+
+### SettleGameModal
+
+Modal for ending a game with settlement and stats.
+
+```tsx
+interface SettleGameModalProps {
+  game: Game;
+  playerAId: string;
+  playerBId: string;
+  playerAName: string;
+  playerBName: string;
+  playerAScores: HoleScore[];
+  playerBScores: HoleScore[];
+  holes?: HoleSnapshot[];
+  onConfirm: () => Promise<void>;
+  onClose: () => void;
+}
+```
+
+**Features:**
+- Final result display
+- Settlement amount (who owes who, teeth count)
+- Player stats section:
+  - Total strokes
+  - Eagles (if any)
+  - Birdies
+  - Pars
+  - Bogeys
+  - Double bogeys+ (if any)
+- "End Game" button (renamed from "End Match")
 
 ## Styling Conventions
 

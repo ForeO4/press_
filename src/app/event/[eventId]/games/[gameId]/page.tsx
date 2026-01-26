@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { GameDetailHeader } from '@/components/games/GameDetailHeader';
 import { GameScorecard } from '@/components/games/GameScorecard';
-import { GameCard } from '@/components/games/GameCard';
-import { CreatePressModal } from '@/components/games/CreatePressModal';
+import { ScoreEntry } from '@/components/games/ScoreEntry';
+import { GameTrackingRow } from '@/components/games/GameTrackingRow';
+import { PressButton } from '@/components/games/PressButton';
 import { SettleGameModal } from '@/components/games/SettleGameModal';
-import { ScoreEditorSheet } from '@/components/scorecard/ScoreEditorSheet';
 import { useScorecardStore } from '@/stores/scorecardStore';
 import { getGameWithParticipants, createPress, updateGameStatus } from '@/lib/services/games';
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
@@ -18,12 +18,24 @@ import { mockUsers } from '@/lib/mock/users';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAppStore } from '@/stores';
 import { isMockMode } from '@/lib/env/public';
-import { Zap, Check, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  computeHoleResults,
+  computeMatchPlayResult,
+} from '@/lib/domain/settlement/computeSettlement';
+import {
+  ArrowLeft,
+  Check,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  TableProperties,
+} from 'lucide-react';
 import type {
   GameWithParticipants,
   HoleScore,
   TeeSnapshot,
-  CreatePressInput,
+  HoleSnapshot,
 } from '@/types';
 
 export default function GameDetailPage({
@@ -40,8 +52,9 @@ export default function GameDetailPage({
   const [courseData, setCourseData] = useState<TeeSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showPressModal, setShowPressModal] = useState(false);
   const [showSettleModal, setShowSettleModal] = useState(false);
+  const [currentHole, setCurrentHole] = useState(1);
+  const [showFullScorecard, setShowFullScorecard] = useState(false);
 
   // Scorecard store for inline editing
   const selectCell = useScorecardStore((state) => state.selectCell);
@@ -139,10 +152,10 @@ export default function GameDetailPage({
   const playerAScores = playerA ? getPlayerScoresFromStore(playerA.userId) : [];
   const playerBScores = playerB ? getPlayerScoresFromStore(playerB.userId) : [];
 
-  // Find current hole for press modal
-  const getCurrentHole = (): number => {
-    if (!game) return 1;
-    let maxHole = 0;
+  // Auto-navigate to current hole based on scores
+  useEffect(() => {
+    if (!game) return;
+    let maxHole = game.startHole;
 
     for (const participant of game.participants) {
       const userScores = scores[participant.userId] ?? [];
@@ -151,21 +164,47 @@ export default function GameDetailPage({
           score.holeNumber >= game.startHole &&
           score.holeNumber <= game.endHole
         ) {
-          maxHole = Math.max(maxHole, score.holeNumber);
+          maxHole = Math.max(maxHole, score.holeNumber + 1);
         }
       }
     }
 
-    return maxHole || game.startHole - 1;
+    // Don't go past end hole
+    const nextHole = Math.min(maxHole, game.endHole);
+    setCurrentHole(nextHole);
+  }, [game, scores]);
+
+  // Get current hole data
+  const currentHoleData: HoleSnapshot | undefined = courseData?.holes.find(
+    (h) => h.number === currentHole
+  );
+
+  // Navigate to previous hole
+  const goToPrevHole = () => {
+    if (game && currentHole > game.startHole) {
+      setCurrentHole(currentHole - 1);
+    }
   };
 
+  // Navigate to next hole
+  const goToNextHole = () => {
+    if (game && currentHole < game.endHole) {
+      setCurrentHole(currentHole + 1);
+    }
+  };
+
+  // Handle score entry
+  const handleScoreChange = useCallback((playerId: string, score: number) => {
+    useScorecardStore.getState().setScore(playerId, currentHole, score);
+  }, [currentHole]);
+
   // Handle press creation
-  const handleCreatePress = async (input: CreatePressInput) => {
+  const handlePress = async (multiplier: number) => {
     if (!game) return;
 
     try {
-      await createPress(game, input.stake, input.startHole);
-      setShowPressModal(false);
+      const pressStake = game.stakeTeethInt * multiplier;
+      await createPress(game, pressStake, currentHole);
       await loadData();
     } catch (err) {
       console.error('[GameDetailPage] Failed to create press:', err);
@@ -217,22 +256,115 @@ export default function GameDetailPage({
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header section */}
-      <GameDetailHeader
-        game={game}
-        eventId={params.eventId}
-        playerAName={playerAName}
-        playerBName={playerBName}
-        playerAScores={playerAScores}
-        playerBScores={playerBScores}
-      />
+  // Calculate match status for tracking row
+  const getMatchStatus = () => {
+    if (!playerA || !playerB) return { text: 'All Square', color: 'text-amber-400' };
 
-      {/* Scorecard section */}
-      {courseData && playerA && playerB && (
+    const holeResults = computeHoleResults(
+      game,
+      playerA.userId,
+      playerB.userId,
+      playerAScores,
+      playerBScores
+    );
+
+    if (holeResults.length === 0) return { text: 'All Square', color: 'text-amber-400' };
+
+    const matchResult = computeMatchPlayResult(
+      playerA.userId,
+      playerB.userId,
+      holeResults
+    );
+
+    if (matchResult.holesUp === 0) return { text: 'All Square', color: 'text-amber-400' };
+
+    const winnerName = matchResult.winnerId === playerA.userId
+      ? playerAName.split(' ')[0]
+      : playerBName.split(' ')[0];
+
+    return {
+      text: `${winnerName} +${matchResult.holesUp}`,
+      color: matchResult.winnerId === playerA.userId ? 'text-primary' : 'text-blue-400',
+    };
+  };
+
+  const matchStatus = getMatchStatus();
+  const holeResults = playerA && playerB
+    ? computeHoleResults(game, playerA.userId, playerB.userId, playerAScores, playerBScores)
+    : [];
+
+  // Build score entry players
+  const scoreEntryPlayers = [
+    {
+      id: playerA?.userId ?? '',
+      name: playerAName,
+      getsStroke: currentHoleData?.handicap
+        ? currentHoleData.handicap <= 9 // Simplified stroke logic
+        : false,
+    },
+    {
+      id: playerB?.userId ?? '',
+      name: playerBName,
+      getsStroke: false,
+    },
+  ];
+
+  // Get current scores for entry
+  const currentScores: Record<string, number | null> = {};
+  if (playerA) {
+    const score = playerAScores.find((s) => s.holeNumber === currentHole);
+    currentScores[playerA.userId] = score?.strokes ?? null;
+  }
+  if (playerB) {
+    const score = playerBScores.find((s) => s.holeNumber === currentHole);
+    currentScores[playerB.userId] = score?.strokes ?? null;
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-10 -mx-4 bg-background/95 backdrop-blur-lg border-b border-border/30 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <Link href={`/event/${params.eventId}/games`}>
+            <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </Link>
+          <div className="text-center">
+            <div className="text-sm font-medium text-muted-foreground">
+              {courseData?.courseName ?? 'Course'}
+            </div>
+            <div className="text-lg font-bold">
+              Hole {currentHole} of {game.endHole}
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowFullScorecard(!showFullScorecard)}
+            className={cn(
+              'gap-1.5 -mr-2',
+              showFullScorecard && 'text-primary'
+            )}
+          >
+            <TableProperties className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Hole info */}
+        {currentHoleData && (
+          <div className="flex items-center justify-center gap-4 mt-2 text-sm text-muted-foreground">
+            <span>Par {currentHoleData.par}</span>
+            <span>{currentHoleData.yardage} yds</span>
+            <span>SI: {currentHoleData.handicap}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Full Scorecard (collapsible) */}
+      {showFullScorecard && courseData && playerA && playerB && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Scorecard</h2>
           <GameScorecard
             game={game}
             playerAId={playerA.userId}
@@ -247,66 +379,114 @@ export default function GameDetailPage({
         </div>
       )}
 
-      {/* Presses section */}
-      {game.childGames && game.childGames.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Presses</h2>
-          <div className="space-y-3">
-            {game.childGames.map((childGame) => (
-              <GameCard
-                key={childGame.id}
-                game={childGame}
-                canPress={false}
-                onPress={() => {}}
-                isNested
-                scores={scores}
-              />
-            ))}
-          </div>
-        </div>
+      {/* Score Entry Section */}
+      {!showFullScorecard && currentHoleData && game.status === 'active' && (
+        <Card className="border-border/30">
+          <CardContent className="p-4">
+            <div className="text-sm font-medium text-muted-foreground mb-3">
+              ENTER SCORES
+            </div>
+            <ScoreEntry
+              hole={currentHoleData}
+              players={scoreEntryPlayers}
+              scores={currentScores}
+              onScoreChange={handleScoreChange}
+              onComplete={goToNextHole}
+            />
+          </CardContent>
+        </Card>
       )}
 
-      {/* Action buttons */}
-      <Card className="bg-gradient-to-br from-card/80 to-card/40">
-        <CardContent className="flex items-center justify-between gap-4 py-4">
-          {canPress && game.status === 'active' && (
-            <Button
-              variant="outline"
-              onClick={() => setShowPressModal(true)}
-              className="gap-2 border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 hover:text-purple-300"
-            >
-              <Zap className="h-4 w-4" />
-              Press
-            </Button>
-          )}
-          <div className="flex-1" />
-          {game.status === 'active' && (
-            <Button
-              variant="default"
-              onClick={handleSettle}
-              className="gap-2"
-            >
-              <Check className="h-4 w-4" />
-              End Match
-            </Button>
-          )}
-          {game.status === 'complete' && (
-            <span className="text-sm text-muted-foreground">
-              This game has been settled
-            </span>
-          )}
-        </CardContent>
-      </Card>
+      {/* Game Tracking Row */}
+      <GameTrackingRow
+        type={game.type}
+        label={game.type === 'match_play' ? 'MATCH PLAY' : game.type === 'nassau' ? 'NASSAU' : 'SKINS'}
+        startHole={game.startHole}
+        endHole={game.endHole}
+        holeResults={holeResults}
+        currentStatus={matchStatus.text}
+        statusColor={matchStatus.color}
+      />
 
-      {/* Press Modal */}
-      {showPressModal && (
-        <CreatePressModal
-          parentGame={game}
-          currentHole={getCurrentHole()}
-          onSubmit={handleCreatePress}
-          onClose={() => setShowPressModal(false)}
+      {/* Presses as tracking rows */}
+      {game.childGames && game.childGames.map((press) => {
+        const pressResults = playerA && playerB
+          ? computeHoleResults(press, playerA.userId, playerB.userId, playerAScores, playerBScores)
+          : [];
+        const pressMatchResult = playerA && playerB
+          ? computeMatchPlayResult(playerA.userId, playerB.userId, pressResults)
+          : { holesUp: 0, winnerId: null };
+
+        let pressStatus = 'All Square';
+        let pressColor = 'text-amber-400';
+        if (pressMatchResult.holesUp > 0) {
+          const winnerName = pressMatchResult.winnerId === playerA?.userId
+            ? playerAName.split(' ')[0]
+            : playerBName.split(' ')[0];
+          pressStatus = `${winnerName} +${pressMatchResult.holesUp}`;
+          pressColor = pressMatchResult.winnerId === playerA?.userId ? 'text-primary' : 'text-blue-400';
+        }
+
+        return (
+          <GameTrackingRow
+            key={press.id}
+            type={press.type}
+            label={`PRESS (H${press.startHole})`}
+            startHole={press.startHole}
+            endHole={press.endHole}
+            holeResults={pressResults}
+            currentStatus={pressStatus}
+            statusColor={pressColor}
+            isPress
+          />
+        );
+      })}
+
+      {/* Press Button */}
+      {canPress && game.status === 'active' && (
+        <PressButton
+          baseStake={game.stakeTeethInt}
+          onPress={handlePress}
         />
       )}
+
+      {/* Navigation and Actions */}
+      <div className="flex items-center justify-between pt-2">
+        <Button
+          variant="outline"
+          onClick={goToPrevHole}
+          disabled={!game || currentHole <= game.startHole}
+          className="gap-1"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Prev
+        </Button>
+
+        {game.status === 'active' ? (
+          <Button
+            variant="default"
+            onClick={handleSettle}
+            className="gap-2"
+          >
+            <Check className="h-4 w-4" />
+            End Game
+          </Button>
+        ) : (
+          <span className="text-sm text-muted-foreground">
+            Game Complete
+          </span>
+        )}
+
+        <Button
+          variant="outline"
+          onClick={goToNextHole}
+          disabled={!game || currentHole >= game.endHole}
+          className="gap-1"
+        >
+          Next
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
 
       {/* Settle Modal */}
       {showSettleModal && playerA && playerB && (
@@ -318,13 +498,11 @@ export default function GameDetailPage({
           playerBName={playerBName}
           playerAScores={playerAScores}
           playerBScores={playerBScores}
+          holes={courseData?.holes}
           onConfirm={handleConfirmSettle}
           onClose={() => setShowSettleModal(false)}
         />
       )}
-
-      {/* Score Editor Sheet */}
-      <ScoreEditorSheet />
     </div>
   );
 }

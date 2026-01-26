@@ -1,31 +1,39 @@
 'use client';
 
 import { useState } from 'react';
-import { GameCard } from './GameCard';
+import { ActiveGameCard } from './ActiveGameCard';
+import { RecentGameCard } from './RecentGameCard';
 import { GameSummaryHeader } from './GameSummaryHeader';
 import { cn } from '@/lib/utils';
 import type { GameWithParticipants, HoleScore } from '@/types';
-import { Flame, Trophy, ChevronDown, ChevronUp, Swords } from 'lucide-react';
+import { Flame, Trophy, ChevronDown, Swords, History } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 interface GamesListProps {
   games: GameWithParticipants[];
   eventId?: string;
-  canPress: boolean;
-  onPress: (gameId: string) => void;
+  canPress?: boolean;
+  onPress?: (gameId: string) => void;
   scores?: Record<string, HoleScore[]>;
 }
 
-export function GamesList({ games, eventId, canPress, onPress, scores = {} }: GamesListProps) {
-  const [showCompleted, setShowCompleted] = useState(false);
+export function GamesList({ games, eventId, scores = {} }: GamesListProps) {
+  const [showRecent, setShowRecent] = useState(true);
 
-  // Separate games by status
-  const activeGames = games.filter((game) => game.status === 'active');
-  const completedGames = games.filter((game) => game.status === 'complete');
+  // Separate games by status - only show parent games (not presses)
+  const parentGames = games.filter((game) => game.parentGameId === null);
+  const activeGames = parentGames.filter((game) => game.status === 'active');
+  const completedGames = parentGames.filter((game) => game.status === 'complete');
+
+  // Show only 3 most recent completed games
+  const recentGames = completedGames.slice(0, 3);
+  const hasMoreHistory = completedGames.length > 3;
 
   // Calculate totals for header
   const totalTeeth = games.reduce((sum, game) => sum + game.stakeTeethInt, 0);
 
-  if (games.length === 0) {
+  if (parentGames.length === 0) {
     return (
       <div className="relative flex flex-col items-center justify-center py-20 text-center">
         {/* Background decoration */}
@@ -69,11 +77,9 @@ export function GamesList({ games, eventId, canPress, onPress, scores = {} }: Ga
                 className="animate-in fade-in slide-in-from-bottom-2"
                 style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
               >
-                <GameCard
+                <ActiveGameCard
                   game={game}
-                  eventId={eventId}
-                  canPress={canPress}
-                  onPress={() => onPress(game.id)}
+                  eventId={eventId ?? ''}
                   scores={scores}
                 />
               </div>
@@ -82,22 +88,22 @@ export function GamesList({ games, eventId, canPress, onPress, scores = {} }: Ga
         </section>
       )}
 
-      {/* Completed games section */}
-      {completedGames.length > 0 && (
+      {/* Recent games section */}
+      {recentGames.length > 0 && (
         <section>
           <button
-            onClick={() => setShowCompleted(!showCompleted)}
+            onClick={() => setShowRecent(!showRecent)}
             className="flex w-full items-center justify-between rounded-xl px-2 py-2.5 text-left transition-all duration-200 hover:bg-muted/10"
           >
             <SectionHeader
-              icon={<Trophy className="h-4 w-4" />}
+              icon={<History className="h-4 w-4" />}
               iconColor="text-muted-foreground"
-              title="Completed"
-              count={completedGames.length}
+              title="Recent"
+              count={recentGames.length}
             />
             <div className={cn(
               'flex h-6 w-6 items-center justify-center rounded-lg bg-muted/20 transition-transform duration-200',
-              showCompleted && 'rotate-180'
+              showRecent && 'rotate-180'
             )}>
               <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </div>
@@ -105,27 +111,37 @@ export function GamesList({ games, eventId, canPress, onPress, scores = {} }: Ga
 
           <div className={cn(
             'grid transition-all duration-300 ease-out',
-            showCompleted ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+            showRecent ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
           )}>
             <div className="overflow-hidden">
-              <div className="mt-3 space-y-3 pt-1">
-                {completedGames.map((game, index) => (
+              <div className="mt-3 space-y-2 pt-1">
+                {recentGames.map((game, index) => (
                   <div
                     key={game.id}
                     className={cn(
-                      showCompleted && 'animate-in fade-in slide-in-from-top-2'
+                      showRecent && 'animate-in fade-in slide-in-from-top-2'
                     )}
                     style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
                   >
-                    <GameCard
+                    <RecentGameCard
                       game={game}
-                      eventId={eventId}
-                      canPress={false}
-                      onPress={() => {}}
+                      eventId={eventId ?? ''}
                       scores={scores}
                     />
                   </div>
                 ))}
+
+                {/* View All History link */}
+                {hasMoreHistory && (
+                  <div className="pt-2 text-center">
+                    <Link href={eventId ? `/event/${eventId}/games/history` : '#'}>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground">
+                        <History className="mr-2 h-4 w-4" />
+                        View All History ({completedGames.length})
+                      </Button>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           </div>

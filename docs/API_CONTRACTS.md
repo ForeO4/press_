@@ -118,11 +118,17 @@ Create a new game.
 **Request:**
 ```typescript
 {
-  type: 'match_play' | 'nassau' | 'skins';
-  stake: number; // Alligator Teeth (integer)
+  type: 'match_play' | 'nassau' | 'skins'; // Primary contest type
+  contests?: Array<{                        // Optional: all enabled contests
+    type: 'match_play' | 'nassau' | 'skins';
+    enabled: boolean;
+    scoringBasis: 'net' | 'gross';
+  }>;
+  stake: number;                            // Alligator Teeth (integer)
   participantIds: string[];
-  startHole?: number; // default 1
-  endHole?: number; // default 18
+  startHole?: number;                       // default 1
+  endHole?: number;                         // default 18
+  scoringBasis?: 'net' | 'gross';          // default 'net'
 }
 ```
 
@@ -158,7 +164,7 @@ Create a press (child game).
 **Validation:**
 - `startHole` must be > current hole
 - `startHole` must be <= parent's `endHole`
-- `stake` must be positive integer
+- `stake` must be a non-negative integer (0 allowed for friendly games)
 
 ### Settlement
 

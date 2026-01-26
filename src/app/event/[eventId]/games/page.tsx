@@ -4,15 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { GamesList } from '@/components/games/GamesList';
 import { Plus, Swords } from 'lucide-react';
-import { CreatePressModal } from '@/components/games/CreatePressModal';
 import { CreateGameModal, type CreateGameData } from '@/components/games/CreateGameModal';
-import { getGamesForEvent, createGame, createPress } from '@/lib/services/games';
+import { getGamesForEvent, createGame } from '@/lib/services/games';
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
 import { useAppStore } from '@/stores';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { isMockMode } from '@/lib/env/public';
 import { mockUsers } from '@/lib/mock/users';
-import type { Game, GameWithParticipants, CreatePressInput, HoleScore } from '@/types';
+import type { GameWithParticipants, HoleScore } from '@/types';
 
 export default function GamesPage({
   params,
@@ -23,7 +22,6 @@ export default function GamesPage({
   const currentUser = useCurrentUser();
   const [games, setGames] = useState<GameWithParticipants[]>([]);
   const [scores, setScores] = useState<Record<string, HoleScore[]>>({});
-  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -61,40 +59,9 @@ export default function GamesPage({
     loadData();
   }, [loadData]);
 
-  // Check if user can create presses
-  // In mock mode, check role. In real auth, allow any authenticated user for now.
-  const canPress = isMockMode
-    ? mockUser?.role === 'OWNER' ||
-      mockUser?.role === 'ADMIN' ||
-      mockUser?.role === 'PLAYER'
-    : !!currentUser;
-
   const canCreateGame = isMockMode
     ? mockUser?.role === 'OWNER' || mockUser?.role === 'ADMIN'
     : !!currentUser;
-
-  const handlePress = (gameId: string) => {
-    const game = games.find((g) => g.id === gameId);
-    if (game) {
-      setSelectedGame(game);
-    }
-  };
-
-  const handleCreatePress = async (input: CreatePressInput) => {
-    try {
-      const parentGame = games.find((g) => g.id === input.parentGameId);
-      if (!parentGame) return;
-
-      await createPress(parentGame, input.stake, input.startHole);
-      setSelectedGame(null);
-
-      // Reload games to get the new press
-      await loadData();
-    } catch (error) {
-      console.error('[GamesPage] Failed to create press:', error);
-      alert('Failed to create press');
-    }
-  };
 
   const handleCreateGame = async (data: CreateGameData) => {
     try {
@@ -117,23 +84,6 @@ export default function GamesPage({
       console.error('[GamesPage] Failed to create game:', error);
       alert('Failed to create game');
     }
-  };
-
-  // Find current hole for press modal (simple heuristic: max hole with scores)
-  const getCurrentHole = (game: Game): number => {
-    const participants = games.find((g) => g.id === game.id)?.participants ?? [];
-    let maxHole = 0;
-
-    for (const participant of participants) {
-      const userScores = scores[participant.userId] ?? [];
-      for (const score of userScores) {
-        if (score.holeNumber >= game.startHole && score.holeNumber <= game.endHole) {
-          maxHole = Math.max(maxHole, score.holeNumber);
-        }
-      }
-    }
-
-    return maxHole || game.startHole - 1;
   };
 
   if (loading) {
@@ -180,8 +130,6 @@ export default function GamesPage({
       <GamesList
         games={games}
         eventId={params.eventId}
-        canPress={canPress}
-        onPress={handlePress}
         scores={scores}
       />
 
@@ -192,16 +140,6 @@ export default function GamesPage({
           players={mockUsers}
           onSubmit={handleCreateGame}
           onClose={() => setShowCreateModal(false)}
-        />
-      )}
-
-      {/* Press Modal */}
-      {selectedGame && (
-        <CreatePressModal
-          parentGame={selectedGame}
-          currentHole={getCurrentHole(selectedGame)}
-          onSubmit={handleCreatePress}
-          onClose={() => setSelectedGame(null)}
         />
       )}
     </div>

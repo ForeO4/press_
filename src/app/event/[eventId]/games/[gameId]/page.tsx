@@ -8,7 +8,8 @@ import { GameDetailHeader } from '@/components/games/GameDetailHeader';
 import { GameScorecard } from '@/components/games/GameScorecard';
 import { GameCard } from '@/components/games/GameCard';
 import { CreatePressModal } from '@/components/games/CreatePressModal';
-import { getGameWithParticipants, createPress } from '@/lib/services/games';
+import { SettleGameModal } from '@/components/games/SettleGameModal';
+import { getGameWithParticipants, createPress, updateGameStatus } from '@/lib/services/games';
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
 import { getEventTeeSnapshot } from '@/lib/services/courses';
 import { mockUsers } from '@/lib/mock/users';
@@ -38,6 +39,7 @@ export default function GameDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showPressModal, setShowPressModal] = useState(false);
+  const [showSettleModal, setShowSettleModal] = useState(false);
 
   // Load game data
   const loadData = useCallback(async () => {
@@ -138,8 +140,21 @@ export default function GameDetailPage({
 
   // Handle settle game
   const handleSettle = () => {
-    // TODO: Implement settlement modal
-    alert('Settlement feature coming soon!');
+    setShowSettleModal(true);
+  };
+
+  // Confirm settlement
+  const handleConfirmSettle = async () => {
+    if (!game) return;
+
+    try {
+      await updateGameStatus(game.id, 'complete');
+      setShowSettleModal(false);
+      await loadData();
+    } catch (err) {
+      console.error('[GameDetailPage] Failed to settle game:', err);
+      alert('Failed to settle game');
+    }
   };
 
   if (loading) {
@@ -254,6 +269,21 @@ export default function GameDetailPage({
           currentHole={getCurrentHole()}
           onSubmit={handleCreatePress}
           onClose={() => setShowPressModal(false)}
+        />
+      )}
+
+      {/* Settle Modal */}
+      {showSettleModal && playerA && playerB && (
+        <SettleGameModal
+          game={game}
+          playerAId={playerA.userId}
+          playerBId={playerB.userId}
+          playerAName={playerAName}
+          playerBName={playerBName}
+          playerAScores={playerAScores}
+          playerBScores={playerBScores}
+          onConfirm={handleConfirmSettle}
+          onClose={() => setShowSettleModal(false)}
         />
       )}
     </div>

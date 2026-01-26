@@ -104,4 +104,5 @@ Future settlement types (not yet implemented):
 1. **E2.2 Nassau** - Front/back/total bets
 2. **E2.4 Presses** - Multiple presses per game
 3. **E3.1 Alligator Teeth** - Full ledger system
-4. **Deploy to Vercel** - Production deployment
+4. **Tags System** - Game/event tagging for AI-generated synopses
+5. **Deploy to Vercel** - Production deployment

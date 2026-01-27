@@ -14,8 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `computeMatchResultForRange()` - Match result for any hole range
   - SettleGameModal shows 3-box display for Nassau games
   - Total summary shows net teeth owed between players
-  - GameScorecard stats box shows Front 9 / Back 9 / Overall status
+  - GameScorecard stats box shows Front 9 / Back 9 / Overall status with gross scores
   - 5 new test cases for Nassau settlement scenarios
+- **Score Entry UX Improvements**
+  - "Enter → [Next Player]" button shows progression through players
+  - "Save & Next Hole" on last player for clear flow
+  - Larger, more prominent action button
 - **Real Handicap System** - Database-backed handicaps replace mock values
   - `HandicapProfile` type - User's handicap index + GHIN number
   - `HandicapSnapshot` type - Frozen handicap for event duration

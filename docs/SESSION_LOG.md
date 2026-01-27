@@ -484,7 +484,44 @@ Round 4 UI/UX fixes complete. Handicap stroke visualization working. Ready for d
 - TypeScript compiles without errors
 
 ### Commits
-- TBD (this session)
+- `4a2b911` - feat: E2.2 Nassau game type + Real handicap system
+- `e0a21d0` - docs: Add player profile setup to backlog
+- `8435985` - feat: Enhance Nassau status with gross scores + improve score entry UX
 
 ### Notes
 Both features fully implemented. Nassau settlement and stats display working. Real handicaps load from database with mock fallback for demo mode.
+
+---
+
+## Session: 2025-01-26 (Nassau UI Polish)
+
+**Duration:** ~30 minutes
+**Focus:** Nassau UI improvements based on user testing
+
+### Accomplished
+
+**Nassau Status Enhancements:**
+- Added gross scores below each segment status (Front 9 / Back 9 / Overall)
+- Shows Player A vs Player B scores in emerald/amber colors
+- Larger status text for better visibility
+
+**Score Entry UX:**
+- Renamed "Save Score" button to show flow: "Enter → [Next Player]"
+- Shows "Save & Next Hole" when on last player
+- Made button larger and more prominent
+
+**Backlog Updates:**
+- Added Player Profile Setup feature
+- Added Team/Group Names feature for community management
+
+### Key Decisions
+- Gross scores shown as "35 - 38" format below match status
+- Score entry button clearly indicates next action in flow
+
+### Commits
+- `4a2b911` - feat: E2.2 Nassau game type + Real handicap system
+- `e0a21d0` - docs: Add player profile setup to backlog
+- `8435985` - feat: Enhance Nassau status with gross scores + improve score entry UX
+
+### Notes
+All changes pushed to remote. Ready for deployment testing.

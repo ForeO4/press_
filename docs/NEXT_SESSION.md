@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2025-01-26
 > **Branch:** `feat/fully-baked-press` (default)
-> **Status:** Nassau + Real Handicaps complete, ready for deployment
+> **Status:** Nassau + Real Handicaps + UI Polish complete, ready for deployment
 
 ## Session Goals
 
@@ -43,9 +43,15 @@
 - **Player handicaps** shown next to names (from database)
 - **Yardage row** in scorecard header
 - **Match Stats box** with status, holes won, summary
-  - **Nassau: Front 9 / Back 9 / Overall status**
+  - **Nassau: Front 9 / Back 9 / Overall status with gross scores**
 - Press rows for child games
 - Full light/dark mode support
+
+### Score Entry UX
+- Number pad with clear flow
+- **"Enter → [Next Player]"** button shows progression
+- **"Save & Next Hole"** on last player
+- Auto-advance through players
 
 ### Handicap System
 - `HandicapProfile` - User's handicap index + GHIN number

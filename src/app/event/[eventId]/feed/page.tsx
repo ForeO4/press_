@@ -1,13 +1,20 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { mockPosts } from '@/lib/mock/data';
-import { mockUsers } from '@/lib/mock/users';
+import { PostCard } from '@/components/feed/PostCard';
 import { useAppStore } from '@/stores';
-import { formatTimeAgo } from '@/lib/utils';
 import { isMockMode } from '@/lib/env/public';
+import {
+  getPosts,
+  createPost,
+  toggleReaction,
+  addComment,
+  getAuthorName,
+} from '@/lib/services/posts';
+import type { EventPost, EventComment } from '@/types';
 
 export default function FeedPage({
   params,
@@ -15,10 +22,45 @@ export default function FeedPage({
   params: { eventId: string };
 }) {
   const mockUser = useAppStore((state) => state.mockUser);
+  const [posts, setPosts] = useState<EventPost[]>([]);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
 
-  // In mock mode, use demo data
-  const posts = isMockMode ? mockPosts : [];
   const canPost = mockUser?.role !== 'VIEWER';
+
+  // Load posts on mount
+  useEffect(() => {
+    const loadPosts = async () => {
+      if (isMockMode) {
+        const loaded = await getPosts(params.eventId);
+        setPosts(loaded);
+      }
+    };
+    loadPosts();
+  }, [params.eventId]);
+
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim() || !mockUser) return;
+
+    setIsPosting(true);
+    try {
+      const post = await createPost(params.eventId, mockUser.id, newPostContent.trim());
+      setPosts((prev) => [post, ...prev]);
+      setNewPostContent('');
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
+  const handleReactionToggle = async (postId: string) => {
+    if (!mockUser) return { reacted: false, count: 0 };
+    return toggleReaction(postId, mockUser.id);
+  };
+
+  const handleAddComment = async (postId: string, content: string): Promise<EventComment> => {
+    if (!mockUser) throw new Error('Not logged in');
+    return addComment(postId, mockUser.id, content);
+  };
 
   return (
     <div className="space-y-6">
@@ -29,8 +71,21 @@ export default function FeedPage({
         <Card>
           <CardContent className="pt-6">
             <div className="flex gap-2">
-              <Input placeholder="Share something with the group..." />
-              <Button>Post</Button>
+              <Input
+                placeholder="Share something with the group..."
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleCreatePost();
+                  }
+                }}
+                disabled={isPosting}
+              />
+              <Button onClick={handleCreatePost} disabled={!newPostContent.trim() || isPosting}>
+                {isPosting ? 'Posting...' : 'Post'}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -47,45 +102,16 @@ export default function FeedPage({
             </CardContent>
           </Card>
         ) : (
-          posts
-            .sort(
-              (a, b) =>
-                new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime()
-            )
-            .map((post) => {
-              const author = post.authorId
-                ? mockUsers.find((u) => u.id === post.authorId)
-                : null;
-
-              return (
-                <Card key={post.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        {post.isSystem ? (
-                          <span className="text-sm font-medium text-muted-foreground">
-                            System
-                          </span>
-                        ) : (
-                          <span className="font-medium">
-                            {author?.name ?? 'Unknown'}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {formatTimeAgo(post.createdAt)}
-                      </span>
-                    </div>
-                    <p
-                      className={`mt-2 ${post.isSystem ? 'italic text-muted-foreground' : ''}`}
-                    >
-                      {post.content}
-                    </p>
-                  </CardContent>
-                </Card>
-              );
-            })
+          posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              authorName={getAuthorName(post.authorId)}
+              currentUserId={mockUser?.id ?? ''}
+              onReactionToggle={handleReactionToggle}
+              onAddComment={handleAddComment}
+            />
+          ))
         )}
       </div>
     </div>

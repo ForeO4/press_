@@ -31,8 +31,13 @@ export const mockEvent: Event = {
 
 export const mockEventSettings: EventSettings = {
   eventId: 'demo-event',
-  pressRules: { autoPressTrigger: 2, defaultStake: 10 },
-  defaultTeeth: 100,
+  pressRules: {
+    enabled: true,
+    trigger: 2,
+    maxPresses: 3,
+    stakeMultiplier: 1,
+  },
+  defaultBucks: 100,
   allowSelfPress: true,
   updatedAt: '2024-04-01T10:00:00Z',
 };
@@ -166,16 +171,19 @@ export function getGamesWithParticipants(): GameWithParticipants[] {
 }
 
 // ============================================
-// TEETH BALANCES
+// GATOR BUCKS BALANCES
 // ============================================
 
-export const mockTeethBalances: TeethBalance[] = mockUsers.map((user) => ({
+export const mockGatorBucksBalances: TeethBalance[] = mockUsers.map((user) => ({
   id: `balance-${user.id}`,
   eventId: 'demo-event',
   userId: user.id,
   balanceInt: 100,
   updatedAt: '2024-04-15T08:00:00Z',
 }));
+
+/** @deprecated Use mockGatorBucksBalances instead */
+export const mockTeethBalances = mockGatorBucksBalances;
 
 // ============================================
 // SETTLEMENTS
@@ -221,7 +229,7 @@ export const mockPosts: EventPost[] = [
     id: 'post-3',
     eventId: 'demo-event',
     authorId: null,
-    content: 'Press created starting hole 10 (10 Teeth)',
+    content: 'Press created starting hole 10 (10 Bucks)',
     mediaIds: [],
     isSystem: true,
     createdAt: '2024-04-15T11:00:00Z',

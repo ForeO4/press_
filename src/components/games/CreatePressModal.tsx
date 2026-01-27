@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { formatTeeth } from '@/lib/utils';
+import { formatGatorBucks } from '@/lib/utils';
 import { validatePress, getDefaultPressStake } from '@/lib/domain/games/createPress';
 import type { Game, CreatePressInput } from '@/types';
 
@@ -78,7 +78,7 @@ export function CreatePressModal({
 
           <div className="space-y-2">
             <label htmlFor="stake" className="text-sm font-medium">
-              Stake (Alligator Teeth)
+              Stake (Gator Bucks)
             </label>
             <Input
               id="stake"
@@ -88,7 +88,7 @@ export function CreatePressModal({
               onChange={(e) => setStake(parseInt(e.target.value, 10))}
             />
             <p className="text-xs text-muted-foreground">
-              Default: {formatTeeth(defaultStake)}
+              Default: {formatGatorBucks(defaultStake)}
             </p>
           </div>
 

@@ -1,11 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { mockEvent, mockEventSettings } from '@/lib/mock/data';
+import { Input } from '@/components/ui/input';
+import { mockEvent } from '@/lib/mock/data';
 import { useAppStore } from '@/stores';
 import { isMockMode } from '@/lib/env/public';
+import {
+  getSettings,
+  setAutoPressEnabled,
+  setAutoPressThreshold,
+  setMaxPresses,
+  setAllowSelfPress,
+} from '@/lib/services/eventSettings';
+import type { EventSettings, AutoPressConfig } from '@/types';
 
 export default function AdminPage({
   params,
@@ -16,15 +25,25 @@ export default function AdminPage({
 
   // In mock mode, use demo data
   const event = isMockMode ? mockEvent : null;
-  const settings = isMockMode ? mockEventSettings : null;
 
   // Only admin/owner can access this page
   const isAdmin = mockUser?.role === 'OWNER' || mockUser?.role === 'ADMIN';
 
   const [isLocked, setIsLocked] = useState(event?.isLocked ?? false);
-  const [allowSelfPress, setAllowSelfPress] = useState(
-    settings?.allowSelfPress ?? true
-  );
+  const [settings, setSettings] = useState<EventSettings | null>(null);
+  const [autoPressConfig, setAutoPressConfig] = useState<AutoPressConfig | null>(null);
+
+  // Load settings
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (isMockMode) {
+        const loaded = await getSettings(params.eventId);
+        setSettings(loaded);
+        setAutoPressConfig(loaded.pressRules);
+      }
+    };
+    loadSettings();
+  }, [params.eventId]);
 
   if (!isAdmin) {
     return (
@@ -41,9 +60,31 @@ export default function AdminPage({
     alert(`Event ${!isLocked ? 'locked' : 'unlocked'}. This would update the database in a real app.`);
   };
 
-  const handleToggleSelfPress = () => {
-    setAllowSelfPress(!allowSelfPress);
-    alert(`Self-press ${!allowSelfPress ? 'enabled' : 'disabled'}. This would update settings in a real app.`);
+  const handleToggleSelfPress = async () => {
+    if (!settings) return;
+    const updated = await setAllowSelfPress(params.eventId, !settings.allowSelfPress);
+    setSettings(updated);
+  };
+
+  const handleToggleAutoPress = async () => {
+    if (!autoPressConfig) return;
+    const updated = await setAutoPressEnabled(params.eventId, !autoPressConfig.enabled);
+    setSettings(updated);
+    setAutoPressConfig(updated.pressRules);
+  };
+
+  const handleThresholdChange = async (value: number) => {
+    if (!autoPressConfig) return;
+    const updated = await setAutoPressThreshold(params.eventId, value);
+    setSettings(updated);
+    setAutoPressConfig(updated.pressRules);
+  };
+
+  const handleMaxPressesChange = async (value: number) => {
+    if (!autoPressConfig) return;
+    const updated = await setMaxPresses(params.eventId, value);
+    setSettings(updated);
+    setAutoPressConfig(updated.pressRules);
   };
 
   return (
@@ -77,39 +118,130 @@ export default function AdminPage({
         </CardContent>
       </Card>
 
-      {/* Press Rules */}
+      {/* Auto-Press Rules */}
       <Card>
         <CardHeader>
-          <CardTitle>Press Rules</CardTitle>
+          <CardTitle>Auto-Press Rules</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Enable/Disable toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">
+                Auto-Press: {autoPressConfig?.enabled ? 'Enabled' : 'Disabled'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {autoPressConfig?.enabled
+                  ? 'Presses are created automatically when a player is down'
+                  : 'Players must manually create presses'}
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleToggleAutoPress}>
+              {autoPressConfig?.enabled ? 'Disable' : 'Enable'}
+            </Button>
+          </div>
+
+          {/* Threshold setting */}
+          {autoPressConfig?.enabled && (
+            <>
+              <div className="border-t border-border/30 pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Trigger Threshold</p>
+                    <p className="text-sm text-muted-foreground">
+                      Auto-press when {autoPressConfig.trigger} holes down
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleThresholdChange(autoPressConfig.trigger - 1)}
+                      disabled={autoPressConfig.trigger <= 1}
+                    >
+                      -
+                    </Button>
+                    <span className="w-8 text-center font-bold">{autoPressConfig.trigger}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleThresholdChange(autoPressConfig.trigger + 1)}
+                      disabled={autoPressConfig.trigger >= 9}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Max presses setting */}
+              <div className="border-t border-border/30 pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Max Presses Per Game</p>
+                    <p className="text-sm text-muted-foreground">
+                      Limit of {autoPressConfig.maxPresses} auto-presses per game
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleMaxPressesChange(autoPressConfig.maxPresses - 1)}
+                      disabled={autoPressConfig.maxPresses <= 1}
+                    >
+                      -
+                    </Button>
+                    <span className="w-8 text-center font-bold">{autoPressConfig.maxPresses}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleMaxPressesChange(autoPressConfig.maxPresses + 1)}
+                      disabled={autoPressConfig.maxPresses >= 10}
+                    >
+                      +
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Manual Press Rules */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Manual Press Rules</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">
-                Self-Press: {allowSelfPress ? 'Enabled' : 'Disabled'}
+                Self-Press: {settings?.allowSelfPress ? 'Enabled' : 'Disabled'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {allowSelfPress
+                {settings?.allowSelfPress
                   ? 'Players can create their own presses'
                   : 'Only admins can create presses'}
               </p>
             </div>
             <Button variant="outline" onClick={handleToggleSelfPress}>
-              {allowSelfPress ? 'Disable' : 'Enable'}
+              {settings?.allowSelfPress ? 'Disable' : 'Enable'}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Default Teeth */}
+      {/* Default Bucks */}
       <Card>
         <CardHeader>
           <CardTitle>Starting Balance</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            New members start with {settings?.defaultTeeth ?? 100} Alligator
-            Teeth
+            New members start with {settings?.defaultBucks ?? 100} Gator
+            Bucks
           </p>
         </CardContent>
       </Card>

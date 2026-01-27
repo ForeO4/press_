@@ -14,11 +14,15 @@ import { getGameWithParticipants, createPress, updateGameStatus } from '@/lib/se
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
 import { getEventTeeSnapshot } from '@/lib/services/courses';
 import { getHandicapSnapshot } from '@/lib/services/handicaps';
+import { getAutoPressConfig } from '@/lib/services/eventSettings';
+import { checkAutoPress, computeAutoPressStake } from '@/lib/domain/games/autoPress';
+import { createAutoPressPost } from '@/lib/services/posts';
 import { mockUsers } from '@/lib/mock/users';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAppStore } from '@/stores';
 import { isMockMode } from '@/lib/env/public';
 import { cn } from '@/lib/utils';
+import type { AutoPressConfig } from '@/types';
 import {
   ArrowLeft,
   Check,
@@ -52,6 +56,7 @@ export default function GameDetailPage({
   const [showSettleModal, setShowSettleModal] = useState(false);
   const [currentHole, setCurrentHole] = useState(1);
   const [showFullScorecard, setShowFullScorecard] = useState(true); // Default to visible
+  const [autoPressConfig, setAutoPressConfig] = useState<AutoPressConfig | null>(null);
 
   // Scorecard store for inline editing
   const selectCell = useScorecardStore((state) => state.selectCell);
@@ -64,12 +69,15 @@ export default function GameDetailPage({
       setLoading(true);
       setError(null);
 
-      const [gameData, roundsData, scoresData, teeSnapshot] = await Promise.all([
+      const [gameData, roundsData, scoresData, teeSnapshot, pressConfig] = await Promise.all([
         getGameWithParticipants(params.gameId),
         getEventRounds(params.eventId),
         getScoresForEvent(params.eventId),
         getEventTeeSnapshot(params.eventId),
+        getAutoPressConfig(params.eventId),
       ]);
+
+      setAutoPressConfig(pressConfig);
 
       if (!gameData) {
         setError('Game not found');
@@ -205,10 +213,61 @@ export default function GameDetailPage({
     }
   };
 
-  // Handle score entry
-  const handleScoreChange = useCallback((playerId: string, score: number) => {
+  // Handle score entry and check for auto-press
+  const handleScoreChange = useCallback(async (playerId: string, score: number) => {
     useScorecardStore.getState().setScore(playerId, currentHole, score);
-  }, [currentHole]);
+
+    // Check for auto-press after both players have entered scores for this hole
+    if (game && autoPressConfig && playerA && playerB) {
+      // Get current scores from store
+      const storeScores = useScorecardStore.getState().scores;
+      const playerAScore = storeScores[playerA.userId]?.[currentHole];
+      const playerBScore = storeScores[playerB.userId]?.[currentHole];
+
+      // Only check if both players have entered a score for this hole
+      if (playerAScore && playerBScore) {
+        // Get all scores as HoleScore arrays
+        const playerAAllScores = getPlayerScoresFromStore(playerA.userId);
+        const playerBAllScores = getPlayerScoresFromStore(playerB.userId);
+
+        const result = checkAutoPress(
+          game,
+          playerA.userId,
+          playerB.userId,
+          playerAAllScores,
+          playerBAllScores,
+          autoPressConfig,
+          currentHole
+        );
+
+        if (result.shouldPress && result.losingPlayerId) {
+          // Create the press
+          const pressStake = computeAutoPressStake(game, autoPressConfig);
+          try {
+            await createPress(game, pressStake, currentHole);
+
+            // Get losing player name
+            const losingPlayerName = result.losingPlayerId === playerA.userId
+              ? playerAName
+              : playerBName;
+
+            // Create system post
+            await createAutoPressPost(
+              params.eventId,
+              losingPlayerName,
+              result.holesDown,
+              result.startHole
+            );
+
+            // Reload data to show the new press
+            await loadData();
+          } catch (err) {
+            console.error('[GameDetailPage] Auto-press failed:', err);
+          }
+        }
+      }
+    }
+  }, [currentHole, game, autoPressConfig, playerA, playerB, playerAName, playerBName, getPlayerScoresFromStore, loadData, params.eventId]);
 
   // Handle press creation
   const handlePress = async (multiplier: number) => {

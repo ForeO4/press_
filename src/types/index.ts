@@ -1,11 +1,14 @@
 // Press! Core Types
 
 // ============================================
-// ALLIGATOR TEETH
+// GATOR BUCKS
 // ============================================
 
-/** Alligator Teeth - fun currency (always integers) */
-export type AlligatorTeeth = number;
+/** Gator Bucks - fun currency (always integers) */
+export type GatorBucks = number;
+
+/** @deprecated Use GatorBucks instead */
+export type AlligatorTeeth = GatorBucks;
 
 // ============================================
 // EVENTS
@@ -24,10 +27,17 @@ export interface Event {
   updatedAt: string;
 }
 
+export interface AutoPressConfig {
+  enabled: boolean;        // Master toggle
+  trigger: number;         // Holes down (default: 2)
+  maxPresses: number;      // Per game limit (default: 3)
+  stakeMultiplier: number; // Stake = parent * multiplier (default: 1)
+}
+
 export interface EventSettings {
   eventId: string;
-  pressRules: Record<string, unknown>;
-  defaultTeeth: number;
+  pressRules: AutoPressConfig;
+  defaultBucks: number;
   allowSelfPress: boolean;
   updatedAt: string;
 }
@@ -228,28 +238,34 @@ export interface SettlementWithNames extends Settlement {
 }
 
 // ============================================
-// TEETH
+// GATOR BUCKS
 // ============================================
 
-export interface TeethBalance {
+export interface GatorBucksBalance {
   id: string;
   eventId: string;
   userId: string;
-  balanceInt: AlligatorTeeth;
+  balanceInt: GatorBucks;
   updatedAt: string;
 }
 
-export interface TeethLedgerEntry {
+/** @deprecated Use GatorBucksBalance instead */
+export type TeethBalance = GatorBucksBalance;
+
+export interface GatorBucksTransaction {
   id: string;
   eventId: string;
   userId: string;
-  deltaInt: AlligatorTeeth;
-  balanceInt: AlligatorTeeth;
+  deltaInt: GatorBucks;
+  balanceInt: GatorBucks;
   reason: string;
-  referenceType: string | null;
+  referenceType: 'game' | 'settlement' | 'adjustment' | null;
   referenceId: string | null;
   createdAt: string;
 }
+
+/** @deprecated Use GatorBucksTransaction instead */
+export type TeethLedgerEntry = GatorBucksTransaction;
 
 // ============================================
 // SOCIAL
@@ -301,4 +317,28 @@ export interface HandicapSnapshot {
   handicapIndex: number;
   courseHandicap: number | null;
   createdAt: string;
+}
+
+// ============================================
+// PLAYER PROFILES
+// ============================================
+
+export interface PlayerProfile {
+  id: string;
+  userId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  ghinNumber?: string;
+  handicapIndex?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePlayerInput {
+  name: string;
+  email?: string;
+  phone?: string;
+  ghinNumber?: string;
+  handicapIndex?: number;
 }

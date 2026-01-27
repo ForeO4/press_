@@ -190,6 +190,27 @@ export function GameScorecard({
           ? computeMatchResultForRange(playerAId, playerBId, playerAScores, playerBScores, 1, 18)
           : null;
 
+        // Calculate gross totals for each Nassau segment
+        const calcSegmentTotal = (scores: HoleScore[], start: number, end: number): number | null => {
+          let total = 0;
+          let hasAny = false;
+          for (let h = start; h <= end; h++) {
+            const score = scores.find(s => s.holeNumber === h);
+            if (score) {
+              total += score.strokes;
+              hasAny = true;
+            }
+          }
+          return hasAny ? total : null;
+        };
+
+        const playerAFront9 = calcSegmentTotal(playerAScores, 1, 9);
+        const playerBFront9 = calcSegmentTotal(playerBScores, 1, 9);
+        const playerABack9 = calcSegmentTotal(playerAScores, 10, 18);
+        const playerBBack9 = calcSegmentTotal(playerBScores, 10, 18);
+        const playerAOverall = playerATotal;
+        const playerBOverall = playerBTotal;
+
         const formatNassauStatus = (result: MatchPlayResult, playerA: string, playerB: string) => {
           if (result.holesUp === 0) return 'AS';
           const winnerName = result.winnerId === playerAId ? playerA : playerB;
@@ -205,39 +226,54 @@ export function GameScorecard({
                   <div className="text-xs text-emerald-400/60 uppercase tracking-widest font-medium mb-3 text-center">Nassau Status</div>
                   <div className="grid grid-cols-3 gap-2">
                     {/* Front 9 */}
-                    <div className="text-center p-2 rounded-lg bg-emerald-800/20">
+                    <div className="text-center p-3 rounded-lg bg-emerald-800/20">
                       <div className="text-xs text-emerald-400/60 mb-1">Front 9</div>
                       <div className={cn(
-                        'text-sm font-black',
+                        'text-base font-black mb-2',
                         front9Result?.winnerId === playerAId && 'text-emerald-400',
                         front9Result?.winnerId === playerBId && 'text-amber-400',
                         !front9Result?.winnerId && 'text-white'
                       )}>
                         {front9Result ? formatNassauStatus(front9Result, playerAName.split(' ')[0], playerBName.split(' ')[0]) : '-'}
                       </div>
+                      <div className="flex justify-center gap-3 text-xs">
+                        <span className="text-emerald-400">{playerAFront9 ?? '-'}</span>
+                        <span className="text-emerald-600">-</span>
+                        <span className="text-amber-400">{playerBFront9 ?? '-'}</span>
+                      </div>
                     </div>
                     {/* Back 9 */}
-                    <div className="text-center p-2 rounded-lg bg-emerald-800/20">
+                    <div className="text-center p-3 rounded-lg bg-emerald-800/20">
                       <div className="text-xs text-emerald-400/60 mb-1">Back 9</div>
                       <div className={cn(
-                        'text-sm font-black',
+                        'text-base font-black mb-2',
                         back9Result?.winnerId === playerAId && 'text-emerald-400',
                         back9Result?.winnerId === playerBId && 'text-amber-400',
                         !back9Result?.winnerId && 'text-white'
                       )}>
                         {back9Result ? formatNassauStatus(back9Result, playerAName.split(' ')[0], playerBName.split(' ')[0]) : '-'}
                       </div>
+                      <div className="flex justify-center gap-3 text-xs">
+                        <span className="text-emerald-400">{playerABack9 ?? '-'}</span>
+                        <span className="text-emerald-600">-</span>
+                        <span className="text-amber-400">{playerBBack9 ?? '-'}</span>
+                      </div>
                     </div>
                     {/* Overall */}
-                    <div className="text-center p-2 rounded-lg bg-emerald-800/20">
+                    <div className="text-center p-3 rounded-lg bg-emerald-800/20">
                       <div className="text-xs text-emerald-400/60 mb-1">Overall</div>
                       <div className={cn(
-                        'text-sm font-black',
+                        'text-base font-black mb-2',
                         overallResult?.winnerId === playerAId && 'text-emerald-400',
                         overallResult?.winnerId === playerBId && 'text-amber-400',
                         !overallResult?.winnerId && 'text-white'
                       )}>
                         {overallResult ? formatNassauStatus(overallResult, playerAName.split(' ')[0], playerBName.split(' ')[0]) : '-'}
+                      </div>
+                      <div className="flex justify-center gap-3 text-xs">
+                        <span className="text-emerald-400">{playerAOverall ?? '-'}</span>
+                        <span className="text-emerald-600">-</span>
+                        <span className="text-amber-400">{playerBOverall ?? '-'}</span>
                       </div>
                     </div>
                   </div>

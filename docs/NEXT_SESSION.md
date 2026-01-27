@@ -120,11 +120,17 @@ Priority order:
    - Auto-create handicap profile when player is added
    - Link to existing user account if email matches
    - Consider: nickname/display name, home course, tee preference
-3. **E3.1 Alligator Teeth** - Full ledger with transaction history
-4. **E4.1 Event Feed** - Social posts and comments
-5. **Automatic Presses** - Auto-press at 2-down rule
-6. **Tags System** - Game/event tagging for AI synopses
-7. **E2.3 Skins** - Skins game type
+3. **Team/Group Names** - Community/group management
+   - Team names for Nassau (e.g., "Team Mike" vs "Team Alex")
+   - Community/group concept (a group of regular players)
+   - Group settings: who can manage, invite players, set defaults
+   - Display team names instead of player names in shared views
+   - Consider: group handicap calculations, recurring events
+4. **E3.1 Alligator Teeth** - Full ledger with transaction history
+5. **E4.1 Event Feed** - Social posts and comments
+6. **Automatic Presses** - Auto-press at 2-down rule
+7. **Tags System** - Game/event tagging for AI synopses
+8. **E2.3 Skins** - Skins game type
 
 ## Quick Start Commands
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar';
-import { Delete, Check, Save } from 'lucide-react';
+import { Delete, Check } from 'lucide-react';
 import { useScorecardStore } from '@/stores/scorecardStore';
 import type { HoleSnapshot } from '@/types';
 
@@ -231,14 +231,22 @@ export function ScoreEntry({
           </Button>
         </div>
 
-        {/* Visible Save button */}
+        {/* Prominent Enter/Next button */}
         <Button
           onClick={handleEnter}
           disabled={!inputValue}
-          className="w-full h-12 gap-2 text-base font-semibold bg-primary hover:bg-primary/90"
+          className="w-full h-14 gap-2 text-lg font-bold bg-primary hover:bg-primary/90"
         >
-          <Save className="h-5 w-5" />
-          Save Score
+          <Check className="h-6 w-6" />
+          {(() => {
+            const currentIndex = players.findIndex((p) => p.id === activePlayerId);
+            const isLastPlayer = currentIndex === players.length - 1;
+            if (isLastPlayer) {
+              return 'Save & Next Hole';
+            }
+            const nextPlayer = players[currentIndex + 1];
+            return `Enter → ${nextPlayer?.name.split(' ')[0] ?? 'Next'}`;
+          })()}
         </Button>
       </div>
     </div>

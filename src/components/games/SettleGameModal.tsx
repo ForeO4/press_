@@ -9,8 +9,11 @@ import {
   computeHoleResults,
   computeMatchPlayResult,
   computeMatchPlaySettlement,
+  computeNassauSettlement,
+  computeMatchResultForRange,
+  type NassauSettlement,
 } from '@/lib/domain/settlement/computeSettlement';
-import type { Game, HoleScore, HoleSnapshot } from '@/types';
+import type { Game, HoleScore, HoleSnapshot, Settlement } from '@/types';
 
 interface SettleGameModalProps {
   game: Game;
@@ -82,6 +85,8 @@ export function SettleGameModal({
 }: SettleGameModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isNassau = game.type === 'nassau';
+
   // Calculate match result
   const holeResults = computeHoleResults(
     game,
@@ -91,6 +96,8 @@ export function SettleGameModal({
     playerBScores
   );
   const matchResult = computeMatchPlayResult(playerAId, playerBId, holeResults);
+
+  // Standard match play settlement
   const settlement = computeMatchPlaySettlement(
     game,
     playerAId,
@@ -99,9 +106,32 @@ export function SettleGameModal({
     playerBScores
   );
 
+  // Nassau settlement (3 bets)
+  const nassauSettlement = isNassau
+    ? computeNassauSettlement(game, playerAId, playerBId, playerAScores, playerBScores)
+    : null;
+
+  // Nassau match results for each segment
+  const front9Result = isNassau
+    ? computeMatchResultForRange(playerAId, playerBId, playerAScores, playerBScores, 1, 9)
+    : null;
+  const back9Result = isNassau
+    ? computeMatchResultForRange(playerAId, playerBId, playerAScores, playerBScores, 10, 18)
+    : null;
+  const overallResult = isNassau
+    ? computeMatchResultForRange(playerAId, playerBId, playerAScores, playerBScores, 1, 18)
+    : null;
+
   const holesPlayed = holeResults.length;
   const totalHoles = game.endHole - game.startHole + 1;
   const holesRemaining = totalHoles - holesPlayed;
+
+  // Calculate total teeth for Nassau
+  const nassauTotalTeeth = nassauSettlement
+    ? (nassauSettlement.front9?.amountInt ?? 0) +
+      (nassauSettlement.back9?.amountInt ?? 0) +
+      (nassauSettlement.overall?.amountInt ?? 0)
+    : 0;
 
   // Calculate player stats
   const playerAStats = holes.length > 0
@@ -198,35 +228,75 @@ export function SettleGameModal({
             <p className="text-lg font-semibold">{getResultText()}</p>
           </div>
 
-          {/* Settlement Box */}
-          <div className="rounded-xl border border-border/50 bg-gradient-to-br from-primary/10 to-primary/5 p-6">
-            {settlement ? (
-              <div className="space-y-3 text-center">
-                <p className="text-sm text-muted-foreground">
-                  {getPlayerName(settlement.payerId).split(' ')[0]} owes{' '}
-                  {getPlayerName(settlement.payeeId).split(' ')[0]}
-                </p>
-                <div className="flex items-center justify-center gap-2">
-                  <AlligatorIcon size="lg" />
-                  <span className="text-4xl font-bold text-primary">
-                    {settlement.amountInt}
-                  </span>
+          {/* Settlement Box(es) */}
+          {isNassau && nassauSettlement ? (
+            <div className="space-y-4">
+              {/* Nassau 3-box display */}
+              <div className="grid grid-cols-3 gap-3">
+                {/* Front 9 */}
+                <NassauSettlementBox
+                  label="Front 9"
+                  settlement={nassauSettlement.front9}
+                  matchResult={front9Result!}
+                  stake={game.stakeTeethInt}
+                  getPlayerName={getPlayerName}
+                />
+                {/* Back 9 */}
+                <NassauSettlementBox
+                  label="Back 9"
+                  settlement={nassauSettlement.back9}
+                  matchResult={back9Result!}
+                  stake={game.stakeTeethInt}
+                  getPlayerName={getPlayerName}
+                />
+                {/* Overall */}
+                <NassauSettlementBox
+                  label="Overall"
+                  settlement={nassauSettlement.overall}
+                  matchResult={overallResult!}
+                  stake={game.stakeTeethInt}
+                  getPlayerName={getPlayerName}
+                />
+              </div>
+
+              {/* Total settlement summary */}
+              {nassauTotalTeeth > 0 && (
+                <NassauTotalSummary
+                  nassauSettlement={nassauSettlement}
+                  getPlayerName={getPlayerName}
+                />
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border/50 bg-gradient-to-br from-primary/10 to-primary/5 p-6">
+              {settlement ? (
+                <div className="space-y-3 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {getPlayerName(settlement.payerId).split(' ')[0]} owes{' '}
+                    {getPlayerName(settlement.payeeId).split(' ')[0]}
+                  </p>
+                  <div className="flex items-center justify-center gap-2">
+                    <AlligatorIcon size="lg" />
+                    <span className="text-4xl font-bold text-primary">
+                      {settlement.amountInt}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    ({game.stakeTeethInt} teeth × {matchResult.holesUp} holes up)
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  ({game.stakeTeethInt} teeth × {matchResult.holesUp} holes up)
-                </p>
-              </div>
-            ) : (
-              <div className="text-center">
-                <p className="text-lg font-semibold text-amber-400">
-                  Match Tied
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  No teeth exchanged
-                </p>
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="text-center">
+                  <p className="text-lg font-semibold text-amber-400">
+                    Match Tied
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    No teeth exchanged
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Player Stats */}
           {playerAStats && playerBStats && (
@@ -294,6 +364,110 @@ export function SettleGameModal({
           </Button>
         </CardFooter>
       </Card>
+    </div>
+  );
+}
+
+// Nassau Settlement Box component
+interface NassauSettlementBoxProps {
+  label: string;
+  settlement: Omit<Settlement, 'id' | 'createdAt'> | null;
+  matchResult: { winnerId: string | null; holesUp: number };
+  stake: number;
+  getPlayerName: (id: string) => string;
+}
+
+function NassauSettlementBox({
+  label,
+  settlement,
+  matchResult,
+  stake,
+  getPlayerName,
+}: NassauSettlementBoxProps) {
+  return (
+    <div className="rounded-lg border border-border/50 bg-gradient-to-br from-primary/10 to-primary/5 p-3 text-center">
+      <div className="text-xs font-medium text-muted-foreground mb-2">{label}</div>
+      {settlement ? (
+        <>
+          <div className="flex items-center justify-center gap-1 mb-1">
+            <AlligatorIcon size="sm" />
+            <span className="text-xl font-bold text-primary">{settlement.amountInt}</span>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {getPlayerName(settlement.payeeId).split(' ')[0]} wins
+          </div>
+          <div className="text-xs text-muted-foreground/70">
+            {matchResult.holesUp} UP
+          </div>
+        </>
+      ) : (
+        <div className="py-2">
+          <span className="text-sm font-medium text-amber-400">Tied</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Nassau Total Summary component
+interface NassauTotalSummaryProps {
+  nassauSettlement: NassauSettlement;
+  getPlayerName: (id: string) => string;
+}
+
+function NassauTotalSummary({ nassauSettlement, getPlayerName }: NassauTotalSummaryProps) {
+  // Calculate net position for each player
+  const playerTotals: Record<string, number> = {};
+
+  const addToTotal = (settlement: Omit<Settlement, 'id' | 'createdAt'> | null) => {
+    if (!settlement) return;
+    playerTotals[settlement.payeeId] = (playerTotals[settlement.payeeId] ?? 0) + settlement.amountInt;
+    playerTotals[settlement.payerId] = (playerTotals[settlement.payerId] ?? 0) - settlement.amountInt;
+  };
+
+  addToTotal(nassauSettlement.front9);
+  addToTotal(nassauSettlement.back9);
+  addToTotal(nassauSettlement.overall);
+
+  // Find the net winner and loser
+  let netWinner: string | null = null;
+  let netLoser: string | null = null;
+  let netAmount = 0;
+
+  for (const playerId of Object.keys(playerTotals)) {
+    const total = playerTotals[playerId];
+    if (total > 0) {
+      netWinner = playerId;
+      netAmount = total;
+    } else if (total < 0) {
+      netLoser = playerId;
+    }
+  }
+
+  if (!netWinner || !netLoser || netAmount === 0) {
+    return (
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center">
+        <span className="text-lg font-semibold text-amber-400">All Square</span>
+        <p className="text-sm text-muted-foreground mt-1">No net teeth exchanged</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/15 to-primary/5 p-4">
+      <div className="text-center">
+        <div className="text-xs font-medium text-muted-foreground mb-2">
+          NASSAU TOTAL
+        </div>
+        <p className="text-sm text-muted-foreground mb-1">
+          {getPlayerName(netLoser).split(' ')[0]} owes{' '}
+          {getPlayerName(netWinner).split(' ')[0]}
+        </p>
+        <div className="flex items-center justify-center gap-2">
+          <AlligatorIcon size="lg" />
+          <span className="text-3xl font-bold text-primary">{netAmount}</span>
+        </div>
+      </div>
     </div>
   );
 }

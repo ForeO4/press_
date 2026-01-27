@@ -281,3 +281,24 @@ export interface EventMessage {
   isSystem: boolean;
   createdAt: string;
 }
+
+// ============================================
+// HANDICAPS
+// ============================================
+
+export interface HandicapProfile {
+  id: string;
+  userId: string;
+  handicapIndex: number | null;
+  ghinNumber: string | null;
+  updatedAt: string;
+}
+
+export interface HandicapSnapshot {
+  id: string;
+  eventId: string;
+  userId: string;
+  handicapIndex: number;
+  courseHandicap: number | null;
+  createdAt: string;
+}

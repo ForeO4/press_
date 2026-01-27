@@ -1,14 +1,14 @@
-# Next Session - Deployment & Nassau
+# Next Session - Deployment
 
 > **Last Updated:** 2025-01-26
 > **Branch:** `feat/fully-baked-press` (default)
-> **Status:** Augusta theme complete, documentation updated, ready for deployment
+> **Status:** Nassau + Real Handicaps complete, ready for deployment
 
 ## Session Goals
 
 1. **Deploy to Vercel** - Production deployment
-2. **E2.2 Nassau** - Implement Nassau game type
-3. **Real Handicap System** - Replace mock handicaps with user data
+2. **E3.1 Alligator Teeth** - Full ledger with transaction history
+3. **E4.1 Event Feed** - Social posts and comments
 
 ## What's Complete
 
@@ -17,7 +17,9 @@
 - E1.2 Event Management (CRUD)
 - E1.3 Scoring (mobile scorecard, realtime sync)
 - E2.1 Match Play (hole-by-hole tracking)
+- **E2.2 Nassau** - Front 9 / Back 9 / Overall (3 bets)
 - E2.4 Presses (basic press working)
+- **Real Handicap System** - Database lookups, course handicap calculation
 - Dark theme support
 - Demo mode (works with Supabase configured)
 
@@ -27,6 +29,7 @@
 - GamesList with Active/Recent sections
 - Press creation flow with 1x-4x multipliers
 - **Game Detail Page** with full scorecard
+- **Nassau 3-box settlement display**
 
 ### Scorecard Features (Augusta Theme)
 - **Augusta Green & Gold theme** - Premium golf aesthetic
@@ -37,11 +40,19 @@
   - Emerald section headers, amber press rows
 - **Handicap stroke dots** (pops) on relevant holes
 - **Gross/net score display** (e.g., "5/4")
-- **Player handicaps** shown next to names
+- **Player handicaps** shown next to names (from database)
 - **Yardage row** in scorecard header
 - **Match Stats box** with status, holes won, summary
+  - **Nassau: Front 9 / Back 9 / Overall status**
 - Press rows for child games
 - Full light/dark mode support
+
+### Handicap System
+- `HandicapProfile` - User's handicap index + GHIN number
+- `HandicapSnapshot` - Frozen handicap for event duration
+- `calculateCourseHandicap()` - Index × (Slope / 113)
+- Database tables: `handicap_profiles`, `handicap_snapshots`
+- Service layer with mock data support
 
 ## Immediate Next Tasks
 
@@ -53,58 +64,60 @@ Production deployment checklist:
 - [ ] Test authentication flow
 - [ ] Configure custom domain (optional)
 
-### 2. E2.2 Nassau Game Type
-Nassau = 3 match play bets in one:
-- Front 9 (holes 1-9)
-- Back 9 (holes 10-18)
-- Overall 18
+### 2. E3.1 Alligator Teeth Ledger
+Full teeth tracking system:
+- Ledger entries with transaction history
+- Balance display per user per event
+- Settlement entries create ledger entries
+- Event-level settlement summary
 
-**Implementation needs:**
-- Settlement calculation for Nassau (3 separate results)
-- UI to show front/back/overall status in stats box
-- End Game modal update for Nassau (3 settlements)
-
-### 3. Real Handicap System
-Replace mock handicaps with real data:
-- Add handicap field to user profiles
-- Add course handicap to game participants
-- Calculate playing handicap based on tee/course rating
+### 3. E4.1 Event Feed
+Social features:
+- Posts and comments
+- System-generated game updates
+- Media attachments via R2
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/components/games/GameScorecard.tsx` | Scorecard with handicap dots, yardage, stats |
-| `src/components/games/PressButton.tsx` | Flame + "Press!" button |
-| `src/components/games/ScoreEntry.tsx` | Score entry with stroke indicator |
-| `src/components/scorecard/ScoreEditorSheet.tsx` | Width-constrained score editor |
-| `src/app/event/[eventId]/games/[gameId]/page.tsx` | Game detail page |
-| `src/lib/domain/settlement/computeSettlement.ts` | Settlement calculation |
+| `src/components/games/GameScorecard.tsx` | Scorecard with handicap dots, Nassau stats |
+| `src/components/games/SettleGameModal.tsx` | 3-box Nassau settlement display |
+| `src/lib/domain/settlement/computeSettlement.ts` | Nassau + Match Play settlement |
+| `src/lib/services/handicaps.ts` | Handicap profile/snapshot service |
+| `src/types/index.ts` | HandicapProfile, HandicapSnapshot types |
+| `src/app/event/[eventId]/games/[gameId]/page.tsx` | Game detail with real handicaps |
 
 ## Technical Notes
 
-### Handicap Stroke Calculation
+### Nassau Settlement
 ```typescript
-const handicapDiff = Math.abs(playerAHandicap - playerBHandicap);
-const playerAGetsStrokes = playerAHandicap > playerBHandicap;
-// Player gets stroke on hole if: holeHandicap <= handicapDiff
+// 3 separate bets computed
+const nassauSettlement = computeNassauSettlement(game, playerAId, playerBId, ...);
+// Returns: { front9, back9, overall } - each can be null (tied)
 ```
 
-### Mock Handicaps (Demo)
-- Player A: 12 handicap
-- Player B: 8 handicap
-- Difference: 4 strokes on holes with handicap 1-4
+### Course Handicap Calculation
+```typescript
+// Formula: Handicap Index × (Slope / 113)
+const courseHandicap = Math.round(handicapIndex * (slope / 113));
+```
+
+### Handicap Snapshots (Demo Mode)
+- user-1: 12.4 index → 14 course handicap (slope 131)
+- user-2: 8.2 index → 10 course handicap
+- user-3: 15.8 index → 18 course handicap
+- user-4: 5.1 index → 6 course handicap
 
 ## Backlog Features
 
 Priority order:
 1. **Deploy to Vercel** - Production deployment
-2. **E2.2 Nassau** - Front/back/total bets (3 settlements per game)
-3. **Real Handicaps** - User profile handicaps
-4. **E3.1 Alligator Teeth** - Full ledger with transaction history
-5. **E4.1 Event Feed** - Social posts and comments
-6. **Automatic Presses** - Auto-press at 2-down rule
-7. **Tags System** - Game/event tagging for AI synopses
+2. **E3.1 Alligator Teeth** - Full ledger with transaction history
+3. **E4.1 Event Feed** - Social posts and comments
+4. **Automatic Presses** - Auto-press at 2-down rule
+5. **Tags System** - Game/event tagging for AI synopses
+6. **E2.3 Skins** - Skins game type
 
 ## Quick Start Commands
 

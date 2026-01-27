@@ -8,6 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **E2.2 Nassau Game Type** - Front 9 / Back 9 / Overall (3 bets in one)
+  - `computeNassauSettlement()` - Computes 3 separate settlements
+  - `computeHoleResultsForRange()` - Hole results for specific range
+  - `computeMatchResultForRange()` - Match result for any hole range
+  - SettleGameModal shows 3-box display for Nassau games
+  - Total summary shows net teeth owed between players
+  - GameScorecard stats box shows Front 9 / Back 9 / Overall status
+  - 5 new test cases for Nassau settlement scenarios
+- **Real Handicap System** - Database-backed handicaps replace mock values
+  - `HandicapProfile` type - User's handicap index + GHIN number
+  - `HandicapSnapshot` type - Frozen handicap for event duration
+  - `src/lib/services/handicaps.ts` - Service layer for handicap operations
+    - `getHandicapProfile()` - Get user's current handicap
+    - `getHandicapSnapshot()` - Get frozen handicap for event
+    - `createHandicapSnapshot()` - Freeze handicap when event starts
+    - `calculateCourseHandicap()` - Formula: Index × (Slope / 113)
+  - Game detail page now loads handicaps from database
+  - Mock data support for demo mode with realistic handicaps
 - **Augusta Green & Gold Theme** - Premium scorecard color scheme
   - Player A: Emerald (forest green) - `emerald-700` light / `emerald-400` dark
   - Player B: Amber (gold) - `amber-700` light / `amber-400` dark

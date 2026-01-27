@@ -423,3 +423,68 @@ All 13 tasks completed. Build passes. Ready for user testing.
 
 ### Notes
 Round 4 UI/UX fixes complete. Handicap stroke visualization working. Ready for deployment.
+
+---
+
+## Session: 2025-01-26 (Nassau + Real Handicaps)
+
+**Duration:** ~1 hour
+**Focus:** E2.2 Nassau game type + Real handicap system
+
+### Accomplished
+
+**E2.2 Nassau Game Type:**
+- Added `NassauSettlement` interface for 3-bet structure
+- Implemented `computeNassauSettlement()` - computes front 9, back 9, overall
+- Added `computeHoleResultsForRange()` helper for range-based computation
+- Added `computeMatchResultForRange()` for segment status
+- Updated SettleGameModal with 3-box display for Nassau games
+  - Individual boxes for Front 9 / Back 9 / Overall
+  - Net total summary showing who owes whom
+  - Handles ties gracefully
+- Updated GameScorecard stats box for Nassau
+  - Shows Front 9 / Back 9 / Overall status during play
+  - Color-coded by current leader
+- Added 5 new test cases for Nassau scenarios
+
+**Real Handicap System:**
+- Added `HandicapProfile` and `HandicapSnapshot` types to index.ts
+- Created `src/lib/services/handicaps.ts` service layer
+  - `getHandicapProfile()` - user's current handicap
+  - `getHandicapSnapshot()` - frozen handicap for event
+  - `createHandicapSnapshot()` - freeze handicap at event start
+  - `calculateCourseHandicap()` - Index × (Slope / 113)
+- Updated game detail page to load handicaps from database
+- Mock data support with realistic handicaps for demo mode
+
+### Key Decisions
+- Nassau uses fixed hole ranges (1-9, 10-18, 1-18) per golf standard
+- Handicap snapshots frozen at event start to prevent mid-round changes
+- Course handicap formula uses standard USGA calculation
+- Default to 0 (scratch) if no handicap snapshot exists
+
+### Files Created
+- `src/lib/services/handicaps.ts` - Handicap service layer
+
+### Files Modified
+- `src/lib/domain/settlement/computeSettlement.ts` - Nassau functions
+- `src/lib/domain/settlement/computeSettlement.test.ts` - Nassau tests
+- `src/components/games/SettleGameModal.tsx` - 3-box Nassau display
+- `src/components/games/GameScorecard.tsx` - Nassau stats box
+- `src/types/index.ts` - Handicap types
+- `src/app/event/[eventId]/games/[gameId]/page.tsx` - Real handicaps
+
+### Documentation Updated
+- CHANGELOG.md
+- NEXT_SESSION.md
+- SESSION_LOG.md
+
+### Test Results
+- All 166 tests passing
+- TypeScript compiles without errors
+
+### Commits
+- TBD (this session)
+
+### Notes
+Both features fully implemented. Nassau settlement and stats display working. Real handicaps load from database with mock fallback for demo mode.

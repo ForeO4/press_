@@ -192,6 +192,155 @@ export function formatSettlementDisplay(
 }
 
 /**
+ * Nassau settlement result (3 separate bets)
+ */
+export interface NassauSettlement {
+  front9: Omit<Settlement, 'id' | 'createdAt'> | null;
+  back9: Omit<Settlement, 'id' | 'createdAt'> | null;
+  overall: Omit<Settlement, 'id' | 'createdAt'> | null;
+}
+
+/**
+ * Compute hole results for a specific range of holes
+ */
+export function computeHoleResultsForRange(
+  playerAId: string,
+  playerBId: string,
+  playerAScores: HoleScore[],
+  playerBScores: HoleScore[],
+  startHole: number,
+  endHole: number
+): HoleResult[] {
+  const results: HoleResult[] = [];
+
+  for (let hole = startHole; hole <= endHole; hole++) {
+    const scoreA = playerAScores.find((s) => s.holeNumber === hole);
+    const scoreB = playerBScores.find((s) => s.holeNumber === hole);
+
+    if (!scoreA || !scoreB) {
+      continue; // Skip holes without scores
+    }
+
+    let winner: 'A' | 'B' | 'tie';
+    if (scoreA.strokes < scoreB.strokes) {
+      winner = 'A';
+    } else if (scoreB.strokes < scoreA.strokes) {
+      winner = 'B';
+    } else {
+      winner = 'tie';
+    }
+
+    results.push({
+      hole,
+      playerAStrokes: scoreA.strokes,
+      playerBStrokes: scoreB.strokes,
+      winner,
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Create a settlement from a match result
+ */
+function createSettlementFromResult(
+  game: Game,
+  matchResult: MatchPlayResult,
+  stake: AlligatorTeeth
+): Omit<Settlement, 'id' | 'createdAt'> | null {
+  if (!matchResult.winnerId || !matchResult.loserId) {
+    return null;
+  }
+
+  return {
+    eventId: game.eventId,
+    gameId: game.id,
+    payerId: matchResult.loserId,
+    payeeId: matchResult.winnerId,
+    amountInt: stake * matchResult.holesUp,
+    status: 'pending',
+  };
+}
+
+/**
+ * Compute Nassau settlement (front 9 / back 9 / overall = 3 bets)
+ */
+export function computeNassauSettlement(
+  game: Game,
+  playerAId: string,
+  playerBId: string,
+  playerAScores: HoleScore[],
+  playerBScores: HoleScore[]
+): NassauSettlement {
+  const stake = game.stakeTeethInt;
+
+  // Front 9 (holes 1-9)
+  const front9Results = computeHoleResultsForRange(
+    playerAId,
+    playerBId,
+    playerAScores,
+    playerBScores,
+    1,
+    9
+  );
+  const front9Match = computeMatchPlayResult(playerAId, playerBId, front9Results);
+  const front9Settlement = createSettlementFromResult(game, front9Match, stake);
+
+  // Back 9 (holes 10-18)
+  const back9Results = computeHoleResultsForRange(
+    playerAId,
+    playerBId,
+    playerAScores,
+    playerBScores,
+    10,
+    18
+  );
+  const back9Match = computeMatchPlayResult(playerAId, playerBId, back9Results);
+  const back9Settlement = createSettlementFromResult(game, back9Match, stake);
+
+  // Overall (holes 1-18)
+  const overallResults = computeHoleResultsForRange(
+    playerAId,
+    playerBId,
+    playerAScores,
+    playerBScores,
+    1,
+    18
+  );
+  const overallMatch = computeMatchPlayResult(playerAId, playerBId, overallResults);
+  const overallSettlement = createSettlementFromResult(game, overallMatch, stake);
+
+  return {
+    front9: front9Settlement,
+    back9: back9Settlement,
+    overall: overallSettlement,
+  };
+}
+
+/**
+ * Compute match result for a range of holes (useful for Nassau stats)
+ */
+export function computeMatchResultForRange(
+  playerAId: string,
+  playerBId: string,
+  playerAScores: HoleScore[],
+  playerBScores: HoleScore[],
+  startHole: number,
+  endHole: number
+): MatchPlayResult {
+  const holeResults = computeHoleResultsForRange(
+    playerAId,
+    playerBId,
+    playerAScores,
+    playerBScores,
+    startHole,
+    endHole
+  );
+  return computeMatchPlayResult(playerAId, playerBId, holeResults);
+}
+
+/**
  * Alligator Teeth disclaimer text
  */
 export const TEETH_DISCLAIMER =

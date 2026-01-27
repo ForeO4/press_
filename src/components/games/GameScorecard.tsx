@@ -5,7 +5,9 @@ import { Flame } from 'lucide-react';
 import type { Game, HoleScore, HoleSnapshot, GameWithParticipants } from '@/types';
 import {
   computeHoleResults,
+  computeMatchResultForRange,
   type HoleResult,
+  type MatchPlayResult,
 } from '@/lib/domain/settlement/computeSettlement';
 
 interface GameScorecardProps {
@@ -43,22 +45,13 @@ export function GameScorecard({
   canPress = false,
   onPress,
 }: GameScorecardProps) {
-  // Calculate handicap strokes for each player
-  // In match play, the higher handicap player gets strokes on the hardest holes
-  // The number of strokes = difference in handicaps
-  const handicapDiff = Math.abs(playerAHandicap - playerBHandicap);
-  const playerAGetsStrokes = playerAHandicap > playerBHandicap;
-  const playerBGetsStrokes = playerBHandicap > playerAHandicap;
-
   // Helper to check if a player gets a stroke on a specific hole
+  // Each player gets strokes on holes where the handicap index <= their course handicap
   const getsStrokeOnHole = (isPlayerA: boolean, holeHandicap: number): boolean => {
-    if (isPlayerA && playerAGetsStrokes) {
-      return holeHandicap <= handicapDiff;
+    if (isPlayerA) {
+      return holeHandicap <= playerAHandicap;
     }
-    if (!isPlayerA && playerBGetsStrokes) {
-      return holeHandicap <= handicapDiff;
-    }
-    return false;
+    return holeHandicap <= playerBHandicap;
   };
 
   const frontNine = holes.filter((h) => h.number <= 9);
@@ -185,54 +178,116 @@ export function GameScorecard({
           matchStatus > 0 ? `${playerAName.split(' ')[0]} ${matchStatus} UP` :
           `${playerBName.split(' ')[0]} ${Math.abs(matchStatus)} UP`;
 
+        // Nassau-specific calculations
+        const isNassau = game.type === 'nassau';
+        const front9Result = isNassau
+          ? computeMatchResultForRange(playerAId, playerBId, playerAScores, playerBScores, 1, 9)
+          : null;
+        const back9Result = isNassau
+          ? computeMatchResultForRange(playerAId, playerBId, playerAScores, playerBScores, 10, 18)
+          : null;
+        const overallResult = isNassau
+          ? computeMatchResultForRange(playerAId, playerBId, playerAScores, playerBScores, 1, 18)
+          : null;
+
+        const formatNassauStatus = (result: MatchPlayResult, playerA: string, playerB: string) => {
+          if (result.holesUp === 0) return 'AS';
+          const winnerName = result.winnerId === playerAId ? playerA : playerB;
+          return `${winnerName} ${result.holesUp}UP`;
+        };
+
         return (
-          <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-xl border border-emerald-900/30 bg-gradient-to-br from-emerald-950 via-emerald-950/95 to-emerald-900/90 p-5 shadow-xl">
+            <div className="grid grid-cols-2 gap-6">
               {/* Match Status */}
-              <div className="col-span-2 text-center pb-2 border-b border-border/30">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Match Status</div>
-                <div className={cn(
-                  'text-lg font-bold',
-                  matchStatus > 0 && 'text-primary',
-                  matchStatus < 0 && 'text-blue-400',
-                  matchStatus === 0 && 'text-amber-400'
-                )}>
-                  {matchStatusStr}
+              {isNassau ? (
+                <div className="col-span-2 pb-3 border-b border-emerald-800/50">
+                  <div className="text-xs text-emerald-400/60 uppercase tracking-widest font-medium mb-3 text-center">Nassau Status</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Front 9 */}
+                    <div className="text-center p-2 rounded-lg bg-emerald-800/20">
+                      <div className="text-xs text-emerald-400/60 mb-1">Front 9</div>
+                      <div className={cn(
+                        'text-sm font-black',
+                        front9Result?.winnerId === playerAId && 'text-emerald-400',
+                        front9Result?.winnerId === playerBId && 'text-amber-400',
+                        !front9Result?.winnerId && 'text-white'
+                      )}>
+                        {front9Result ? formatNassauStatus(front9Result, playerAName.split(' ')[0], playerBName.split(' ')[0]) : '-'}
+                      </div>
+                    </div>
+                    {/* Back 9 */}
+                    <div className="text-center p-2 rounded-lg bg-emerald-800/20">
+                      <div className="text-xs text-emerald-400/60 mb-1">Back 9</div>
+                      <div className={cn(
+                        'text-sm font-black',
+                        back9Result?.winnerId === playerAId && 'text-emerald-400',
+                        back9Result?.winnerId === playerBId && 'text-amber-400',
+                        !back9Result?.winnerId && 'text-white'
+                      )}>
+                        {back9Result ? formatNassauStatus(back9Result, playerAName.split(' ')[0], playerBName.split(' ')[0]) : '-'}
+                      </div>
+                    </div>
+                    {/* Overall */}
+                    <div className="text-center p-2 rounded-lg bg-emerald-800/20">
+                      <div className="text-xs text-emerald-400/60 mb-1">Overall</div>
+                      <div className={cn(
+                        'text-sm font-black',
+                        overallResult?.winnerId === playerAId && 'text-emerald-400',
+                        overallResult?.winnerId === playerBId && 'text-amber-400',
+                        !overallResult?.winnerId && 'text-white'
+                      )}>
+                        {overallResult ? formatNassauStatus(overallResult, playerAName.split(' ')[0], playerBName.split(' ')[0]) : '-'}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="col-span-2 text-center pb-3 border-b border-emerald-800/50">
+                  <div className="text-xs text-emerald-400/60 uppercase tracking-widest font-medium mb-1">Match Status</div>
+                  <div className={cn(
+                    'text-2xl font-black tracking-tight',
+                    matchStatus > 0 && 'text-emerald-400',
+                    matchStatus < 0 && 'text-amber-400',
+                    matchStatus === 0 && 'text-white'
+                  )}>
+                    {matchStatusStr}
+                  </div>
+                </div>
+              )}
 
               {/* Player A Stats */}
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-primary">{playerAName.split(' ')[0]}</div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="space-y-3 p-3 rounded-lg bg-emerald-800/30 border border-emerald-700/30">
+                <div className="text-base font-bold text-emerald-400">{playerAName.split(' ')[0]}</div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <div className="text-muted-foreground">Gross</div>
-                    <div className="font-mono font-bold">{playerATotal ?? '-'}</div>
+                    <div className="text-emerald-500/60 text-xs">Gross</div>
+                    <div className="font-mono font-black text-xl text-white">{playerATotal ?? '-'}</div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">Holes Won</div>
-                    <div className="font-mono font-bold">{holesWonA}</div>
+                    <div className="text-emerald-500/60 text-xs">Holes Won</div>
+                    <div className="font-mono font-black text-xl text-white">{holesWonA}</div>
                   </div>
                 </div>
               </div>
 
               {/* Player B Stats */}
-              <div className="space-y-2">
-                <div className="text-sm font-medium text-blue-400">{playerBName.split(' ')[0]}</div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="space-y-3 p-3 rounded-lg bg-amber-900/20 border border-amber-700/30">
+                <div className="text-base font-bold text-amber-400">{playerBName.split(' ')[0]}</div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <div className="text-muted-foreground">Gross</div>
-                    <div className="font-mono font-bold">{playerBTotal ?? '-'}</div>
+                    <div className="text-amber-500/60 text-xs">Gross</div>
+                    <div className="font-mono font-black text-xl text-white">{playerBTotal ?? '-'}</div>
                   </div>
                   <div>
-                    <div className="text-muted-foreground">Holes Won</div>
-                    <div className="font-mono font-bold">{holesWonB}</div>
+                    <div className="text-amber-500/60 text-xs">Holes Won</div>
+                    <div className="font-mono font-black text-xl text-white">{holesWonB}</div>
                   </div>
                 </div>
               </div>
 
               {/* Summary */}
-              <div className="col-span-2 pt-2 border-t border-border/30 flex justify-between text-xs text-muted-foreground">
+              <div className="col-span-2 pt-3 border-t border-emerald-800/50 flex justify-between text-xs text-emerald-600 font-medium">
                 <span>Par: {totalPar}</span>
                 <span>Holes Played: {holesPlayed}</span>
                 <span>Halved: {holesTied}</span>
@@ -301,14 +356,20 @@ function ScorecardSection({
     return score?.strokes ?? null;
   };
 
-  const getScoreColor = (score: number | null, par: number): string => {
-    if (score === null) return 'text-muted-foreground';
+  // Score colors that work in both light and dark modes
+  const getScoreStyle = (score: number | null, par: number, isWinner: boolean): string => {
+    if (score === null) return 'text-slate-400';
     const diff = score - par;
-    if (diff <= -2) return 'text-green-600 dark:text-green-400 font-bold'; // Eagle+
-    if (diff === -1) return 'text-green-600 dark:text-green-400'; // Birdie
-    if (diff === 0) return ''; // Par
-    if (diff === 1) return 'text-red-500 dark:text-red-400'; // Bogey
-    return 'text-red-600 dark:text-red-500 font-bold'; // Double+
+    // Eagle or better - gold/yellow highlight
+    if (diff <= -2) return 'text-amber-500 font-black';
+    // Birdie - bright
+    if (diff === -1) return 'text-emerald-500 dark:text-emerald-400 font-bold';
+    // Par - normal
+    if (diff === 0) return 'text-slate-700 dark:text-slate-200';
+    // Bogey - slightly muted
+    if (diff === 1) return 'text-slate-500 dark:text-slate-400';
+    // Double+ - more muted
+    return 'text-slate-400 dark:text-slate-500';
   };
 
   // Get winner for a hole
@@ -355,116 +416,115 @@ function ScorecardSection({
   const sectionCumulative = lastSectionHole > 0 ? getCumulativeStatus(lastSectionHole) : 0;
 
   return (
-    <div className="rounded-xl border border-border/50 bg-gradient-to-br from-card/80 to-card/40 overflow-hidden">
-      <div className="border-b border-border/30 bg-muted/30 px-4 py-2">
-        <h3 className="text-sm font-semibold">{title}</h3>
+    <div className="rounded-xl border border-emerald-200/50 dark:border-emerald-900/30 overflow-hidden shadow-lg bg-white dark:bg-slate-900">
+      {/* Section Header */}
+      <div className="border-b border-emerald-200/50 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-950/50 dark:to-slate-900 px-4 py-2.5">
+        <h3 className="text-sm font-bold text-emerald-800 dark:text-emerald-300">{title}</h3>
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             {/* Hole numbers */}
-            <tr className="border-b border-border/30">
-              <th className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-2 pl-4 pr-2 text-left font-medium text-muted-foreground min-w-[100px]">
+            <tr className="border-b border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/30 dark:bg-emerald-950/20">
+              <th className="sticky left-0 z-10 bg-emerald-50/50 dark:bg-emerald-950/30 py-2.5 pl-4 pr-2 text-left font-bold text-emerald-700 dark:text-emerald-400 min-w-[120px]">
                 Hole
               </th>
               {holes.map((hole) => (
                 <th
                   key={hole.number}
                   className={cn(
-                    'px-2 py-2 text-center font-medium min-w-[40px]',
-                    !isHoleInRange(hole.number) && 'opacity-40'
+                    'px-2 py-2.5 text-center font-bold text-slate-600 dark:text-slate-300 min-w-[44px]',
+                    !isHoleInRange(hole.number) && 'opacity-30'
                   )}
                 >
                   {hole.number}
                 </th>
               ))}
-              <th className="px-3 py-2 text-center font-bold bg-muted/30 min-w-[50px]">
+              <th className="px-3 py-2.5 text-center font-black text-emerald-800 dark:text-emerald-300 bg-emerald-100/50 dark:bg-emerald-950/40 min-w-[56px]">
                 {totalLabel}
               </th>
             </tr>
 
             {/* Par row */}
-            <tr className="border-b border-border/30 text-xs text-muted-foreground">
-              <td className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-1.5 pl-4 pr-2">
+            <tr className="border-b border-emerald-100/50 dark:border-emerald-900/20 text-xs">
+              <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 py-1.5 pl-4 pr-2 text-slate-500 dark:text-slate-500 font-medium">
                 Par
               </td>
               {holes.map((hole) => (
                 <td
                   key={hole.number}
                   className={cn(
-                    'px-2 py-1.5 text-center',
-                    !isHoleInRange(hole.number) && 'opacity-40'
+                    'px-2 py-1.5 text-center text-slate-500 dark:text-slate-500',
+                    !isHoleInRange(hole.number) && 'opacity-30'
                   )}
                 >
                   {hole.par}
                 </td>
               ))}
-              <td className="px-3 py-1.5 text-center font-medium bg-muted/30">
+              <td className="px-3 py-1.5 text-center font-medium text-slate-600 dark:text-slate-400 bg-emerald-50/50 dark:bg-emerald-950/20">
                 {parTotal}
               </td>
             </tr>
 
             {/* Yardage row */}
-            <tr className="border-b border-border/30 text-xs text-muted-foreground">
-              <td className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-1.5 pl-4 pr-2">
+            <tr className="border-b border-emerald-100/50 dark:border-emerald-900/20 text-xs">
+              <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 py-1.5 pl-4 pr-2 text-slate-500 dark:text-slate-500 font-medium">
                 Yards
               </td>
               {holes.map((hole) => (
                 <td
                   key={hole.number}
                   className={cn(
-                    'px-2 py-1.5 text-center',
-                    !isHoleInRange(hole.number) && 'opacity-40'
+                    'px-2 py-1.5 text-center text-slate-400 dark:text-slate-600',
+                    !isHoleInRange(hole.number) && 'opacity-30'
                   )}
                 >
                   {hole.yardage}
                 </td>
               ))}
-              <td className="px-3 py-1.5 text-center font-medium bg-muted/30">
+              <td className="px-3 py-1.5 text-center font-medium text-slate-500 dark:text-slate-500 bg-emerald-50/50 dark:bg-emerald-950/20">
                 {holes.reduce((sum, h) => sum + h.yardage, 0)}
               </td>
             </tr>
 
             {/* Handicap row */}
-            <tr className="border-b border-border/30 text-xs text-muted-foreground">
-              <td className="sticky left-0 z-10 bg-card/90 backdrop-blur-sm py-1.5 pl-4 pr-2">
-                Handicap
+            <tr className="border-b border-emerald-200/50 dark:border-emerald-900/30 text-xs">
+              <td className="sticky left-0 z-10 bg-white dark:bg-slate-900 py-1.5 pl-4 pr-2 text-slate-500 dark:text-slate-500 font-medium">
+                Hdcp
               </td>
               {holes.map((hole) => (
                 <td
                   key={hole.number}
                   className={cn(
-                    'px-2 py-1.5 text-center',
-                    !isHoleInRange(hole.number) && 'opacity-40'
+                    'px-2 py-1.5 text-center text-slate-400 dark:text-slate-600',
+                    !isHoleInRange(hole.number) && 'opacity-30'
                   )}
                 >
                   {hole.handicap}
                 </td>
               ))}
-              <td className="px-3 py-1.5 text-center bg-muted/30">-</td>
+              <td className="px-3 py-1.5 text-center bg-emerald-50/50 dark:bg-emerald-950/20 text-slate-400">-</td>
             </tr>
           </thead>
 
           <tbody>
             {/* Player A row */}
-            <tr className="border-b border-border/30 bg-primary/5">
-              <td className="sticky left-0 z-10 bg-primary/10 backdrop-blur-sm py-2 pl-4 pr-2">
+            <tr className="border-b border-emerald-200/50 dark:border-emerald-900/30 bg-gradient-to-r from-emerald-50 via-emerald-50/50 to-transparent dark:from-emerald-950/40 dark:via-emerald-950/20 dark:to-transparent">
+              <td className="sticky left-0 z-10 bg-gradient-to-r from-emerald-100 to-emerald-50 dark:from-emerald-950/60 dark:to-emerald-950/40 py-2.5 pl-4 pr-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-primary">
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">
                     {playerAName.split(' ')[0]}
-                    {playerAHandicap !== undefined && (
-                      <span className="text-xs opacity-70 ml-1">({playerAHandicap})</span>
-                    )}
+                    <span className="text-xs font-normal text-emerald-500 dark:text-emerald-600 ml-1">({playerAHandicap})</span>
                   </span>
                   {canPress && onPress && (
                     <button
                       onClick={() => onPress(playerAId)}
-                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-105"
                       title="Press"
                     >
                       <Flame className="h-3 w-3" />
-                      <span>Press!</span>
+                      <span>PRESS!</span>
                     </button>
                   )}
                 </div>
@@ -482,60 +542,57 @@ function ScorecardSection({
                     onClick={onCellClick && inRange ? () => onCellClick(playerAId, hole.number) : undefined}
                     className={cn(
                       'px-0.5 py-2 text-center font-mono relative',
-                      !inRange && 'opacity-40',
-                      onCellClick && inRange && 'cursor-pointer hover:bg-primary/20 transition-colors'
+                      !inRange && 'opacity-30',
+                      onCellClick && inRange && 'cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors'
                     )}
                   >
                     {/* Stroke dot indicator */}
                     {getsStroke && inRange && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-primary rounded-full border border-background z-10" />
+                      <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full shadow-sm shadow-emerald-500/50" />
                     )}
                     <span
                       className={cn(
-                        'inline-flex items-center justify-center rounded-full',
-                        getsStroke && score !== null ? 'min-w-[38px] h-7 px-1' : 'w-7 h-7',
-                        getScoreColor(getsStroke ? netScore : score, hole.par),
-                        isWinner && 'ring-2 ring-amber-400 bg-amber-400/20'
+                        'inline-flex items-center justify-center rounded-lg w-9 h-8 text-sm',
+                        getScoreStyle(getsStroke ? netScore : score, hole.par, isWinner),
+                        isWinner && 'ring-2 ring-amber-400 bg-amber-100 dark:bg-amber-500/20 shadow-md shadow-amber-400/30'
                       )}
                     >
                       {score !== null ? (
                         getsStroke ? (
-                          <span className="text-xs">
-                            <span className="opacity-60">{score}</span>
-                            <span className="opacity-40">/</span>
-                            <span className="font-bold">{netScore}</span>
+                          <span className="text-xs leading-none font-bold">
+                            <span className="opacity-50">{score}</span>
+                            <span className="opacity-30">/</span>
+                            <span>{netScore}</span>
                           </span>
                         ) : (
-                          score
+                          <span className="font-bold">{score}</span>
                         )
-                      ) : '-'}
+                      ) : <span className="text-slate-300 dark:text-slate-600">-</span>}
                     </span>
                   </td>
                 );
               })}
-              <td className="px-3 py-2 text-center font-mono font-bold bg-muted/30 text-primary">
+              <td className="px-3 py-2 text-center font-mono font-black text-lg bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400">
                 {playerATotal ?? '-'}
               </td>
             </tr>
 
             {/* Player B row */}
-            <tr className="border-b border-border/30 bg-blue-500/5">
-              <td className="sticky left-0 z-10 bg-blue-500/10 backdrop-blur-sm py-2 pl-4 pr-2">
+            <tr className="border-b border-amber-200/50 dark:border-amber-900/30 bg-gradient-to-r from-amber-50 via-amber-50/50 to-transparent dark:from-amber-950/30 dark:via-amber-950/15 dark:to-transparent">
+              <td className="sticky left-0 z-10 bg-gradient-to-r from-amber-100 to-amber-50 dark:from-amber-950/50 dark:to-amber-950/30 py-2.5 pl-4 pr-2">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-blue-400">
+                  <span className="font-bold text-amber-700 dark:text-amber-400">
                     {playerBName.split(' ')[0]}
-                    {playerBHandicap !== undefined && (
-                      <span className="text-xs opacity-70 ml-1">({playerBHandicap})</span>
-                    )}
+                    <span className="text-xs font-normal text-amber-500 dark:text-amber-600 ml-1">({playerBHandicap})</span>
                   </span>
                   {canPress && onPress && (
                     <button
                       onClick={() => onPress(playerBId)}
-                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500 transition-all shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-105"
                       title="Press"
                     >
                       <Flame className="h-3 w-3" />
-                      <span>Press!</span>
+                      <span>PRESS!</span>
                     </button>
                   )}
                 </div>
@@ -553,52 +610,51 @@ function ScorecardSection({
                     onClick={onCellClick && inRange ? () => onCellClick(playerBId, hole.number) : undefined}
                     className={cn(
                       'px-0.5 py-2 text-center font-mono relative',
-                      !inRange && 'opacity-40',
-                      onCellClick && inRange && 'cursor-pointer hover:bg-blue-500/20 transition-colors'
+                      !inRange && 'opacity-30',
+                      onCellClick && inRange && 'cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/20 transition-colors'
                     )}
                   >
                     {/* Stroke dot indicator */}
                     {getsStroke && inRange && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-blue-400 rounded-full border border-background z-10" />
+                      <span className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full shadow-sm shadow-amber-500/50" />
                     )}
                     <span
                       className={cn(
-                        'inline-flex items-center justify-center rounded-full',
-                        getsStroke && score !== null ? 'min-w-[38px] h-7 px-1' : 'w-7 h-7',
-                        getScoreColor(getsStroke ? netScore : score, hole.par),
-                        isWinner && 'ring-2 ring-amber-400 bg-amber-400/20'
+                        'inline-flex items-center justify-center rounded-lg w-9 h-8 text-sm',
+                        getScoreStyle(getsStroke ? netScore : score, hole.par, isWinner),
+                        isWinner && 'ring-2 ring-amber-400 bg-amber-100 dark:bg-amber-500/20 shadow-md shadow-amber-400/30'
                       )}
                     >
                       {score !== null ? (
                         getsStroke ? (
-                          <span className="text-xs">
-                            <span className="opacity-60">{score}</span>
-                            <span className="opacity-40">/</span>
-                            <span className="font-bold">{netScore}</span>
+                          <span className="text-xs leading-none font-bold">
+                            <span className="opacity-50">{score}</span>
+                            <span className="opacity-30">/</span>
+                            <span>{netScore}</span>
                           </span>
                         ) : (
-                          score
+                          <span className="font-bold">{score}</span>
                         )
-                      ) : '-'}
+                      ) : <span className="text-slate-300 dark:text-slate-600">-</span>}
                     </span>
                   </td>
                 );
               })}
-              <td className="px-3 py-2 text-center font-mono font-bold bg-muted/30 text-blue-400">
+              <td className="px-3 py-2 text-center font-mono font-black text-lg bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400">
                 {playerBTotal ?? '-'}
               </td>
             </tr>
 
             {/* Match/Nassau row with cumulative +/- */}
-            <tr className="border-b border-border/30 text-xs bg-amber-500/5">
-              <td className="sticky left-0 z-10 bg-amber-500/10 backdrop-blur-sm py-2 pl-4 pr-2 font-semibold text-amber-400">
+            <tr className="border-b border-emerald-200/30 dark:border-emerald-900/30 text-xs bg-emerald-50/50 dark:bg-emerald-950/20">
+              <td className="sticky left-0 z-10 bg-emerald-50 dark:bg-emerald-950/40 py-2.5 pl-4 pr-2 font-bold text-emerald-700 dark:text-emerald-500">
                 {gameTypeLabel}
               </td>
               {holes.map((hole) => {
                 const inRange = isHoleInRange(hole.number);
                 if (!inRange) {
                   return (
-                    <td key={hole.number} className="px-2 py-2 text-center opacity-40">
+                    <td key={hole.number} className="px-2 py-2.5 text-center opacity-30 text-slate-400">
                       -
                     </td>
                   );
@@ -607,7 +663,7 @@ function ScorecardSection({
                 const hasResult = holeResults.some(r => r.hole === hole.number);
                 if (!hasResult) {
                   return (
-                    <td key={hole.number} className="px-2 py-2 text-center text-muted-foreground">
+                    <td key={hole.number} className="px-2 py-2.5 text-center text-slate-400">
                       -
                     </td>
                   );
@@ -616,10 +672,10 @@ function ScorecardSection({
                   <td
                     key={hole.number}
                     className={cn(
-                      'px-2 py-2 text-center font-bold',
-                      cumulative > 0 && 'text-primary',
-                      cumulative < 0 && 'text-blue-400',
-                      cumulative === 0 && 'text-amber-400'
+                      'px-2 py-2.5 text-center font-black',
+                      cumulative > 0 && 'text-emerald-600 dark:text-emerald-400',
+                      cumulative < 0 && 'text-amber-600 dark:text-amber-400',
+                      cumulative === 0 && 'text-slate-400'
                     )}
                   >
                     {formatStatus(cumulative)}
@@ -627,10 +683,10 @@ function ScorecardSection({
                 );
               })}
               <td className={cn(
-                'px-3 py-2 text-center font-bold bg-muted/30',
-                sectionCumulative > 0 && 'text-primary',
-                sectionCumulative < 0 && 'text-blue-400',
-                sectionCumulative === 0 && 'text-amber-400'
+                'px-3 py-2.5 text-center font-black text-sm bg-emerald-100/80 dark:bg-emerald-950/50',
+                sectionCumulative > 0 && 'text-emerald-600 dark:text-emerald-400',
+                sectionCumulative < 0 && 'text-amber-600 dark:text-amber-400',
+                sectionCumulative === 0 && 'text-slate-500'
               )}>
                 {formatStatus(sectionCumulative)}
               </td>
@@ -642,9 +698,12 @@ function ScorecardSection({
               const pressEndHole = press.endHole;
 
               return (
-                <tr key={press.id} className="border-b border-border/30 text-xs bg-purple-500/5">
-                  <td className="sticky left-0 z-10 bg-purple-500/10 backdrop-blur-sm py-2 pl-4 pr-2 font-semibold text-purple-400">
-                    Press {index + 1}
+                <tr key={press.id} className="border-b border-amber-200/30 dark:border-amber-900/20 text-xs bg-gradient-to-r from-amber-50/50 to-transparent dark:from-amber-950/20 dark:to-transparent">
+                  <td className="sticky left-0 z-10 bg-amber-50 dark:bg-amber-950/30 py-2 pl-4 pr-2 font-bold text-amber-600 dark:text-amber-500">
+                    <span className="flex items-center gap-1">
+                      <Flame className="h-3 w-3" />
+                      Press {index + 1}
+                    </span>
                   </td>
                   {holes.map((hole) => {
                     const inPressRange = hole.number >= pressStartHole && hole.number <= pressEndHole;
@@ -652,7 +711,7 @@ function ScorecardSection({
 
                     if (!inPressRange || !inSection) {
                       return (
-                        <td key={hole.number} className="px-2 py-2 text-center text-muted-foreground/30">
+                        <td key={hole.number} className="px-2 py-2 text-center text-slate-300 dark:text-slate-700">
                           -
                         </td>
                       );
@@ -663,7 +722,7 @@ function ScorecardSection({
 
                     if (!hasResult) {
                       return (
-                        <td key={hole.number} className="px-2 py-2 text-center text-muted-foreground">
+                        <td key={hole.number} className="px-2 py-2 text-center text-slate-400">
                           -
                         </td>
                       );
@@ -673,10 +732,10 @@ function ScorecardSection({
                       <td
                         key={hole.number}
                         className={cn(
-                          'px-2 py-2 text-center font-bold',
-                          cumulative > 0 && 'text-primary',
-                          cumulative < 0 && 'text-blue-400',
-                          cumulative === 0 && 'text-purple-400'
+                          'px-2 py-2 text-center font-black',
+                          cumulative > 0 && 'text-emerald-600 dark:text-emerald-400',
+                          cumulative < 0 && 'text-amber-600 dark:text-amber-400',
+                          cumulative === 0 && 'text-slate-400'
                         )}
                       >
                         {formatStatus(cumulative)}
@@ -691,10 +750,10 @@ function ScorecardSection({
                     const pressCumulative = getCumulativeForRange(pressStartHole, lastPressHoleInSection);
                     return (
                       <td className={cn(
-                        'px-3 py-2 text-center font-bold bg-muted/30',
-                        pressCumulative > 0 && 'text-primary',
-                        pressCumulative < 0 && 'text-blue-400',
-                        pressCumulative === 0 && 'text-purple-400'
+                        'px-3 py-2 text-center font-black bg-amber-100/50 dark:bg-amber-950/30',
+                        pressCumulative > 0 && 'text-emerald-600 dark:text-emerald-400',
+                        pressCumulative < 0 && 'text-amber-600 dark:text-amber-400',
+                        pressCumulative === 0 && 'text-amber-500'
                       )}>
                         {formatStatus(pressCumulative)}
                       </td>

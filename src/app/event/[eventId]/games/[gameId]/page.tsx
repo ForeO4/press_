@@ -13,6 +13,7 @@ import { useScorecardStore } from '@/stores/scorecardStore';
 import { getGameWithParticipants, createPress, updateGameStatus } from '@/lib/services/games';
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
 import { getEventTeeSnapshot } from '@/lib/services/courses';
+import { getHandicapSnapshot } from '@/lib/services/handicaps';
 import { mockUsers } from '@/lib/mock/users';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAppStore } from '@/stores';
@@ -45,6 +46,7 @@ export default function GameDetailPage({
   const [game, setGame] = useState<GameWithParticipants | null>(null);
   const [scores, setScores] = useState<Record<string, HoleScore[]>>({});
   const [courseData, setCourseData] = useState<TeeSnapshot | null>(null);
+  const [handicaps, setHandicaps] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSettleModal, setShowSettleModal] = useState(false);
@@ -86,6 +88,18 @@ export default function GameDetailPage({
         }
       }
       setScores(userScores);
+
+      // Load handicaps for all participants
+      const handicapPromises = gameData.participants.map(async (p) => {
+        const snapshot = await getHandicapSnapshot(params.eventId, p.userId);
+        return { userId: p.userId, handicap: snapshot?.courseHandicap ?? 0 };
+      });
+      const handicapResults = await Promise.all(handicapPromises);
+      const handicapMap: Record<string, number> = {};
+      for (const { userId, handicap } of handicapResults) {
+        handicapMap[userId] = handicap;
+      }
+      setHandicaps(handicapMap);
     } catch (err) {
       console.error('[GameDetailPage] Failed to load data:', err);
       setError('Failed to load game data');
@@ -143,9 +157,9 @@ export default function GameDetailPage({
     : null;
   const playerAName = playerAUser?.name ?? 'Player A';
   const playerBName = playerBUser?.name ?? 'Player B';
-  // Mock handicaps for demo - in real app, these would come from user/round data
-  const playerAHandicap = 12;
-  const playerBHandicap = 8;
+  // Get handicaps from loaded data (defaults to 0 for scratch golfers)
+  const playerAHandicap = playerA ? (handicaps[playerA.userId] ?? 0) : 0;
+  const playerBHandicap = playerB ? (handicaps[playerB.userId] ?? 0) : 0;
   // Use store scores for live updates, fall back to loaded scores
   const playerAScores = playerA ? getPlayerScoresFromStore(playerA.userId) : [];
   const playerBScores = playerB ? getPlayerScoresFromStore(playerB.userId) : [];

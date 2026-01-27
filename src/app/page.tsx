@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { AuthHeader } from '@/components/auth/AuthHeader';
 
 export default function HomePage() {
   return (
@@ -9,7 +10,10 @@ export default function HomePage() {
       {/* Header */}
       <header className="container mx-auto flex items-center justify-between px-4 py-4">
         <span className="text-lg font-bold text-primary">Press!</span>
-        <ThemeToggle />
+        <div className="flex items-center gap-4">
+          <AuthHeader />
+          <ThemeToggle />
+        </div>
       </header>
 
       {/* Hero */}

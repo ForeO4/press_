@@ -14,6 +14,7 @@ import {
   setMaxPresses,
   setAllowSelfPress,
 } from '@/lib/services/eventSettings';
+import { InviteModal } from '@/components/events/InviteModal';
 import type { EventSettings, AutoPressConfig } from '@/types';
 
 export default function AdminPage({
@@ -32,6 +33,7 @@ export default function AdminPage({
   const [isLocked, setIsLocked] = useState(event?.isLocked ?? false);
   const [settings, setSettings] = useState<EventSettings | null>(null);
   const [autoPressConfig, setAutoPressConfig] = useState<AutoPressConfig | null>(null);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // Load settings
   useEffect(() => {
@@ -90,6 +92,26 @@ export default function AdminPage({
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Admin Settings</h1>
+
+      {/* Invite Players */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Invite Players</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">Share invite links</p>
+              <p className="text-sm text-muted-foreground">
+                Create and manage invite links to let players join this event.
+              </p>
+            </div>
+            <Button onClick={() => setIsInviteModalOpen(true)}>
+              Manage Invites
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Event Lock */}
       <Card>
@@ -257,6 +279,14 @@ export default function AdminPage({
           </p>
         </CardContent>
       </Card>
+
+      {/* Invite Modal */}
+      <InviteModal
+        eventId={params.eventId}
+        eventName={event?.name ?? 'Event'}
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+      />
     </div>
   );
 }

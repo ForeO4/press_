@@ -5,6 +5,65 @@ import { createEventTeeSnapshot } from '@/lib/services/courses';
 import type { Event, CreateEventInput, UpdateEventInput } from '@/types';
 
 /**
+ * Create a new event using RPC (recommended)
+ * This creates the event, owner membership, settings, and initializes teeth balance in one transaction
+ */
+export async function createEventWithRPC(
+  input: CreateEventInput
+): Promise<Event> {
+  if (isMockMode) {
+    // In mock mode, create a fake event
+    const now = new Date().toISOString();
+    const eventId = crypto.randomUUID();
+
+    // Create tee snapshot if teeSetId provided
+    if (input.teeSetId) {
+      await createEventTeeSnapshot(eventId, input.teeSetId);
+    }
+
+    return {
+      id: eventId,
+      name: input.name,
+      date: input.date,
+      visibility: input.visibility,
+      isLocked: false,
+      createdBy: 'mock-user',
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
+  const supabase = createClient();
+  if (!supabase) throw new Error('Supabase client not available');
+
+  const { data, error } = await supabase.rpc('rpc_create_event', {
+    p_name: input.name,
+    p_date: input.date,
+    p_visibility: input.visibility,
+  });
+
+  if (error) throw error;
+
+  if (!data?.success || !data?.event) {
+    throw new Error('Failed to create event');
+  }
+
+  const event = mapEventFromDb(data.event);
+
+  // Create tee snapshot if teeSetId provided
+  if (input.teeSetId) {
+    try {
+      await createEventTeeSnapshot(event.id, input.teeSetId);
+    } catch (snapshotError) {
+      // Log but don't fail event creation
+      console.error('[events] Failed to create tee snapshot:', snapshotError);
+    }
+  }
+
+  return event;
+}
+
+/**
  * Create a new event
  */
 export async function createEvent(

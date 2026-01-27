@@ -8,8 +8,7 @@ import { StepBasics, type BasicFormData } from '@/components/events/wizard/StepB
 import { StepCourse, type CourseFormData } from '@/components/events/wizard/StepCourse';
 import { StepRules, type RulesFormData } from '@/components/events/wizard/StepRules';
 import { StepReview } from '@/components/events/wizard/StepReview';
-import { createEvent } from '@/lib/services/events';
-import { createSettings } from '@/lib/services/eventSettings';
+import { createEventWithRPC } from '@/lib/services/events';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { getCourses, getCourseTeeSets } from '@/lib/services/courses';
 import { DEFAULT_AUTO_PRESS_CONFIG } from '@/lib/domain/games/autoPress';
@@ -103,22 +102,12 @@ export default function CreateEventWizardPage() {
     setError(null);
 
     try {
-      // Create the event
-      const event = await createEvent(
-        {
-          name: basics.name,
-          date: basics.startDate,
-          visibility: basics.visibility,
-          teeSetId: course.teeSetId,
-        },
-        user.id
-      );
-
-      // Create event settings
-      await createSettings(event.id, {
-        pressRules: rules.autoPressConfig,
-        defaultBucks: rules.defaultStake * 10, // Convert stake to bucks
-        allowSelfPress: true,
+      // Create the event using RPC (creates event, membership, settings, and teeth balance)
+      const event = await createEventWithRPC({
+        name: basics.name,
+        date: basics.startDate,
+        visibility: basics.visibility,
+        teeSetId: course.teeSetId,
       });
 
       // Navigate to the new event

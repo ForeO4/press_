@@ -1,19 +1,28 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { mockEvent, mockMemberships, mockTeethBalances } from '@/lib/mock/data';
+import { BalanceCard } from '@/components/gatorBucks/BalanceCard';
+import { mockEvent, mockMemberships, mockGatorBucksBalances } from '@/lib/mock/data';
 import { mockUsers } from '@/lib/mock/users';
-import { formatDate, formatTeeth } from '@/lib/utils';
+import { formatDate, formatGatorBucks } from '@/lib/utils';
 import { isMockMode } from '@/lib/env/public';
+import { useAppStore } from '@/stores';
 
 export default function EventPage({
   params,
 }: {
   params: { eventId: string };
 }) {
+  const mockUser = useAppStore((state) => state.mockUser);
+
   // In mock mode, use demo data
   const event = isMockMode ? mockEvent : null;
   const memberships = isMockMode ? mockMemberships : [];
+
+  // Get current user's balance
+  const userBalance = mockUser
+    ? mockGatorBucksBalances.find((b) => b.userId === mockUser.id) ?? null
+    : null;
 
   if (!event) {
     return (
@@ -49,6 +58,11 @@ export default function EventPage({
         </div>
       </div>
 
+      {/* User Balance */}
+      {userBalance && (
+        <BalanceCard balance={userBalance} size="md" />
+      )}
+
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -78,13 +92,13 @@ export default function EventPage({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Teeth in Play
+              Total Bucks in Play
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {formatTeeth(
-                mockTeethBalances.reduce((sum, b) => sum + b.balanceInt, 0)
+              {formatGatorBucks(
+                mockGatorBucksBalances.reduce((sum, b) => sum + b.balanceInt, 0)
               )}
             </p>
           </CardContent>

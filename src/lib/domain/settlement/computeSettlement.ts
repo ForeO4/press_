@@ -341,7 +341,10 @@ export function computeMatchResultForRange(
 }
 
 /**
- * Alligator Teeth disclaimer text
+ * Gator Bucks disclaimer text
  */
-export const TEETH_DISCLAIMER =
-  'Alligator Teeth are for fun and have no cash value.';
+export const GATOR_BUCKS_DISCLAIMER =
+  'Gator Bucks are for fun and have no cash value.';
+
+/** @deprecated Use GATOR_BUCKS_DISCLAIMER instead */
+export const TEETH_DISCLAIMER = GATOR_BUCKS_DISCLAIMER;

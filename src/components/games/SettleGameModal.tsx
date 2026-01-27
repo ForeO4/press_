@@ -126,8 +126,8 @@ export function SettleGameModal({
   const totalHoles = game.endHole - game.startHole + 1;
   const holesRemaining = totalHoles - holesPlayed;
 
-  // Calculate total teeth for Nassau
-  const nassauTotalTeeth = nassauSettlement
+  // Calculate total bucks for Nassau
+  const nassauTotalBucks = nassauSettlement
     ? (nassauSettlement.front9?.amountInt ?? 0) +
       (nassauSettlement.back9?.amountInt ?? 0) +
       (nassauSettlement.overall?.amountInt ?? 0)
@@ -260,7 +260,7 @@ export function SettleGameModal({
               </div>
 
               {/* Total settlement summary */}
-              {nassauTotalTeeth > 0 && (
+              {nassauTotalBucks > 0 && (
                 <NassauTotalSummary
                   nassauSettlement={nassauSettlement}
                   getPlayerName={getPlayerName}
@@ -282,7 +282,7 @@ export function SettleGameModal({
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    ({game.stakeTeethInt} teeth × {matchResult.holesUp} holes up)
+                    ({game.stakeTeethInt} bucks × {matchResult.holesUp} holes up)
                   </p>
                 </div>
               ) : (
@@ -291,7 +291,7 @@ export function SettleGameModal({
                     Match Tied
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    No teeth exchanged
+                    No bucks exchanged
                   </p>
                 </div>
               )}
@@ -448,7 +448,7 @@ function NassauTotalSummary({ nassauSettlement, getPlayerName }: NassauTotalSumm
     return (
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-center">
         <span className="text-lg font-semibold text-amber-400">All Square</span>
-        <p className="text-sm text-muted-foreground mt-1">No net teeth exchanged</p>
+        <p className="text-sm text-muted-foreground mt-1">No net bucks exchanged</p>
       </div>
     );
   }

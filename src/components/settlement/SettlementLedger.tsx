@@ -1,8 +1,8 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatTeeth } from '@/lib/utils';
-import { TEETH_DISCLAIMER } from '@/lib/domain/settlement/computeSettlement';
+import { formatGatorBucks } from '@/lib/utils';
+import { GATOR_BUCKS_DISCLAIMER } from '@/lib/domain/settlement/computeSettlement';
 import type { SettlementWithNames } from '@/types';
 
 interface SettlementLedgerProps {
@@ -52,7 +52,7 @@ export function SettlementLedger({ settlements }: SettlementLedgerProps) {
                     </td>
                     <td className="py-3">{settlement.payeeName}</td>
                     <td className="py-3 text-right font-medium text-primary">
-                      {formatTeeth(settlement.amountInt)}
+                      {formatGatorBucks(settlement.amountInt)}
                     </td>
                   </tr>
                 ))}
@@ -63,7 +63,7 @@ export function SettlementLedger({ settlements }: SettlementLedgerProps) {
           {/* Disclaimer */}
           <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">
             <span className="mr-2">&#x26A0;</span>
-            {TEETH_DISCLAIMER}
+            {GATOR_BUCKS_DISCLAIMER}
           </div>
         </div>
       </CardContent>

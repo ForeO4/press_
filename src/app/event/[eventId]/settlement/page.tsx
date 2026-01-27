@@ -7,7 +7,7 @@ import { mockSettlements } from '@/lib/mock/data';
 import { mockUsers } from '@/lib/mock/users';
 import { useAppStore } from '@/stores';
 import { formatSettlementDisplay, computeNetPositions, TEETH_DISCLAIMER } from '@/lib/domain/settlement/computeSettlement';
-import { formatTeeth } from '@/lib/utils';
+import { formatGatorBucks } from '@/lib/utils';
 import { isMockMode } from '@/lib/env/public';
 
 export default function SettlementPage({
@@ -72,7 +72,7 @@ export default function SettlementPage({
                       }`}
                     >
                       {amount > 0 ? '+' : ''}
-                      {formatTeeth(amount)}
+                      {formatGatorBucks(amount)}
                     </span>
                   </div>
                 );

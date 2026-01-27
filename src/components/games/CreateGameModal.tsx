@@ -12,10 +12,12 @@ import {
 } from '@/components/ui/card';
 import { PlayerAvatar } from '@/components/ui/PlayerAvatar';
 import { AlligatorIcon } from '@/components/ui/AlligatorIcon';
+import { AddPlayerModal } from '@/components/players/AddPlayerModal';
 import { cn } from '@/lib/utils';
 import { gameTypePillStyles } from '@/lib/design/colors';
-import { Plus, Check, X } from 'lucide-react';
-import type { MockUser, GameType } from '@/types';
+import { createPlayer } from '@/lib/services/players';
+import { Plus } from 'lucide-react';
+import type { MockUser, GameType, CreatePlayerInput } from '@/types';
 
 interface CreateGameModalProps {
   eventId: string;
@@ -73,9 +75,8 @@ export function CreateGameModal({
   const [endHole, setEndHole] = useState(18);
   const [error, setError] = useState<string | null>(null);
 
-  // Add player form state
-  const [showAddPlayer, setShowAddPlayer] = useState(false);
-  const [newPlayerName, setNewPlayerName] = useState('');
+  // Add player modal state
+  const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
   const [addingFor, setAddingFor] = useState<'A' | 'B' | null>(null);
   const [localPlayers, setLocalPlayers] = useState<MockUser[]>(players);
 
@@ -94,32 +95,25 @@ export function CreateGameModal({
     setScoringBasis((prev) => (prev === 'net' ? 'gross' : 'net'));
   };
 
-  // Handle adding a new player
-  const handleAddPlayer = () => {
-    if (!newPlayerName.trim()) return;
+  // Handle adding a new player via modal
+  const handleAddPlayer = async (input: CreatePlayerInput) => {
+    // Create player using the service
+    const { player } = await createPlayer(eventId, input);
 
-    const newPlayer: MockUser = {
-      id: `temp-${Date.now()}`,
-      name: newPlayerName.trim(),
-      email: `${newPlayerName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-      role: 'PLAYER',
-    };
-
-    setLocalPlayers((prev) => [...prev, newPlayer]);
+    setLocalPlayers((prev) => [...prev, player]);
 
     // Auto-select for the appropriate dropdown
     if (addingFor === 'A') {
-      setPlayerAId(newPlayer.id);
+      setPlayerAId(player.id);
     } else if (addingFor === 'B') {
-      setPlayerBId(newPlayer.id);
+      setPlayerBId(player.id);
     }
 
     // Notify parent if callback provided
-    onAddPlayer?.(newPlayerName.trim());
+    onAddPlayer?.(input.name);
 
-    // Reset form
-    setNewPlayerName('');
-    setShowAddPlayer(false);
+    // Close modal
+    setShowAddPlayerModal(false);
     setAddingFor(null);
   };
 
@@ -131,7 +125,7 @@ export function CreateGameModal({
     }
 
     if (!Number.isInteger(stake)) {
-      setError('Stake must be an integer (Alligator Teeth)');
+      setError('Stake must be an integer (Gator Bucks)');
       return;
     }
 
@@ -310,7 +304,7 @@ export function CreateGameModal({
                 className="h-10 w-10 shrink-0"
                 onClick={() => {
                   setAddingFor('A');
-                  setShowAddPlayer(true);
+                  setShowAddPlayerModal(true);
                 }}
               >
                 <Plus className="h-4 w-4" />
@@ -347,7 +341,7 @@ export function CreateGameModal({
                 className="h-10 w-10 shrink-0"
                 onClick={() => {
                   setAddingFor('B');
-                  setShowAddPlayer(true);
+                  setShowAddPlayerModal(true);
                 }}
               >
                 <Plus className="h-4 w-4" />
@@ -355,50 +349,15 @@ export function CreateGameModal({
             </div>
           </div>
 
-          {/* Add Player Inline Form */}
-          {showAddPlayer && (
-            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-primary">
-                  Add New Player {addingFor ? `(Player ${addingFor === 'A' ? '1' : '2'})` : ''}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => {
-                    setShowAddPlayer(false);
-                    setNewPlayerName('');
-                    setAddingFor(null);
-                  }}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Player name..."
-                  value={newPlayerName}
-                  onChange={(e) => setNewPlayerName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleAddPlayer();
-                    }
-                  }}
-                  className="flex-1"
-                  autoFocus
-                />
-                <Button
-                  type="button"
-                  onClick={handleAddPlayer}
-                  disabled={!newPlayerName.trim()}
-                  size="sm"
-                >
-                  Add
-                </Button>
-              </div>
-            </div>
+          {/* Add Player Modal */}
+          {showAddPlayerModal && (
+            <AddPlayerModal
+              onSubmit={handleAddPlayer}
+              onClose={() => {
+                setShowAddPlayerModal(false);
+                setAddingFor(null);
+              }}
+            />
           )}
 
           {/* Hole Presets */}

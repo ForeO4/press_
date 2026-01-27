@@ -50,16 +50,16 @@ export function AlligatorIcon({ className, size = 'md' }: AlligatorIconProps) {
 }
 
 /**
- * Alligator teeth display with icon and value
+ * Gator Bucks display with icon and value
  */
-interface TeethDisplayProps {
+interface BucksDisplayProps {
   value: number;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   showLabel?: boolean;
 }
 
-export function TeethDisplay({ value, size = 'md', className, showLabel }: TeethDisplayProps) {
+export function BucksDisplay({ value, size = 'md', className, showLabel }: BucksDisplayProps) {
   const textSizes = {
     sm: 'text-sm',
     md: 'text-base',
@@ -70,7 +70,10 @@ export function TeethDisplay({ value, size = 'md', className, showLabel }: Teeth
     <div className={cn('flex items-center gap-1.5', className)}>
       <AlligatorIcon size={size} className="text-primary" />
       <span className={cn('font-bold', textSizes[size])}>{value}</span>
-      {showLabel && <span className="text-xs text-muted-foreground">teeth</span>}
+      {showLabel && <span className="text-xs text-muted-foreground">bucks</span>}
     </div>
   );
 }
+
+/** @deprecated Use BucksDisplay instead */
+export const TeethDisplay = BucksDisplay;

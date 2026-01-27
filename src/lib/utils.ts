@@ -21,11 +21,14 @@ export function formatDate(date: string | Date): string {
 }
 
 /**
- * Format Alligator Teeth amount
+ * Format Gator Bucks amount
  */
-export function formatTeeth(amount: number): string {
-  return `${amount} Teeth`;
+export function formatGatorBucks(amount: number): string {
+  return `${amount} Bucks`;
 }
+
+/** @deprecated Use formatGatorBucks instead */
+export const formatTeeth = formatGatorBucks;
 
 /**
  * Get initials from name

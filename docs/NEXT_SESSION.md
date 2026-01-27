@@ -1,13 +1,32 @@
-# Next Session - Deployment
+# Next Session - Production Testing
 
-> **Last Updated:** 2025-01-26
-> **Branch:** `feat/fully-baked-press` (default)
-> **Status:** Nassau + Real Handicaps + UI Polish complete, ready for deployment
+> **Last Updated:** 2025-01-27
+> **Branch:** `main`
+> **Status:** Bug fixes completed (commit 5082bfe), build verified passing, ready for production testing
+
+## Session Status
+
+- Bug fixes completed and pushed (commit 5082bfe)
+- Build verified passing
+- Ready for production testing
+
+## Testing Verification Steps
+
+Before proceeding, verify these critical fixes work:
+
+1. **Sign-in button** visible on landing page
+2. **Event creation** works (via RPC)
+3. **Invite button** accessible in event admin
+
+## Testing Documentation
+
+- `docs/MVP_QUICK_TEST.md` - Quick checklist for fast verification
+- `docs/MVP_TESTING_CHECKLIST.md` - Full detailed checklist
 
 ## Session Goals
 
-1. **Deploy to Vercel** - Production deployment
-2. **E3.1 Alligator Teeth** - Full ledger with transaction history
+1. **Production Testing** - Verify all MVP features work
+2. **E3.1 Gator Bucks** - Full ledger with transaction history
 3. **E4.1 Event Feed** - Social posts and comments
 
 ## What's Complete
@@ -62,15 +81,14 @@
 
 ## Immediate Next Tasks
 
-### 1. Deploy to Vercel
-Production deployment checklist:
-- [ ] Configure environment variables
-- [ ] Set up Supabase production project
-- [ ] Enable RLS policies
-- [ ] Test authentication flow
-- [ ] Configure custom domain (optional)
+### 1. Production Testing
+Run through testing checklists to verify MVP features:
+- [ ] Complete `docs/MVP_QUICK_TEST.md` checklist
+- [ ] Verify sign-in, event creation, and invite flows
+- [ ] Test on mobile device
+- [ ] Document any issues found
 
-### 2. E3.1 Alligator Teeth Ledger
+### 2. E3.1 Gator Bucks Ledger
 Full teeth tracking system:
 - Ledger entries with transaction history
 - Balance display per user per event
@@ -115,10 +133,21 @@ const courseHandicap = Math.round(handicapIndex * (slope / 113));
 - user-3: 15.8 index → 18 course handicap
 - user-4: 5.1 index → 6 course handicap
 
+## Backlog Items from Testing
+
+UX improvements identified during MVP testing:
+
+1. **Game types: radio buttons instead of checkboxes** - Single selection
+2. **Gator Bucks input: fix can't delete to 0** - Input validation issue
+3. **Rename "Allowed Game Types" to "Games"** - Simpler label
+4. **Rename "Auto press" to "Game Settings"** - Clearer naming
+5. **Add "Edit" button on review screen** - Allow going back to edit
+6. **Course API integration** - High priority for real course data
+
 ## Backlog Features
 
 Priority order:
-1. **Deploy to Vercel** - Production deployment
+1. **Course API Integration** - Real course data (high priority)
 2. **Player Profile Setup** - Full player onboarding when adding to game
    - Required: Name, email (for auth linking)
    - Handicap: GHIN number (optional), handicap index
@@ -132,7 +161,7 @@ Priority order:
    - Group settings: who can manage, invite players, set defaults
    - Display team names instead of player names in shared views
    - Consider: group handicap calculations, recurring events
-4. **E3.1 Alligator Teeth** - Full ledger with transaction history
+4. **E3.1 Gator Bucks** - Full ledger with transaction history
 5. **E4.1 Event Feed** - Social posts and comments
 6. **Automatic Presses** - Auto-press at 2-down rule
 7. **Tags System** - Game/event tagging for AI synopses

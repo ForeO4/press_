@@ -113,11 +113,18 @@ const courseHandicap = Math.round(handicapIndex * (slope / 113));
 
 Priority order:
 1. **Deploy to Vercel** - Production deployment
-2. **E3.1 Alligator Teeth** - Full ledger with transaction history
-3. **E4.1 Event Feed** - Social posts and comments
-4. **Automatic Presses** - Auto-press at 2-down rule
-5. **Tags System** - Game/event tagging for AI synopses
-6. **E2.3 Skins** - Skins game type
+2. **Player Profile Setup** - Full player onboarding when adding to game
+   - Required: Name, email (for auth linking)
+   - Handicap: GHIN number (optional), handicap index
+   - Optional: Phone number, profile photo
+   - Auto-create handicap profile when player is added
+   - Link to existing user account if email matches
+   - Consider: nickname/display name, home course, tee preference
+3. **E3.1 Alligator Teeth** - Full ledger with transaction history
+4. **E4.1 Event Feed** - Social posts and comments
+5. **Automatic Presses** - Auto-press at 2-down rule
+6. **Tags System** - Game/event tagging for AI synopses
+7. **E2.3 Skins** - Skins game type
 
 ## Quick Start Commands
 

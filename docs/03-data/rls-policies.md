@@ -51,6 +51,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
 | teeth_balances | owner | system | system | never |
 | teeth_ledger | owner | system | never | never |
 | event_posts | member | member | post owner | post owner/admin |
+| event_threads | member | admin+ | - | - |
 | event_messages | member | member | never | admin |
 
 ## Detailed Policies
@@ -196,6 +197,20 @@ CREATE POLICY "share_link_access" ON events
       AND share_links.expires_at > now()
     )
   );
+```
+
+### event_threads
+
+```sql
+-- SELECT: Event members
+CREATE POLICY "threads_select" ON event_threads
+  FOR SELECT
+  USING (is_event_member(event_id));
+
+-- INSERT: Admin or owner (required for rpc_create_event)
+CREATE POLICY "threads_insert" ON event_threads
+  FOR INSERT
+  WITH CHECK (is_event_member(event_id, 'ADMIN'));
 ```
 
 ## Testing Policies

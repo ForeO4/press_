@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Manual Course Input Fallback** - Enter course details manually when API fails
+  - CourseSelector shows "Enter course manually" option on error or empty results
+  - Manual fields: Course Name, Slope Rating (55-155, default 113), Course Rating
+  - Toggle between course search and manual entry
+  - StepCourse accepts either teeSetId or manualCourse data
 - **E2.2 Nassau Game Type** - Front 9 / Back 9 / Overall (3 bets in one)
   - `computeNassauSettlement()` - Computes 3 separate settlements
   - `computeHoleResultsForRange()` - Hole results for specific range
@@ -174,6 +179,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Mock Mode IDs** - Replaced `Date.now()` with `crypto.randomUUID()` for collision-free ID generation
 
 ### Fixed
+- **Event Threads RLS Policy** - Added missing `threads_insert` policy that blocked event creation
+  - Event creation via `rpc_create_event` creates a default "General" thread
+  - Without INSERT policy, thread creation failed silently
+- **Sign-in Button Visibility** - Fixed AuthHeader to show "Select a user" prompt in mock mode when no user selected
 - **Handicap Stroke Calculation** - Fixed to use individual player handicap, not handicap difference
   - Strokes now based on each player's handicap vs hole HCP rating
   - Player gets stroke on hole if: holeHandicap <= playerHandicap

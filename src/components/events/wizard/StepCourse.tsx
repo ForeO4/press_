@@ -1,10 +1,11 @@
 'use client';
 
-import { CourseSelector } from '@/components/courses/CourseSelector';
+import { CourseSelector, ManualCourseData } from '@/components/courses/CourseSelector';
 import { Button } from '@/components/ui/button';
 
 export interface CourseFormData {
   teeSetId: string | undefined;
+  manualCourse?: ManualCourseData;
 }
 
 interface StepCourseProps {
@@ -15,6 +16,12 @@ interface StepCourseProps {
 }
 
 export function StepCourse({ data, onChange, onNext, onBack }: StepCourseProps) {
+  // Can continue if we have a tee set OR valid manual course data
+  const hasValidManualCourse = data.manualCourse &&
+    data.manualCourse.courseName.trim() !== '' &&
+    data.manualCourse.slopeRating > 0;
+  const canContinue = !!data.teeSetId || hasValidManualCourse;
+
   return (
     <div className="space-y-6">
       <div>
@@ -27,7 +34,9 @@ export function StepCourse({ data, onChange, onNext, onBack }: StepCourseProps) 
       <div className="rounded-lg border p-4">
         <CourseSelector
           value={data.teeSetId}
-          onChange={(teeSetId) => onChange({ ...data, teeSetId })}
+          onChange={(teeSetId) => onChange({ ...data, teeSetId, manualCourse: undefined })}
+          manualCourse={data.manualCourse}
+          onManualCourseChange={(manualCourse) => onChange({ ...data, teeSetId: undefined, manualCourse })}
         />
       </div>
 
@@ -49,7 +58,7 @@ export function StepCourse({ data, onChange, onNext, onBack }: StepCourseProps) 
           <Button variant="outline" onClick={onNext}>
             Skip for Now
           </Button>
-          <Button onClick={onNext} disabled={!data.teeSetId}>
+          <Button onClick={onNext} disabled={!canContinue}>
             Continue
           </Button>
         </div>

@@ -478,6 +478,10 @@ CREATE POLICY "threads_select" ON event_threads
   FOR SELECT
   USING (is_event_member(event_id));
 
+CREATE POLICY "threads_insert" ON event_threads
+  FOR INSERT
+  WITH CHECK (is_event_member(event_id, 'ADMIN'));
+
 -- Messages
 CREATE POLICY "messages_select" ON event_messages
   FOR SELECT

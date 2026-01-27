@@ -13,9 +13,18 @@ export function AuthHeader() {
   const user = useCurrentUser();
   const { signOut, loading } = useAuth();
 
-  // Show UserSwitcher in mock mode
+  // Show UserSwitcher in mock mode with indication if no user selected
   if (isMockMode) {
-    return <UserSwitcher />;
+    return (
+      <div className="flex flex-col items-end gap-1">
+        <UserSwitcher />
+        {!user && (
+          <span className="text-xs text-amber-700 font-medium">
+            Select a user above to continue
+          </span>
+        )}
+      </div>
+    );
   }
 
   // Loading state

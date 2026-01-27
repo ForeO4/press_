@@ -185,3 +185,58 @@ Configuration tables:
 - `ui_strings` - Localizable UI text (future i18n)
 
 Related: ADR-005 (Mock Mode must include config seeding)
+
+---
+
+## ADR-009: Local Development Only (No Cloud Deployment)
+
+**Status:** Accepted
+**Date:** 2026-01-27
+**Deciders:** Project Owner
+
+### Context
+We explored deploying Press! to Vercel with Supabase backend for cloud hosting.
+
+### Decision
+Run Press! locally only. No Vercel deployment. No cloud hosting.
+
+### Consequences
+- **Positive:** Full control over environment
+- **Positive:** No deployment complexity or costs
+- **Positive:** Faster iteration during development
+- **Negative:** Not accessible from other devices/users remotely
+
+### How to Run
+```bash
+npm run dev
+```
+App runs at http://localhost:3000
+
+---
+
+## ADR-010: Manual Course Input Fallback
+
+**Status:** Accepted
+**Date:** 2026-01-27
+**Deciders:** Project Owner
+
+### Context
+The course API may fail or return empty results, blocking users from completing event creation. Users need a way to proceed without course data.
+
+### Decision
+Add manual course input option in the CourseSelector component:
+- When course API fails or returns empty, show "Enter course manually" option
+- Manual input fields: Course Name (required), Slope Rating (required, default 113), Course Rating (optional)
+- Toggle between course search and manual entry at any time
+
+### Consequences
+- **Positive:** Users can always complete event creation
+- **Positive:** Graceful degradation when API fails
+- **Positive:** Works offline/without course database
+- **Negative:** Manual entries may have inconsistent data quality
+- **Negative:** No hole-by-hole par information for manual courses
+
+### Implementation
+- `CourseSelector.tsx`: Manual input mode with toggle
+- `StepCourse.tsx`: Accept either teeSetId or manualCourse data
+- Continue button enabled with valid teeSetId OR valid manual course data

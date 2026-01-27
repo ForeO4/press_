@@ -1,12 +1,16 @@
 # Next Session - Production Testing
 
-> **Last Updated:** 2025-01-27
+> **Last Updated:** 2026-01-27
 > **Branch:** `main`
-> **Status:** Bug fixes completed (commit 5082bfe), build verified passing, ready for production testing
+> **Status:** Database schema applied, all bug fixes complete, ready for full MVP testing
 
 ## Session Status
 
-- Bug fixes completed and pushed (commit 5082bfe)
+- Database schema applied to Supabase (31 tables, all RLS policies)
+- Bug fixes completed:
+  - Fix 1: `threads_insert` RLS policy added (unblocks event creation)
+  - Fix 2: Manual course input fallback (when course API fails)
+  - Fix 3: Sign-in button visibility in mock mode
 - Build verified passing
 - Ready for production testing
 
@@ -14,9 +18,10 @@
 
 Before proceeding, verify these critical fixes work:
 
-1. **Sign-in button** visible on landing page
-2. **Event creation** works (via RPC)
-3. **Invite button** accessible in event admin
+1. **Sign-in button** visible on landing page (or "Select user" prompt in mock mode)
+2. **Event creation** works (via RPC with `threads_insert` policy)
+3. **Course selection** - can enter course manually if API fails
+4. **Invite button** accessible in event admin
 
 ## Testing Documentation
 
@@ -142,7 +147,7 @@ UX improvements identified during MVP testing:
 3. **Rename "Allowed Game Types" to "Games"** - Simpler label
 4. **Rename "Auto press" to "Game Settings"** - Clearer naming
 5. **Add "Edit" button on review screen** - Allow going back to edit
-6. **Course API integration** - High priority for real course data
+6. ~~**Course API integration**~~ - Manual input fallback now available
 
 ## Backlog Features
 

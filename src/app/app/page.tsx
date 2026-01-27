@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthHeader } from '@/components/auth/AuthHeader';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { CreateEventModal } from '@/components/events/CreateEventModal';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAppStore } from '@/stores';
 import { getUserEvents } from '@/lib/services/events';
@@ -21,7 +20,6 @@ export default function DashboardPage() {
 
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Fetch events on mount
   useEffect(() => {
@@ -47,13 +45,6 @@ export default function DashboardPage() {
   const userBalance = isMockMode
     ? mockTeethBalances.find((b) => b.userId === mockUser?.id)
     : null;
-
-  const handleEventCreated = () => {
-    // Refresh events list
-    if (user?.id) {
-      getUserEvents(user.id).then(setEvents).catch(console.error);
-    }
-  };
 
   return (
     <main className="min-h-screen bg-background">
@@ -100,9 +91,9 @@ export default function DashboardPage() {
             <h2 className="text-xl font-semibold text-foreground">
               Your Events
             </h2>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
-              Create Event
-            </Button>
+            <Link href="/app/events/new">
+              <Button>Create Event</Button>
+            </Link>
           </div>
 
           {isLoading ? (
@@ -158,11 +149,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <CreateEventModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={handleEventCreated}
-      />
     </main>
   );
 }

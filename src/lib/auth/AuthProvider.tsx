@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { isMockMode } from '@/lib/env/public';
+import { useAppStore } from '@/stores';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(!isMockMode);
+  const setUserProfile = useAppStore((state) => state.setUserProfile);
 
   useEffect(() => {
     if (isMockMode) return;
@@ -31,11 +33,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = createClient();
     if (!supabase) return;
 
+    // Fetch profile for a user
+    const fetchProfile = async (userId: string) => {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('display_name, avatar_url')
+          .eq('id', userId)
+          .single();
+
+        if (profile) {
+          setUserProfile({
+            display_name: profile.display_name,
+          });
+        }
+      } catch (error) {
+        console.error('[AuthProvider] Error fetching profile:', error);
+      }
+    };
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Fetch profile if user is logged in
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      }
     });
 
     // Listen for auth changes
@@ -45,15 +71,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Fetch profile on login, clear on logout
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setUserProfile(null);
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [setUserProfile]);
 
   const signOut = async () => {
     const supabase = createClient();
     if (supabase) {
       await supabase.auth.signOut();
+      setUserProfile(null);
     }
   };
 

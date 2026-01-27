@@ -362,7 +362,8 @@ describe('CreateGameModal', () => {
         btn => btn.querySelector('svg.lucide-plus')
       );
       fireEvent.click(addButtons[0]);
-      expect(screen.getByPlaceholderText('Player name...')).toBeInTheDocument();
+      // AddPlayerModal uses "Full name" placeholder
+      expect(screen.getByPlaceholderText('Full name')).toBeInTheDocument();
     });
   });
 });

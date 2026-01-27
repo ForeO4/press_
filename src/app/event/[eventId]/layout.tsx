@@ -1,18 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AuthHeader } from '@/components/auth/AuthHeader';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { BottomNav } from '@/components/nav/BottomNav';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { InviteModal } from '@/components/events/InviteModal';
 import { cn } from '@/lib/utils';
-import { Settings, Shield } from 'lucide-react';
-
-// Header menu items (Settings, Admin moved here)
-const headerMenuItems = [
-  { name: 'Admin', href: '/admin', icon: Shield },
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
+import { Settings, Shield, UserPlus } from 'lucide-react';
 
 export default function EventLayout({
   children,
@@ -23,6 +20,13 @@ export default function EventLayout({
 }) {
   const pathname = usePathname();
   const baseUrl = `/event/${params.eventId}`;
+  const [showInviteModal, setShowInviteModal] = useState(false);
+
+  // Header menu items
+  const headerMenuItems = [
+    { name: 'Admin', href: '/admin', icon: Shield },
+    { name: 'Settings', href: '/settings', icon: Settings },
+  ];
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -34,6 +38,18 @@ export default function EventLayout({
               Press!
             </Link>
             <div className="flex items-center gap-1">
+              {/* Invite Button */}
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                title="Invite Players"
+              >
+                <UserPlus className="h-5 w-5" />
+              </button>
+
+              {/* Notifications */}
+              <NotificationBell eventId={params.eventId} />
+
               {/* Header navigation items */}
               {headerMenuItems.map((item) => {
                 const href = `${baseUrl}${item.href}`;
@@ -70,6 +86,14 @@ export default function EventLayout({
 
       {/* Bottom Navigation */}
       <BottomNav eventId={params.eventId} />
+
+      {/* Invite Modal */}
+      <InviteModal
+        eventId={params.eventId}
+        eventName="Event"
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+      />
     </div>
   );
 }

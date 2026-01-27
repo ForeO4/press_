@@ -25,20 +25,21 @@ describe('BottomNav', () => {
   });
 
   describe('tab rendering', () => {
-    it('renders all 4 tabs', () => {
+    it('renders all 5 tabs', () => {
       render(<BottomNav eventId="test-event" />);
 
       expect(screen.getByText('Home')).toBeInTheDocument();
-      expect(screen.getByText('Scores')).toBeInTheDocument();
       expect(screen.getByText('Games')).toBeInTheDocument();
-      expect(screen.getByText('Social')).toBeInTheDocument();
+      expect(screen.getByText('Feed')).toBeInTheDocument();
+      expect(screen.getByText('Board')).toBeInTheDocument();
+      expect(screen.getByText('Settle')).toBeInTheDocument();
     });
 
     it('renders correct number of navigation links', () => {
       render(<BottomNav eventId="test-event" />);
 
       const links = screen.getAllByTestId('nav-link');
-      expect(links).toHaveLength(4);
+      expect(links).toHaveLength(5);
     });
   });
 
@@ -50,13 +51,6 @@ describe('BottomNav', () => {
       expect(homeLink).toHaveAttribute('href', '/event/test-event');
     });
 
-    it('Scores tab links to scorecard', () => {
-      render(<BottomNav eventId="test-event" />);
-
-      const scoresLink = screen.getByText('Scores').closest('a');
-      expect(scoresLink).toHaveAttribute('href', '/event/test-event/scorecard');
-    });
-
     it('Games tab links to games', () => {
       render(<BottomNav eventId="test-event" />);
 
@@ -64,11 +58,25 @@ describe('BottomNav', () => {
       expect(gamesLink).toHaveAttribute('href', '/event/test-event/games');
     });
 
-    it('Social tab links to chat', () => {
+    it('Feed tab links to feed', () => {
       render(<BottomNav eventId="test-event" />);
 
-      const socialLink = screen.getByText('Social').closest('a');
-      expect(socialLink).toHaveAttribute('href', '/event/test-event/chat');
+      const feedLink = screen.getByText('Feed').closest('a');
+      expect(feedLink).toHaveAttribute('href', '/event/test-event/feed');
+    });
+
+    it('Board tab links to leaderboard', () => {
+      render(<BottomNav eventId="test-event" />);
+
+      const boardLink = screen.getByText('Board').closest('a');
+      expect(boardLink).toHaveAttribute('href', '/event/test-event/leaderboard');
+    });
+
+    it('Settle tab links to settlement', () => {
+      render(<BottomNav eventId="test-event" />);
+
+      const settleLink = screen.getByText('Settle').closest('a');
+      expect(settleLink).toHaveAttribute('href', '/event/test-event/settlement');
     });
   });
 
@@ -81,14 +89,6 @@ describe('BottomNav', () => {
       expect(homeLink).toHaveClass('text-primary');
     });
 
-    it('highlights Scores tab when on scorecard path', () => {
-      vi.mocked(usePathname).mockReturnValue('/event/test-event/scorecard');
-      render(<BottomNav eventId="test-event" />);
-
-      const scoresLink = screen.getByText('Scores').closest('a');
-      expect(scoresLink).toHaveClass('text-primary');
-    });
-
     it('highlights Games tab when on games path', () => {
       vi.mocked(usePathname).mockReturnValue('/event/test-event/games');
       render(<BottomNav eventId="test-event" />);
@@ -97,20 +97,36 @@ describe('BottomNav', () => {
       expect(gamesLink).toHaveClass('text-primary');
     });
 
-    it('highlights Social tab when on chat path', () => {
-      vi.mocked(usePathname).mockReturnValue('/event/test-event/chat');
+    it('highlights Feed tab when on feed path', () => {
+      vi.mocked(usePathname).mockReturnValue('/event/test-event/feed');
       render(<BottomNav eventId="test-event" />);
 
-      const socialLink = screen.getByText('Social').closest('a');
-      expect(socialLink).toHaveClass('text-primary');
+      const feedLink = screen.getByText('Feed').closest('a');
+      expect(feedLink).toHaveClass('text-primary');
+    });
+
+    it('highlights Board tab when on leaderboard path', () => {
+      vi.mocked(usePathname).mockReturnValue('/event/test-event/leaderboard');
+      render(<BottomNav eventId="test-event" />);
+
+      const boardLink = screen.getByText('Board').closest('a');
+      expect(boardLink).toHaveClass('text-primary');
+    });
+
+    it('highlights Settle tab when on settlement path', () => {
+      vi.mocked(usePathname).mockReturnValue('/event/test-event/settlement');
+      render(<BottomNav eventId="test-event" />);
+
+      const settleLink = screen.getByText('Settle').closest('a');
+      expect(settleLink).toHaveClass('text-primary');
     });
 
     it('inactive tabs have muted color', () => {
       vi.mocked(usePathname).mockReturnValue('/event/test-event');
       render(<BottomNav eventId="test-event" />);
 
-      const scoresLink = screen.getByText('Scores').closest('a');
-      expect(scoresLink).toHaveClass('text-muted-foreground');
+      const gamesLink = screen.getByText('Games').closest('a');
+      expect(gamesLink).toHaveClass('text-muted-foreground');
     });
   });
 

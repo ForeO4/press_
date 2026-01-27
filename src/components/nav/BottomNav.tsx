@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Flag, LayoutGrid, MessageCircle, Wallet } from 'lucide-react';
+import { Flag, MessageCircle, Wallet, Trophy } from 'lucide-react';
 import { GolfClubsIcon } from '@/components/ui/GolfClubsIcon';
 
 interface NavTab {
@@ -16,6 +16,7 @@ const tabs: NavTab[] = [
   { name: 'Home', href: '', icon: Flag },
   { name: 'Games', href: '/games', icon: GolfClubsIcon },
   { name: 'Feed', href: '/feed', icon: MessageCircle },
+  { name: 'Board', href: '/leaderboard', icon: Trophy },
   { name: 'Settle', href: '/settlement', icon: Wallet },
 ];
 

@@ -17,20 +17,30 @@ export default function HomePage() {
         <div className="text-center">
           <h1 className="mb-4 text-5xl font-bold text-primary">Press!</h1>
           <p className="mb-8 text-xl text-muted-foreground">
-            Golf event games made fun with Alligator Teeth
+            Golf event games made fun with Gator Bucks
           </p>
-          <div className="flex justify-center gap-4">
-            <Link href="/app">
-              <Button size="lg">Get Started</Button>
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link href="/event/demo-event">
+              <Button size="lg">Event Home</Button>
             </Link>
-            <Link href="/event/demo-event/scorecard">
+            <Link href="/event/demo-event/games">
               <Button size="lg" variant="secondary">
-                Try Demo
+                Games
               </Button>
             </Link>
-            <Link href="/docs">
+            <Link href="/event/demo-event/feed">
+              <Button size="lg" variant="secondary">
+                Feed
+              </Button>
+            </Link>
+            <Link href="/event/demo-event/admin">
+              <Button size="lg" variant="secondary">
+                Admin
+              </Button>
+            </Link>
+            <Link href="/event/demo-event/settlement">
               <Button size="lg" variant="outline">
-                Documentation
+                Settlement
               </Button>
             </Link>
           </div>
@@ -67,7 +77,7 @@ export default function HomePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Alligator Teeth</CardTitle>
+              <CardTitle>Gator Bucks</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
@@ -79,15 +89,15 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* About Alligator Teeth */}
+      {/* About Gator Bucks */}
       <div className="container mx-auto px-4 py-16">
         <Card className="mx-auto max-w-2xl">
           <CardHeader>
-            <CardTitle className="text-center">What are Alligator Teeth?</CardTitle>
+            <CardTitle className="text-center">What are Gator Bucks?</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
             <p className="mb-4 text-muted-foreground">
-              Alligator Teeth are Press!&apos;s fun currency for betting-style games.
+              Gator Bucks are Press!&apos;s fun currency for betting-style games.
               They&apos;re integers only, event-scoped, and have absolutely no cash value.
             </p>
             <p className="text-sm text-muted-foreground">
@@ -102,7 +112,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           <p>Press! - Golf event games made fun</p>
           <p className="mt-2">
-            Alligator Teeth are for fun and have no cash value.
+            Gator Bucks are for fun and have no cash value.
           </p>
         </div>
       </footer>

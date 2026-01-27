@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Augusta Green & Gold Theme** - Premium scorecard color scheme
+  - Player A: Emerald (forest green) - `emerald-700` light / `emerald-400` dark
+  - Player B: Amber (gold) - `amber-700` light / `amber-400` dark
+  - Match status colors: Emerald when A leads, amber when B leads
+  - Winner highlights: Golden circle with amber ring and background
+  - Section headers: Emerald gradient backgrounds for Front 9/Back 9
+  - Press rows: Amber gradient with flame icon
+  - Full light/dark mode support throughout
 - **UI/UX Fixes Round 4** - Scorecard enhancements based on user testing
   - **Handicap Stroke Dots** - Visual indicators (pops) on holes where player gets strokes
     - Dots appear in top-right corner of each relevant score cell
@@ -144,6 +152,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Mock Mode IDs** - Replaced `Date.now()` with `crypto.randomUUID()` for collision-free ID generation
 
 ### Fixed
+- **Handicap Stroke Calculation** - Fixed to use individual player handicap, not handicap difference
+  - Strokes now based on each player's handicap vs hole HCP rating
+  - Player gets stroke on hole if: holeHandicap <= playerHandicap
+- **Score Box Width Consistency** - Fixed width variations in scorecard cells
+- **Light/Dark Mode Colors** - Improved color contrast and visibility in both modes
 - **Demo Mode with Supabase** - Demo events now work even when Supabase is configured
 - **Dark Theme System Detection** - Theme toggle now uses `resolvedTheme` instead of `theme` to properly detect system dark mode preference
 - **Docs Page Dark Mode** - Added dark mode classes to documentation page background, header, and info box

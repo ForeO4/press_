@@ -42,13 +42,13 @@
 | Event visibility controls | Complete ✅ |
 
 ### E1.3: Scoring
-**Priority:** P0 | **Status:** Not Started
+**Priority:** P0 | **Status:** Complete ✅
 
 | Feature | Status |
 |---------|--------|
-| 18-hole scorecard | Not Started |
-| Multi-player grid view | Not Started |
-| Real-time score sync | Not Started |
+| 18-hole scorecard | Complete ✅ |
+| Multi-player grid view | Complete ✅ |
+| Real-time score sync | Complete ✅ |
 | Leaderboard | Not Started |
 
 ---
@@ -56,13 +56,13 @@
 ## E2: Games
 
 ### E2.1: Match Play
-**Priority:** P0 | **Status:** Not Started
+**Priority:** P0 | **Status:** Complete ✅
 
 | Feature | Status |
 |---------|--------|
-| Head-to-head match tracking | Not Started |
-| Hole-by-hole results | Not Started |
-| Net position display | Not Started |
+| Head-to-head match tracking | Complete ✅ |
+| Hole-by-hole results | Complete ✅ |
+| Net position display | Complete ✅ |
 
 ### E2.2: Nassau
 **Priority:** P0 | **Status:** Not Started
@@ -82,12 +82,12 @@
 | Skin distribution | Not Started |
 
 ### E2.4: Presses
-**Priority:** P0 | **Status:** Not Started
+**Priority:** P0 | **Status:** In Progress
 
 | Feature | Status |
 |---------|--------|
-| Mid-game press creation | Not Started |
-| Parent-child game hierarchy | Not Started |
+| Mid-game press creation | Complete ✅ |
+| Parent-child game hierarchy | Complete ✅ |
 | Press rules configuration | Not Started |
 
 ---
@@ -198,7 +198,8 @@
 
 | Priority | Epics | Status |
 |----------|-------|--------|
-| P0 | E1.1, E1.2 | Complete ✅ |
-| P0 | E1.3, E2.1, E2.2, E2.4, E3.1, E3.2 | Not Started |
+| P0 | E1.1, E1.2, E1.3, E2.1 | Complete ✅ |
+| P0 | E2.4 | In Progress |
+| P0 | E2.2, E3.1, E3.2 | Not Started |
 | P1 | E2.3, E4.1, E4.2, E4.3, E5.1, E6.1 | Not Started |
 | P2 | E5.2, E6.2 | Not Started |

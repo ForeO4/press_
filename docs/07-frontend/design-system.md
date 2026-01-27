@@ -148,6 +148,48 @@ bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/80
 - Tied (All Square): `text-amber-400`
 - Not started: `text-muted-foreground`
 
+## Scorecard Theme (Augusta Green & Gold)
+
+The scorecard uses an Augusta National-inspired color scheme with emerald (forest green) and amber (gold) as the primary accent colors. This provides a premium golf aesthetic while maintaining clear visual distinction between players.
+
+### Player Colors
+
+| Player | Light Mode | Dark Mode | Usage |
+|--------|------------|-----------|-------|
+| Player A | `emerald-700` | `emerald-400` | Player A names, scores, indicators |
+| Player B | `amber-700` | `amber-400` | Player B names, scores, indicators |
+
+### Match Status Colors
+
+| Condition | Color | Usage |
+|-----------|-------|-------|
+| Player A leads | Emerald | Match status text, header gradient |
+| Player B leads | Amber | Match status text, header gradient |
+| All Square | Gray | Neutral state |
+
+### Winner Highlights
+
+- **Winner score cells**: `ring-2 ring-amber-400` with `bg-amber-400/20` background
+- Creates a "golden circle" effect around winning scores each hole
+
+### Section Headers
+
+- **Front 9 / Back 9 headers**: Emerald gradient background (`bg-emerald-900/50` dark, `bg-emerald-100` light)
+- Provides visual separation between scorecard sections
+
+### Press Rows
+
+- **Press game rows**: Amber gradient with flame icon
+- Background: `from-amber-900/30 via-orange-900/20 to-background` (dark mode)
+- Icon: Flame emoji or Lucide Flame in amber/orange
+
+### Light/Dark Mode Support
+
+All Augusta theme colors have light and dark variants:
+- Light mode uses `-700` shades for sufficient contrast
+- Dark mode uses `-400` shades for visibility on dark backgrounds
+- Background colors adjust opacity for each mode
+
 ## Avatar Colors
 
 PlayerAvatar uses cycling colors for visual distinction:

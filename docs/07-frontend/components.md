@@ -388,7 +388,7 @@ interface GameDetailHeaderProps {
 
 ### GameScorecard
 
-Mini 2-player scorecard for game detail view with inline editing support.
+Mini 2-player scorecard for game detail view with inline editing support. Uses the **Augusta Green & Gold** theme for a premium golf aesthetic.
 
 ```tsx
 interface GameScorecardProps {
@@ -407,18 +407,26 @@ interface GameScorecardProps {
 ```
 
 **Features:**
-- Front 9 and Back 9 sections
+- Front 9 and Back 9 sections with **emerald gradient headers**
 - Par row with totals
 - **HCP row** showing hole handicaps (renamed from SI/Stroke Index)
 - Player score rows with par-relative coloring (eagle, birdie, par, bogey, double+)
-- **Golden circle** (ring-2 ring-amber-400) around winning scores for each hole
+- **Golden circle** (`ring-2 ring-amber-400 bg-amber-400/20`) around winning scores for each hole
 - **Winner row** showing cumulative +/- status (+1, AS, -2) from Player A's POV
-- **Press rows** (Press 1, Press 2) showing cumulative status starting at initiation hole
+- **Press rows** (Press 1, Press 2) with amber gradient and flame icon, starting at initiation hole
 - Grayed out holes outside game's range
 - Total scores summary
 - **Inline Score Editing** - Tap any score cell to open ScoreEditorSheet
 - Hover states indicate clickable cells
 - **Visible by default** (not hidden behind toggle)
+
+**Augusta Theme Colors:**
+- Player A: Emerald (`emerald-700` light / `emerald-400` dark)
+- Player B: Amber (`amber-700` light / `amber-400` dark)
+- Match status: Emerald when A leads, amber when B leads
+- Section headers: Emerald gradient backgrounds
+- Press rows: Amber gradient with flame icon
+- Full light/dark mode support
 
 ### HoleResultRow
 

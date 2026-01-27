@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2025-01-26
 > **Branch:** `feat/fully-baked-press` (default)
-> **Status:** UI/UX Round 4 complete, ready for deployment
+> **Status:** Augusta theme complete, documentation updated, ready for deployment
 
 ## Session Goals
 
@@ -16,6 +16,8 @@
 - E1.1 Authentication (Supabase Auth)
 - E1.2 Event Management (CRUD)
 - E1.3 Scoring (mobile scorecard, realtime sync)
+- E2.1 Match Play (hole-by-hole tracking)
+- E2.4 Presses (basic press working)
 - Dark theme support
 - Demo mode (works with Supabase configured)
 
@@ -26,14 +28,20 @@
 - Press creation flow with 1x-4x multipliers
 - **Game Detail Page** with full scorecard
 
-### Scorecard Features (Round 4)
+### Scorecard Features (Augusta Theme)
+- **Augusta Green & Gold theme** - Premium golf aesthetic
+  - Player A: Emerald (forest green)
+  - Player B: Amber (gold)
+  - Emerald/amber status colors based on who leads
+  - Golden circle winner highlights
+  - Emerald section headers, amber press rows
 - **Handicap stroke dots** (pops) on relevant holes
 - **Gross/net score display** (e.g., "5/4")
 - **Player handicaps** shown next to names
 - **Yardage row** in scorecard header
 - **Match Stats box** with status, holes won, summary
-- Golden circle on winning scores
 - Press rows for child games
+- Full light/dark mode support
 
 ## Immediate Next Tasks
 
@@ -91,11 +99,12 @@ const playerAGetsStrokes = playerAHandicap > playerBHandicap;
 
 Priority order:
 1. **Deploy to Vercel** - Production deployment
-2. **E2.2 Nassau** - Front/back/total bets
+2. **E2.2 Nassau** - Front/back/total bets (3 settlements per game)
 3. **Real Handicaps** - User profile handicaps
-4. **E2.4 Presses** - Multiple presses per game
-5. **E3.1 Alligator Teeth** - Full ledger system
-6. **Tags System** - Game/event tagging for AI synopses
+4. **E3.1 Alligator Teeth** - Full ledger with transaction history
+5. **E4.1 Event Feed** - Social posts and comments
+6. **Automatic Presses** - Auto-press at 2-down rule
+7. **Tags System** - Game/event tagging for AI synopses
 
 ## Quick Start Commands
 

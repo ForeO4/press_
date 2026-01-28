@@ -1,0 +1,483 @@
+{
+  "vectors": [
+    {
+      "id": "match-play-singles-net-4and3",
+      "description": "2-player net match play ending 4&3 with handicap dots",
+      "round": {
+        "tee": {
+          "par": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4, "10": 4, "11": 3, "12": 5, "13": 4, "14": 4, "15": 3, "16": 5, "17": 4, "18": 4 },
+          "strokeIndex": { "1": 7, "2": 15, "3": 3, "4": 11, "5": 1, "6": 17, "7": 5, "8": 9, "9": 13, "10": 8, "11": 16, "12": 4, "13": 12, "14": 2, "15": 18, "16": 6, "17": 10, "18": 14 }
+        },
+        "players": [
+          { "id": "blake", "name": "Blake", "courseHandicap": 12 },
+          { "id": "mike", "name": "Mike", "courseHandicap": 6 }
+        ],
+        "grossStrokes": {
+          "blake": { "1": 5, "2": 4, "3": 6, "4": 5, "5": 5, "6": 3, "7": 6, "8": 5, "9": 5, "10": 5, "11": 3, "12": 6, "13": 5, "14": 5, "15": 4, "16": 6, "17": 5 },
+          "mike": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 5, "6": 3, "7": 5, "8": 5, "9": 4, "10": 4, "11": 4, "12": 5, "13": 4, "14": 5, "15": 3, "16": 5, "17": 4 }
+        },
+        "meta": { "holesPlanned": 18 }
+      },
+      "contests": [
+        {
+          "contestId": "mp-1",
+          "name": "Match Play",
+          "type": "match_play_singles",
+          "scoringBasis": "net",
+          "participants": ["blake", "mike"],
+          "stakesConfig": { "unit": 5, "payoutFormat": "per_hole" },
+          "handicapConfig": { "basis": "net", "useRelativeHandicap": true, "allowBelow1": false }
+        }
+      ],
+      "expected": {
+        "mp-1": {
+          "summary": {
+            "contestId": "mp-1",
+            "type": "match_play_singles",
+            "status": "final",
+            "thruHole": 17
+          },
+          "standings": {
+            "type": "match_play",
+            "winner": "mike",
+            "result": "4&3"
+          },
+          "settlement": {
+            "totalAmount": 20,
+            "winner": "mike",
+            "loser": "blake"
+          }
+        }
+      }
+    },
+    {
+      "id": "skins-gross-carryovers",
+      "description": "4-player gross skins with 2 carryovers",
+      "round": {
+        "tee": {
+          "par": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4 },
+          "strokeIndex": { "1": 7, "2": 5, "3": 1, "4": 3, "5": 9, "6": 8, "7": 2, "8": 6, "9": 4 }
+        },
+        "players": [
+          { "id": "p1", "name": "Player 1" },
+          { "id": "p2", "name": "Player 2" },
+          { "id": "p3", "name": "Player 3" },
+          { "id": "p4", "name": "Player 4" }
+        ],
+        "grossStrokes": {
+          "p1": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 5 },
+          "p2": { "1": 4, "2": 4, "3": 6, "4": 5, "5": 4, "6": 2, "7": 5, "8": 5, "9": 4 },
+          "p3": { "1": 5, "2": 3, "3": 6, "4": 4, "5": 5, "6": 3, "7": 6, "8": 4, "9": 4 },
+          "p4": { "1": 5, "2": 4, "3": 6, "4": 5, "5": 4, "6": 3, "7": 5, "8": 5, "9": 5 }
+        },
+        "meta": { "holesPlanned": 9 }
+      },
+      "contests": [
+        {
+          "contestId": "skins-1",
+          "name": "Skins",
+          "type": "skins",
+          "scoringBasis": "gross",
+          "participants": ["p1", "p2", "p3", "p4"],
+          "stakesConfig": { "unit": 2, "payoutFormat": "per_skin" },
+          "handicapConfig": { "basis": "gross", "useRelativeHandicap": false },
+          "options": { "carryoverRules": { "enabled": true } }
+        }
+      ],
+      "expected": {
+        "skins-1": {
+          "summary": {
+            "contestId": "skins-1",
+            "type": "skins",
+            "status": "final",
+            "thruHole": 9
+          },
+          "standings": {
+            "type": "skins",
+            "skinResults": [
+              { "hole": 1, "winner": null, "carryover": true },
+              { "hole": 2, "winner": null, "carryover": true },
+              { "hole": 3, "winner": "p1", "skinsWon": 3 },
+              { "hole": 4, "winner": null, "carryover": true },
+              { "hole": 5, "winner": null, "carryover": true },
+              { "hole": 6, "winner": "p2", "skinsWon": 3 },
+              { "hole": 7, "winner": null, "carryover": true },
+              { "hole": 8, "winner": null, "carryover": true },
+              { "hole": 9, "winner": null, "carryover": true }
+            ],
+            "totalSkinsWon": 6,
+            "carryoverSkins": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "nassau-2v2-with-presses",
+      "description": "4-player 2v2 Nassau with 2 presses",
+      "round": {
+        "tee": {
+          "par": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4, "10": 4, "11": 3, "12": 5, "13": 4, "14": 4, "15": 3, "16": 5, "17": 4, "18": 4 },
+          "strokeIndex": { "1": 7, "2": 15, "3": 3, "4": 11, "5": 1, "6": 17, "7": 5, "8": 9, "9": 13, "10": 8, "11": 16, "12": 4, "13": 12, "14": 2, "15": 18, "16": 6, "17": 10, "18": 14 }
+        },
+        "players": [
+          { "id": "a1", "name": "Team A - Player 1", "courseHandicap": 10 },
+          { "id": "a2", "name": "Team A - Player 2", "courseHandicap": 14 },
+          { "id": "b1", "name": "Team B - Player 1", "courseHandicap": 8 },
+          { "id": "b2", "name": "Team B - Player 2", "courseHandicap": 12 }
+        ],
+        "grossStrokes": {
+          "a1": { "1": 5, "2": 4, "3": 6, "4": 5, "5": 5, "6": 4, "7": 6, "8": 5, "9": 5, "10": 5, "11": 4, "12": 6, "13": 5, "14": 5, "15": 4, "16": 6, "17": 5, "18": 5 },
+          "a2": { "1": 6, "2": 4, "3": 7, "4": 5, "5": 6, "6": 4, "7": 6, "8": 5, "9": 5, "10": 5, "11": 4, "12": 6, "13": 5, "14": 6, "15": 4, "16": 6, "17": 5, "18": 5 },
+          "b1": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 5, "6": 3, "7": 5, "8": 4, "9": 4, "10": 4, "11": 3, "12": 5, "13": 4, "14": 5, "15": 3, "16": 5, "17": 4, "18": 4 },
+          "b2": { "1": 5, "2": 4, "3": 6, "4": 5, "5": 5, "6": 4, "7": 6, "8": 5, "9": 5, "10": 5, "11": 4, "12": 6, "13": 5, "14": 5, "15": 4, "16": 6, "17": 5, "18": 5 }
+        },
+        "meta": {
+          "holesPlanned": 18,
+          "events": {
+            "presses": [
+              { "pressId": "press-1", "parentSegment": "front", "initiatedOnHole": 5, "stake": 5 },
+              { "pressId": "press-2", "parentSegment": "back", "initiatedOnHole": 14, "stake": 5 }
+            ]
+          }
+        }
+      },
+      "contests": [
+        {
+          "contestId": "nassau-1",
+          "name": "Nassau",
+          "type": "nassau",
+          "scoringBasis": "net",
+          "participants": [
+            { "id": "team-a", "name": "Team A", "playerIds": ["a1", "a2"] },
+            { "id": "team-b", "name": "Team B", "playerIds": ["b1", "b2"] }
+          ],
+          "stakesConfig": { "unit": 5, "payoutFormat": "per_hole" },
+          "handicapConfig": { "basis": "net", "useRelativeHandicap": true }
+        }
+      ],
+      "expected": {
+        "nassau-1": {
+          "summary": {
+            "contestId": "nassau-1",
+            "type": "nassau",
+            "status": "final"
+          },
+          "standings": {
+            "type": "nassau",
+            "segments": ["front", "back", "total"],
+            "pressCount": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "bestball-stroke-2v2",
+      "description": "2v2 best ball stroke play with 3 sample holes and audit",
+      "round": {
+        "tee": {
+          "par": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4, "10": 4, "11": 3, "12": 5, "13": 4, "14": 4, "15": 3, "16": 5, "17": 4, "18": 4 },
+          "strokeIndex": { "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7, "8": 8, "9": 9, "10": 10, "11": 11, "12": 12, "13": 13, "14": 14, "15": 15, "16": 16, "17": 17, "18": 18 }
+        },
+        "players": [
+          { "id": "a1", "name": "Alice", "courseHandicap": 10 },
+          { "id": "a2", "name": "Andy", "courseHandicap": 14 },
+          { "id": "b1", "name": "Bob", "courseHandicap": 8 },
+          { "id": "b2", "name": "Betty", "courseHandicap": 12 }
+        ],
+        "grossStrokes": {
+          "a1": { "1": 5, "2": 4, "3": 6 },
+          "a2": { "1": 6, "2": 3, "3": 7 },
+          "b1": { "1": 4, "2": 3, "3": 5 },
+          "b2": { "1": 5, "2": 4, "3": 6 }
+        },
+        "meta": { "holesPlanned": 18 }
+      },
+      "contests": [
+        {
+          "contestId": "bbs-1",
+          "name": "Best Ball Stroke",
+          "type": "bestball_stroke",
+          "scoringBasis": "net",
+          "participants": [
+            { "id": "team-a", "name": "Team A", "playerIds": ["a1", "a2"] },
+            { "id": "team-b", "name": "Team B", "playerIds": ["b1", "b2"] }
+          ],
+          "stakesConfig": { "unit": 10 },
+          "handicapConfig": { "basis": "net", "useRelativeHandicap": true }
+        }
+      ],
+      "expected": {
+        "bbs-1": {
+          "summary": {
+            "contestId": "bbs-1",
+            "type": "bestball_stroke",
+            "status": "live",
+            "thruHole": 3
+          },
+          "standings": {
+            "type": "stroke_play"
+          },
+          "audit": {
+            "holeCount": 3,
+            "hasCountedPlayerInfo": true
+          }
+        }
+      }
+    },
+    {
+      "id": "stableford-with-ties",
+      "description": "Stableford with ties (2 players tied for first)",
+      "round": {
+        "tee": {
+          "par": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4 },
+          "strokeIndex": { "1": 7, "2": 5, "3": 1, "4": 3, "5": 9, "6": 8, "7": 2, "8": 6, "9": 4 }
+        },
+        "players": [
+          { "id": "p1", "name": "Player 1", "courseHandicap": 10 },
+          { "id": "p2", "name": "Player 2", "courseHandicap": 12 },
+          { "id": "p3", "name": "Player 3", "courseHandicap": 8 }
+        ],
+        "grossStrokes": {
+          "p1": { "1": 4, "2": 3, "3": 6, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4 },
+          "p2": { "1": 5, "2": 4, "3": 6, "4": 5, "5": 5, "6": 3, "7": 6, "8": 5, "9": 4 },
+          "p3": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4 }
+        },
+        "meta": { "holesPlanned": 9 }
+      },
+      "contests": [
+        {
+          "contestId": "stab-1",
+          "name": "Stableford",
+          "type": "stableford",
+          "scoringBasis": "net",
+          "participants": ["p1", "p2", "p3"],
+          "stakesConfig": { "unit": 5 },
+          "handicapConfig": { "basis": "net", "useRelativeHandicap": false }
+        }
+      ],
+      "expected": {
+        "stab-1": {
+          "summary": {
+            "contestId": "stab-1",
+            "type": "stableford",
+            "status": "final",
+            "thruHole": 9
+          },
+          "standings": {
+            "type": "stableford",
+            "hasTies": true
+          }
+        }
+      }
+    },
+    {
+      "id": "9-hole-match-skins",
+      "description": "9-hole match play and skins variants",
+      "round": {
+        "tee": {
+          "par": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4 },
+          "strokeIndex": { "1": 7, "2": 5, "3": 1, "4": 3, "5": 9, "6": 8, "7": 2, "8": 6, "9": 4 }
+        },
+        "players": [
+          { "id": "blake", "name": "Blake", "courseHandicap": 10 },
+          { "id": "mike", "name": "Mike", "courseHandicap": 6 }
+        ],
+        "grossStrokes": {
+          "blake": { "1": 5, "2": 4, "3": 6, "4": 5, "5": 5, "6": 3, "7": 6, "8": 5, "9": 5 },
+          "mike": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 5, "6": 3, "7": 5, "8": 5, "9": 4 }
+        },
+        "meta": { "holesPlanned": 9 }
+      },
+      "contests": [
+        {
+          "contestId": "mp-9",
+          "name": "9-Hole Match Play",
+          "type": "match_play_singles",
+          "scoringBasis": "net",
+          "participants": ["blake", "mike"],
+          "stakesConfig": { "unit": 5 },
+          "handicapConfig": { "basis": "net", "useRelativeHandicap": true }
+        },
+        {
+          "contestId": "skins-9",
+          "name": "9-Hole Skins",
+          "type": "skins",
+          "scoringBasis": "net",
+          "participants": ["blake", "mike"],
+          "stakesConfig": { "unit": 2, "payoutFormat": "per_skin" },
+          "handicapConfig": { "basis": "net", "useRelativeHandicap": true },
+          "options": { "carryoverRules": { "enabled": true } }
+        }
+      ],
+      "expected": {
+        "mp-9": {
+          "summary": {
+            "contestId": "mp-9",
+            "type": "match_play_singles",
+            "status": "final",
+            "thruHole": 9
+          },
+          "standings": {
+            "type": "match_play"
+          }
+        },
+        "skins-9": {
+          "summary": {
+            "contestId": "skins-9",
+            "type": "skins",
+            "status": "final",
+            "thruHole": 9
+          },
+          "standings": {
+            "type": "skins"
+          }
+        }
+      }
+    },
+    {
+      "id": "side-pots-ctp-longdrive",
+      "description": "CTP and Long Drive side pots with events",
+      "round": {
+        "tee": {
+          "par": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4 },
+          "strokeIndex": { "1": 7, "2": 5, "3": 1, "4": 3, "5": 9, "6": 8, "7": 2, "8": 6, "9": 4 }
+        },
+        "players": [
+          { "id": "p1", "name": "Player 1" },
+          { "id": "p2", "name": "Player 2" },
+          { "id": "p3", "name": "Player 3" },
+          { "id": "p4", "name": "Player 4" }
+        ],
+        "grossStrokes": {
+          "p1": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4 },
+          "p2": { "1": 5, "2": 4, "3": 6, "4": 5, "5": 5, "6": 4, "7": 6, "8": 5, "9": 5 },
+          "p3": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4 },
+          "p4": { "1": 5, "2": 4, "3": 6, "4": 5, "5": 5, "6": 4, "7": 6, "8": 5, "9": 5 }
+        },
+        "meta": {
+          "holesPlanned": 9,
+          "events": {
+            "ctp": [
+              { "hole": 2, "winnerPlayerId": "p1", "distanceFt": 8.5 },
+              { "hole": 6, "winnerPlayerId": "p3", "distanceFt": 12.2 }
+            ],
+            "longDrive": [
+              { "hole": 3, "winnerPlayerId": "p2", "distanceYds": 285 },
+              { "hole": 7, "winnerPlayerId": "p1", "distanceYds": 290 }
+            ]
+          }
+        }
+      },
+      "contests": [
+        {
+          "contestId": "ctp-1",
+          "name": "Closest to Pin",
+          "type": "ctp",
+          "scoringBasis": "gross",
+          "participants": ["p1", "p2", "p3", "p4"],
+          "stakesConfig": { "unit": 5 },
+          "handicapConfig": { "basis": "gross" },
+          "options": { "designatedHoles": [2, 6] }
+        },
+        {
+          "contestId": "ld-1",
+          "name": "Long Drive",
+          "type": "long_drive",
+          "scoringBasis": "gross",
+          "participants": ["p1", "p2", "p3", "p4"],
+          "stakesConfig": { "unit": 5 },
+          "handicapConfig": { "basis": "gross" },
+          "options": { "designatedHoles": [3, 7] }
+        }
+      ],
+      "expected": {
+        "ctp-1": {
+          "summary": {
+            "contestId": "ctp-1",
+            "type": "ctp",
+            "status": "final"
+          },
+          "standings": {
+            "type": "side_pot",
+            "potType": "ctp",
+            "holeResultCount": 2
+          }
+        },
+        "ld-1": {
+          "summary": {
+            "contestId": "ld-1",
+            "type": "long_drive",
+            "status": "final"
+          },
+          "standings": {
+            "type": "side_pot",
+            "potType": "long_drive",
+            "holeResultCount": 2
+          }
+        }
+      }
+    },
+    {
+      "id": "snake-three-putts",
+      "description": "Snake side pot tracking three-putts",
+      "round": {
+        "tee": {
+          "par": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 4 },
+          "strokeIndex": { "1": 7, "2": 5, "3": 1, "4": 3, "5": 9, "6": 8, "7": 2, "8": 6, "9": 4 }
+        },
+        "players": [
+          { "id": "p1", "name": "Player 1" },
+          { "id": "p2", "name": "Player 2" },
+          { "id": "p3", "name": "Player 3" },
+          { "id": "p4", "name": "Player 4" }
+        ],
+        "grossStrokes": {
+          "p1": { "1": 5, "2": 4, "3": 6, "4": 5, "5": 5, "6": 3, "7": 6, "8": 5, "9": 5 },
+          "p2": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 5, "6": 3, "7": 5, "8": 4, "9": 4 },
+          "p3": { "1": 5, "2": 4, "3": 6, "4": 5, "5": 4, "6": 4, "7": 6, "8": 5, "9": 5 },
+          "p4": { "1": 4, "2": 3, "3": 5, "4": 4, "5": 4, "6": 3, "7": 5, "8": 4, "9": 5 }
+        },
+        "meta": {
+          "holesPlanned": 9,
+          "events": {
+            "threePutts": [
+              { "hole": 1, "playerId": "p1" },
+              { "hole": 4, "playerId": "p3" },
+              { "hole": 7, "playerId": "p1" },
+              { "hole": 9, "playerId": "p4" }
+            ]
+          }
+        }
+      },
+      "contests": [
+        {
+          "contestId": "snake-1",
+          "name": "Snake",
+          "type": "snake",
+          "scoringBasis": "gross",
+          "participants": ["p1", "p2", "p3", "p4"],
+          "stakesConfig": { "unit": 5, "potTotal": 20 },
+          "handicapConfig": { "basis": "gross" }
+        }
+      ],
+      "expected": {
+        "snake-1": {
+          "summary": {
+            "contestId": "snake-1",
+            "type": "snake",
+            "status": "final"
+          },
+          "standings": {
+            "type": "side_pot",
+            "potType": "snake",
+            "currentHolder": "p4"
+          },
+          "settlement": {
+            "holderPays": true,
+            "potTotal": 20
+          }
+        }
+      }
+    }
+  ]
+}

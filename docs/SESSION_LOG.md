@@ -525,3 +525,69 @@ Both features fully implemented. Nassau settlement and stats display working. Re
 
 ### Notes
 All changes pushed to remote. Ready for deployment testing.
+
+---
+
+## Session: 2026-01-27 (Pinky & Brain Testing Cycle)
+
+**Duration:** ~3 hours
+**Focus:** Implement automated E2E testing infrastructure
+
+### Accomplished
+
+**Pinky & Brain Cycle Infrastructure:**
+- Created `pinky/` directory with Playwright test suite
+- Implemented 3-phase testing workflow (Brain → Pinky → Report)
+- Added cycle npm scripts: `cycle:brain`, `cycle:pinky`, `cycle:report`, `cycle:full`
+
+**Happy Path Tests (8 tests):**
+- `01-auth.pinky.ts` - Login, signup, mock mode authentication
+- `02-event.pinky.ts` - Event creation and navigation
+- `03-game.pinky.ts` - Game setup and player selection
+- `04-scoring.pinky.ts` - Score entry and saving
+- `05-settlement.pinky.ts` - Match settlement flow
+
+**Narf Chaos Tests (3 tests):**
+- `input-chaos.pinky.ts` - XSS, SQL injection, unicode edge cases
+- `timing-chaos.pinky.ts` - Rapid actions, double submits, race conditions
+- `navigation-chaos.pinky.ts` - Back button, deep links, invalid routes
+
+**Support Infrastructure:**
+- `PinkyScreenshot` helper for consistent screenshot capture
+- `ActionLogger` for timing and action tracking
+- `chaos-inputs.ts` fixture with security test data
+- `test-users.ts` fixture with test personas
+- Report generator script (`scripts/pinky-report.mjs`)
+
+**Documentation:**
+- Created `CYCLE_CONTRACT.md` - Full workflow documentation
+- Created `pinky/README.md` - Test suite quick start guide
+- Updated `.gitignore` to exclude Pinky output directories
+
+### Key Decisions
+- Playwright over Cypress for better trace debugging and parallel execution
+- "Pinky & Brain" naming for memorable, team-friendly workflow
+- Narf tests designed to fail - they find issues, not validate correctness
+- Screenshots at every step for visual debugging and documentation
+- JSON output for machine parsing, Markdown report for human/AI consumption
+
+### Blockers Encountered
+- None
+
+### Files Created
+- `pinky/pinky.config.ts` - Playwright configuration
+- `pinky/README.md` - Quick start guide
+- `pinky/tests/happy-path/*.pinky.ts` - 5 happy path test files
+- `pinky/tests/narf/*.pinky.ts` - 3 chaos test files
+- `pinky/fixtures/chaos-inputs.ts` - Chaos test data
+- `pinky/fixtures/test-users.ts` - Test user personas
+- `pinky/helpers/screenshot.ts` - Screenshot utility
+- `pinky/helpers/action-logger.ts` - Action logging utility
+- `CYCLE_CONTRACT.md` - Workflow documentation
+- `scripts/pinky-report.mjs` - Report generator
+
+### Commits
+- TBD (this session)
+
+### Notes
+Testing infrastructure complete. Next step is to run `npm run cycle:full` and fix any failing tests

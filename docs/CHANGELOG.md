@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Create Game Flow - Empty Player Dropdowns** - Critical fix for production
+  - Current user always appears in player dropdown even if membership query fails
+  - Added diagnostic logging throughout player loading pipeline
+  - `getEventMembers()` returns empty array on error instead of throwing (graceful degradation)
+  - `createPlayer()` now properly logs and propagates errors
+  - Empty state UI shows helpful message: "No players loaded. Use the + button to add players."
+  - AddPlayerModal shows specific error messages instead of generic failure
+  - Player dropdowns show "No players - click + to add" when empty
+
 ### Added
 - **Local Course Database & WHS Calculator** - Foundation for official GHIN integration
   - Database: `source`, `verified`, `created_by` columns on courses

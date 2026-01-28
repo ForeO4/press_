@@ -55,7 +55,10 @@ export function AddPlayerModal({ onSubmit, onClose }: AddPlayerModalProps) {
         handicapIndex: handicapValue,
       });
     } catch (err) {
-      setError('Failed to add player. Please try again.');
+      console.error('[AddPlayerModal] Failed to add player:', err);
+      // Show specific error message if available
+      const message = err instanceof Error ? err.message : 'Failed to add player. Please try again.';
+      setError(message);
     } finally {
       setIsSubmitting(false);
     }

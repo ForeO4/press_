@@ -41,6 +41,12 @@ export default function GamesPage({
         getEventMembers(params.eventId),
       ]);
 
+      console.log('[GamesPage] Data loaded:', {
+        games: gamesData.length,
+        members: membersData.length,
+        currentUser: currentUser ? { id: currentUser.id, name: currentUser.name } : null,
+      });
+
       setGames(gamesData);
 
       // Convert members to MockUser format for the modal
@@ -50,6 +56,21 @@ export default function GamesPage({
         email: m.email || '',
         role: 'PLAYER',
       }));
+
+      // CRITICAL FIX: Always include current user in players list, even if membership query failed
+      // This ensures the logged-in user can always create games with themselves
+      if (currentUser && !isMockMode && !params.eventId.startsWith('demo-')) {
+        const currentUserExists = memberPlayers.some((p) => p.id === currentUser.id);
+        if (!currentUserExists) {
+          console.log('[GamesPage] Adding current user to players list:', currentUser.id);
+          memberPlayers.unshift({
+            id: currentUser.id,
+            name: currentUser.name || currentUser.email || 'Me',
+            email: currentUser.email || '',
+            role: 'OWNER',
+          });
+        }
+      }
 
       // In mock mode, also include mockUsers that might have been added
       if (isMockMode || params.eventId.startsWith('demo-')) {
@@ -62,6 +83,7 @@ export default function GamesPage({
         }
       }
 
+      console.log('[GamesPage] Players for dropdown:', memberPlayers.map(p => ({ id: p.id, name: p.name })));
       setPlayers(memberPlayers);
 
       // Convert roundId -> scores to userId -> scores
@@ -78,7 +100,7 @@ export default function GamesPage({
     } finally {
       setLoading(false);
     }
-  }, [params.eventId]);
+  }, [params.eventId, currentUser]);
 
   useEffect(() => {
     loadData();

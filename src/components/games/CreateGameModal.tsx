@@ -95,26 +95,44 @@ export function CreateGameModal({
     setScoringBasis((prev) => (prev === 'net' ? 'gross' : 'net'));
   };
 
+  // State for add player loading/error
+  const [addPlayerLoading, setAddPlayerLoading] = useState(false);
+  const [addPlayerError, setAddPlayerError] = useState<string | null>(null);
+
   // Handle adding a new player via modal
   const handleAddPlayer = async (input: CreatePlayerInput) => {
-    // Create player using the service
-    const { player } = await createPlayer(eventId, input);
+    setAddPlayerLoading(true);
+    setAddPlayerError(null);
 
-    setLocalPlayers((prev) => [...prev, player]);
+    try {
+      console.log('[CreateGameModal] Creating player:', input);
+      // Create player using the service
+      const { player } = await createPlayer(eventId, input);
+      console.log('[CreateGameModal] Player created:', player);
 
-    // Auto-select for the appropriate dropdown
-    if (addingFor === 'A') {
-      setPlayerAId(player.id);
-    } else if (addingFor === 'B') {
-      setPlayerBId(player.id);
+      setLocalPlayers((prev) => [...prev, player]);
+
+      // Auto-select for the appropriate dropdown
+      if (addingFor === 'A') {
+        setPlayerAId(player.id);
+      } else if (addingFor === 'B') {
+        setPlayerBId(player.id);
+      }
+
+      // Notify parent if callback provided
+      onAddPlayer?.(input.name);
+
+      // Close modal
+      setShowAddPlayerModal(false);
+      setAddingFor(null);
+    } catch (err) {
+      console.error('[CreateGameModal] Failed to create player:', err);
+      const message = err instanceof Error ? err.message : 'Failed to create player';
+      setAddPlayerError(message);
+      // Keep modal open so user can retry
+    } finally {
+      setAddPlayerLoading(false);
     }
-
-    // Notify parent if callback provided
-    onAddPlayer?.(input.name);
-
-    // Close modal
-    setShowAddPlayerModal(false);
-    setAddingFor(null);
   };
 
   const handleSubmit = () => {
@@ -275,6 +293,13 @@ export function CreateGameModal({
             </div>
           </div>
 
+          {/* Empty state hint */}
+          {localPlayers.length === 0 && (
+            <div className="text-sm text-muted-foreground bg-muted/30 px-3 py-2 rounded-md border border-muted">
+              No players loaded. Use the <span className="font-medium">+</span> button to add players.
+            </div>
+          )}
+
           {/* Player A */}
           <div className="space-y-2">
             <label htmlFor="playerA" className="text-sm font-medium text-muted-foreground">
@@ -290,7 +315,7 @@ export function CreateGameModal({
                 onChange={(e) => setPlayerAId(e.target.value)}
                 className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <option value="">Select player...</option>
+                <option value="">{localPlayers.length === 0 ? 'No players - click + to add' : 'Select player...'}</option>
                 {playersForA.map((player) => (
                   <option key={player.id} value={player.id}>
                     {player.name}
@@ -327,7 +352,7 @@ export function CreateGameModal({
                 onChange={(e) => setPlayerBId(e.target.value)}
                 className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <option value="">Select player...</option>
+                <option value="">{playersForB.length === 0 ? 'No players - click + to add' : 'Select player...'}</option>
                 {playersForB.map((player) => (
                   <option key={player.id} value={player.id}>
                     {player.name}

@@ -53,6 +53,7 @@ export interface UpdateEventInput {
   name?: string;
   date?: string;
   visibility?: EventVisibility;
+  teeSetId?: string; // Optional tee set to update snapshot
 }
 
 // ============================================

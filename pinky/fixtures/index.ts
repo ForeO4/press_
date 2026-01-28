@@ -33,3 +33,14 @@ export {
   getNumberFieldChaos,
   type ChaosInput,
 } from './chaos-inputs';
+
+export {
+  FULL_ROUND_SCORES,
+  EXPECTED_SETTLEMENT,
+  TEST_GAME_CONFIG,
+  PRESS_CONFIG,
+  getFront9Scores,
+  getBack9Scores,
+  calculateTotals,
+  type HoleScore,
+} from './test-scores';

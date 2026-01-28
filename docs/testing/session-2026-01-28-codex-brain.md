@@ -50,8 +50,8 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 
 # Test credentials (required for Pinky)
-PINKY_TEST_EMAIL=tartarusveil@gmail.com
-PINKY_TEST_PASSWORD=0P769Pinky123$
+PINKY_TEST_EMAIL=<your-test-email>
+PINKY_TEST_PASSWORD=<your-test-password>
 
 # Codex Brain (needs billing credits)
 OPENAI_API_KEY=sk-...
@@ -125,11 +125,40 @@ Current state (from last run):
 
 ---
 
+## Fixes Applied
+
+### Login Test - pressSequentially Fix (2026-01-28)
+
+**Problem:** Test "user can log in with valid credentials" failed with "Invalid login credentials" even though credentials work manually.
+
+**Root Cause:** The test used `page.fill()` which doesn't properly trigger React's `onChange` handlers on controlled inputs. React state remained empty when form submitted.
+
+**Fix Applied:** Updated `pinky/tests/happy-path/01-auth.pinky.ts` lines 63-73 to use `pressSequentially`:
+
+```typescript
+// Before (broken)
+await page.fill('input[type="email"]', TEST_USER.email);
+
+// After (fixed)
+const emailInput = page.locator('input[type="email"]');
+await emailInput.clear();
+await emailInput.pressSequentially(TEST_USER.email, { delay: 10 });
+```
+
+**Status:** Code fix verified working - form fields are now filled correctly (confirmed via error-context.md showing actual values in fields).
+
+**Remaining Issue:** Supabase returns "Invalid login credentials" for the test user. This is a credential/environment issue, not a code issue. Verify:
+1. Test user `tartarusveil@gmail.com` exists in **production** Supabase (not just local)
+2. Password matches exactly: `0P769Pinky123$`
+3. Email is confirmed in Supabase
+
+---
+
 ## Next Steps
 
-1. Run `npm run cycle:pinky` against production
-2. Review results with `npm run cycle:brain:codex:quick`
-3. Fix timeout issues (likely auth flow timing)
+1. Verify test user exists in production Supabase with confirmed email
+2. Run `npm run cycle:pinky` against production
+3. Review results with `npm run cycle:brain:codex:quick`
 4. Iterate until green
 
 ---

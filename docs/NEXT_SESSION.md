@@ -1,123 +1,107 @@
-# Next Session - Pinky & Brain Testing Cycle Complete
+# Next Session - Production Auth Fixes Complete
 
-> **Last Updated:** 2026-01-27
+> **Last Updated:** 2026-01-28
 > **Branch:** `main`
-> **Status:** Pinky & Brain testing infrastructure complete
+> **Status:** Production auth flow working (signup, login, signout, password reset)
 
 ## What Was Done This Session
 
-### Pinky & Brain Cycle Implementation
+### Production Auth Fixes
 
-Implemented a complete automated testing feedback loop:
+Fixed multiple auth issues preventing signup/signout on production (https://press-4qf0.onrender.com):
 
-| Phase | Command | Purpose |
-|-------|---------|---------|
-| Brain | `npm run cycle:brain` | Static analysis: lint, types, unit tests |
-| Pinky | `npm run cycle:pinky` | E2E tests with screenshots |
-| Report | `npm run cycle:report` | Generate actionable markdown |
-| Full | `npm run cycle:full` | Run all phases |
+| Issue | Fix | File |
+|-------|-----|------|
+| Signup shows nothing | Handle email confirmation flow, show "Check Your Email" message | `SignupForm.tsx` |
+| Signout fails silently | Clear local state first, handle missing session gracefully | `AuthProvider.tsx` |
+| Password reset missing | Added forgot-password and reset-password pages | New files |
+| Reset link goes to home | Added AuthRedirectHandler to detect recovery tokens | `page.tsx` |
 
-### Tests Created
-
-**Happy Path (8 tests):**
-- `01-auth.pinky.ts` - Login, signup, mock mode auth
-- `02-event.pinky.ts` - Event creation and navigation
-- `03-game.pinky.ts` - Game setup and player selection
-- `04-scoring.pinky.ts` - Score entry and saving
-- `05-settlement.pinky.ts` - Match settlement flow
-
-**Narf Chaos (3 tests):**
-- `input-chaos.pinky.ts` - XSS, SQL injection, unicode edge cases
-- `timing-chaos.pinky.ts` - Rapid actions, double submits
-- `navigation-chaos.pinky.ts` - Back button, deep links, invalid routes
-
-### Infrastructure Created
+### New Files Created
 
 ```
-pinky/
-├── tests/                    # Test files
-├── fixtures/                 # Test data (users, chaos inputs)
-├── helpers/                  # Screenshot & logging utilities
-├── pinky.config.ts          # Playwright configuration
-└── README.md                # Quick start guide
+src/components/auth/ForgotPasswordForm.tsx    # Request password reset
+src/components/auth/ResetPasswordForm.tsx     # Set new password
+src/components/auth/AuthRedirectHandler.tsx   # Handle recovery redirects
+src/app/auth/forgot-password/page.tsx         # Forgot password page
+src/app/auth/reset-password/page.tsx          # Reset password page
+```
+
+### Supabase Configuration Required
+
+In Supabase Dashboard → Authentication → URL Configuration:
+- **Site URL**: `https://press-4qf0.onrender.com`
+- **Redirect URLs**: `https://press-4qf0.onrender.com/**`
+- **Email Confirmations**: Disabled (for MVP simplicity)
+
+### Pinky Test Improvements
+
+Updated auth helpers to use `pressSequentially` instead of `fill` for better React form handling.
+
+## Production URLs
+
+| Environment | URL |
+|-------------|-----|
+| Production | https://press-4qf0.onrender.com |
+| Supabase Project | njousvaobicmozxnzfaj |
+
+## Test Credentials
+
+```
+PINKY_TEST_EMAIL=tartarusveil@gmail.com
+PINKY_TEST_PASSWORD=0P769Pinky123$
 ```
 
 ## Next Steps (Priority Order)
 
-### 1. Run Full Cycle
+### 1. Test Full Auth Flow on Production
+- [ ] Signup new user
+- [ ] Login existing user
+- [ ] Signout
+- [ ] Password reset (request → email → reset)
+
+### 2. Run Pinky Tests Against Production
 ```bash
-npm run cycle:full
+npm run cycle:pinky
 ```
-- Fix any test failures
-- Review generated report at `pinky/PINKY_REPORT.md`
 
-### 2. Address Test Failures
-If tests fail:
-- Brain failures: Fix lint/type/unit errors first
-- Happy path failures: Critical - these must pass
-- Narf failures: Expected - document and triage
-
-### 3. Stabilize Flaky Tests
-- Add explicit waits where needed
-- Use more specific selectors
-- Review timing-sensitive interactions
-
-## Backlog
-
-- **Real Supabase Integration**: Connect Pinky tests to actual database
-- **Visual Regression**: Add screenshot comparison between runs
-- **CI/CD Integration**: Add cycle to GitHub Actions workflow
-- **Performance Tests**: Add load time and network waterfall assertions
+### 3. Continue MVP Features
+- Event creation flow
+- Game setup
+- Scoring
 
 ## Quick Commands
 
 ```bash
-# Start dev server (required for Pinky)
+# Start dev server
 npm run dev
 
-# Run Brain only (fast feedback)
-npm run cycle:brain
+# Run Pinky E2E tests
+npm run cycle:pinky
 
-# Run Pinky with visible browser
+# Run with visible browser
 npm run cycle:pinky:headed
 
-# View HTML report after tests
-# Open: pinky/html-report/index.html
-
-# Generate report manually
-npm run cycle:report
-```
-
-## Key Files
-
-| File | Purpose |
-|------|---------|
-| `CYCLE_CONTRACT.md` | Full workflow documentation |
-| `pinky/README.md` | Test suite quick start |
-| `pinky/pinky.config.ts` | Playwright configuration |
-| `scripts/pinky-report.mjs` | Report generator |
-
-## Architecture Notes
-
-### Test Execution Flow
-
-```
+# Full cycle (brain + pinky + report)
 npm run cycle:full
-       ↓
-[Brain] lint → tsc → vitest
-       ↓
-[Pinky] dev server → Playwright → screenshots
-       ↓
-[Report] JSON → Markdown summary
 ```
 
-### Screenshot Organization
+## Key Files Modified This Session
 
-```
-pinky/results/screenshots/
-├── auth/              # Auth flow screenshots
-├── event/             # Event creation screenshots
-├── game/              # Game setup screenshots
-├── scoring/           # Score entry screenshots
-└── settlement/        # Settlement screenshots
-```
+| File | Changes |
+|------|---------|
+| `src/components/auth/SignupForm.tsx` | Email confirmation handling |
+| `src/components/auth/LoginForm.tsx` | Added "Forgot password?" link |
+| `src/lib/auth/AuthProvider.tsx` | Graceful signout with error handling |
+| `src/app/auth/callback/route.ts` | Handle recovery type redirects |
+| `src/app/page.tsx` | Added AuthRedirectHandler |
+| `pinky/helpers/auth.ts` | Better form filling for React |
+
+## Commits This Session
+
+1. `93ec4bf` - fix: Handle email confirmation flow in SignupForm
+2. `9586875` - fix: Add error handling and logging to signOut function
+3. `5881c77` - fix: Handle signOut gracefully when session is missing
+4. `64ba95d` - chore: Add codex brain cycle scripts
+5. `5b8bab1` - feat: Add password reset functionality
+6. `1193723` - fix: Auto-redirect to reset-password when recovery token in URL

@@ -25,9 +25,15 @@ export async function loginAsTestUser(page: Page): Promise<void> {
   // Wait for login form to be ready
   await page.waitForSelector('input[type="email"]', { timeout: 10000 });
 
-  // Fill in credentials
-  await page.fill('input[type="email"]', TEST_USER.email);
-  await page.fill('input[type="password"]', TEST_USER.password);
+  // Fill in credentials - clear first, then type to trigger React onChange
+  const emailInput = page.locator('input[type="email"]');
+  const passwordInput = page.locator('input[type="password"]');
+
+  await emailInput.clear();
+  await emailInput.pressSequentially(TEST_USER.email, { delay: 10 });
+
+  await passwordInput.clear();
+  await passwordInput.pressSequentially(TEST_USER.password, { delay: 10 });
 
   // Submit form
   await page.click('button[type="submit"]');

@@ -61,18 +61,28 @@ test.describe('Happy Path: Authentication', () => {
     await screenshot.capture('01-before-login');
 
     await logger.action('Fill email', async () => {
-      await page.fill('input[type="email"]', TEST_USER.email);
+      const emailInput = page.locator('input[type="email"]');
+      await emailInput.clear();
+      await emailInput.pressSequentially(TEST_USER.email, { delay: 10 });
     });
 
     await logger.action('Fill password', async () => {
-      await page.fill('input[type="password"]', TEST_USER.password);
+      const passwordInput = page.locator('input[type="password"]');
+      await passwordInput.clear();
+      await passwordInput.pressSequentially(TEST_USER.password, { delay: 10 });
     });
+
+    // Small delay to ensure React state is fully updated
+    await page.waitForTimeout(100);
 
     await screenshot.capture('02-credentials-filled');
 
     await logger.action('Submit login form', async () => {
       await page.click('button[type="submit"]');
     });
+
+    // Wait for either redirect OR error message
+    await page.waitForTimeout(500);
 
     await logger.action('Wait for redirect', async () => {
       await page.waitForURL('**/app**', { timeout: 15000 });

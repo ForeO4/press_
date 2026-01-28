@@ -84,11 +84,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [setUserProfile]);
 
   const signOut = async () => {
+    console.log('[AuthProvider] signOut called');
     const supabase = createClient();
-    if (supabase) {
-      await supabase.auth.signOut();
-      setUserProfile(null);
+    if (!supabase) {
+      console.error('[AuthProvider] signOut failed: Supabase client is null');
+      return;
     }
+
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('[AuthProvider] signOut error:', error);
+    } else {
+      console.log('[AuthProvider] signOut successful');
+    }
+    setUserProfile(null);
   };
 
   return (

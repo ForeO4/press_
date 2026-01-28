@@ -18,6 +18,8 @@
     "cycle:pinky": "npx playwright test --config=pinky/pinky.config.ts",
     "cycle:pinky:headed": "npx playwright test --config=pinky/pinky.config.ts --headed",
     "cycle:report": "node scripts/pinky-report.mjs",
+    "cycle:brain:codex": "npx ts-node pinky/scripts/codex-brain.ts",
+    "cycle:brain:codex:quick": "npx ts-node pinky/scripts/codex-brain.ts --quick",
     "cycle:full": "npm run cycle:brain && npm run cycle:pinky && npm run cycle:report"
   },
   "dependencies": {

@@ -86,18 +86,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     console.log('[AuthProvider] signOut called');
     const supabase = createClient();
+
+    // Always clear local state, even if Supabase signOut fails
+    setUser(null);
+    setSession(null);
+    setUserProfile(null);
+
     if (!supabase) {
-      console.error('[AuthProvider] signOut failed: Supabase client is null');
+      console.error('[AuthProvider] signOut: Supabase client is null, cleared local state only');
       return;
     }
 
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('[AuthProvider] signOut error:', error);
+      // Log but don't throw - we've already cleared local state
+      // Common error: "Auth session missing" when session is already gone
+      console.warn('[AuthProvider] signOut warning:', error.message);
     } else {
       console.log('[AuthProvider] signOut successful');
     }
-    setUserProfile(null);
   };
 
   return (

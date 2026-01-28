@@ -26,6 +26,36 @@ type GameType = 'match_play' | 'nassau' | 'skins';
 
 // Game status
 type GameStatus = 'active' | 'complete';
+
+// Course data source
+type CourseSource = 'user' | 'ghin' | 'seed';
+
+// Handicap data source
+type HandicapSource = 'manual' | 'ghin' | 'imported';
+```
+
+### Course Input Types
+
+```typescript
+// Input for creating a new course
+interface CreateCourseInput {
+  name: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  source?: CourseSource;
+}
+
+// Input for creating a new tee set
+interface CreateTeeSetInput {
+  courseId: string;
+  name: string;
+  color?: string;
+  rating?: number;
+  slope?: number;
+  par?: number;
+  yardage?: number;
+}
 ```
 
 ## Tables
@@ -83,6 +113,9 @@ Golf course definitions.
 | city | text | | City |
 | state | text | | State/Province |
 | country | text | default 'US' | Country code |
+| source | text | default 'user' | Data source (user/ghin/seed) |
+| verified | boolean | default false | Whether data is verified |
+| created_by | uuid | FK auth.users | User who created entry |
 
 ### tee_sets
 
@@ -93,8 +126,11 @@ Tee sets for courses.
 | id | uuid | PK | Tee set ID |
 | course_id | uuid | FK courses, NOT NULL | Course reference |
 | name | text | NOT NULL | e.g., "Blue", "White" |
+| color | text | | Tee marker color |
 | rating | decimal(4,1) | | Course rating |
 | slope | integer | | Slope rating |
+| par | integer | | Total par for tee set |
+| yardage | integer | | Total yardage |
 
 ### holes
 
@@ -134,6 +170,37 @@ interface HoleSnapshot {
   yardage: number;   // Distance
 }
 ```
+
+### handicap_profiles
+
+User handicap information.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Profile ID |
+| user_id | uuid | FK auth.users, NOT NULL, UNIQUE | User reference |
+| handicap_index | decimal(3,1) | | Current handicap index |
+| ghin_number | text | | GHIN number if available |
+| source | text | default 'manual' | Data source (manual/ghin/imported) |
+| home_course_id | uuid | FK courses | User's home course |
+| last_verified_at | timestamptz | | Last GHIN verification |
+| created_at | timestamptz | default now() | Creation timestamp |
+| updated_at | timestamptz | default now() | Last update |
+
+### handicap_snapshots
+
+Frozen handicaps for event duration.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Snapshot ID |
+| event_id | uuid | FK events, NOT NULL | Event reference |
+| user_id | uuid | FK auth.users, NOT NULL | User reference |
+| handicap_index | decimal(3,1) | NOT NULL | Frozen handicap index |
+| course_handicap | integer | | Calculated course handicap |
+| created_at | timestamptz | default now() | Creation timestamp |
+
+**Unique:** (event_id, user_id)
 
 ### rounds
 

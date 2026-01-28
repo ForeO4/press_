@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Local Course Database & WHS Calculator** - Foundation for official GHIN integration
+  - Database: `source`, `verified`, `created_by` columns on courses
+  - Database: `par`, `yardage`, `color` columns on tee_sets
+  - Database: `source`, `home_course_id`, `last_verified_at` on handicap_profiles
+  - WHS Formula: `Course Handicap = Index × (Slope/113) + (Rating - Par)`
+  - CourseEntryForm: Full course entry with multiple tee sets
+  - CourseSelector: Search-as-you-type with database persistence
+  - Course search by name, city, state with auto-suggest
+  - AddPlayerModal: Course handicap preview calculator
 - **Manual Course Input Fallback** - Enter course details manually when API fails
   - CourseSelector shows "Enter course manually" option on error or empty results
   - Manual fields: Course Name, Slope Rating (55-155, default 113), Course Rating

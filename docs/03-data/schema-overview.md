@@ -117,8 +117,8 @@ erDiagram
 
 | Table | Description |
 |-------|-------------|
-| `courses` | Golf course definitions |
-| `tee_sets` | Tee options for courses |
+| `courses` | Golf course definitions (+ source, verified, created_by) |
+| `tee_sets` | Tee options for courses (+ color, par, yardage) |
 | `holes` | Hole details (par, handicap) |
 | `event_tee_snapshot` | Frozen tee data for event |
 
@@ -126,7 +126,7 @@ erDiagram
 
 | Table | Description |
 |-------|-------------|
-| `handicap_profiles` | User handicap info |
+| `handicap_profiles` | User handicap info (+ source, home_course_id, last_verified_at) |
 | `handicap_snapshots` | Frozen handicaps for events |
 
 ### Scoring

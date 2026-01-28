@@ -22,6 +22,7 @@ export function SignupForm() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +36,7 @@ export function SignupForm() {
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -45,16 +46,66 @@ export function SignupForm() {
       },
     });
 
+    console.log('[SignUp] Response:', { data, error });
+
     if (error) {
       setError(error.message);
       setLoading(false);
       return;
     }
 
-    // Email confirmation is disabled in local dev, so user is logged in immediately
+    // Check if email confirmation is required
+    // When confirmation is required, we get a user but no session
+    if (data?.user && !data.session) {
+      console.log('[SignUp] Email confirmation required');
+      setEmailConfirmationSent(true);
+      setLoading(false);
+      return;
+    }
+
+    // User is logged in immediately (no confirmation required)
+    console.log('[SignUp] Logged in immediately, redirecting to /app');
     router.push('/app');
     router.refresh();
   };
+
+  // Show success message when email confirmation is required
+  if (emailConfirmationSent) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Check Your Email</CardTitle>
+          <CardDescription>
+            We&apos;ve sent a confirmation link to <strong>{email}</strong>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Please check your email and click the confirmation link to activate your account.
+            The link will expire in 24 hours.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Didn&apos;t receive the email? Check your spam folder or{' '}
+            <button
+              type="button"
+              onClick={() => setEmailConfirmationSent(false)}
+              className="text-primary hover:underline"
+            >
+              try again
+            </button>
+            .
+          </p>
+        </CardContent>
+        <CardFooter>
+          <Link href="/auth/login" className="w-full">
+            <Button variant="outline" className="w-full">
+              Back to Sign In
+            </Button>
+          </Link>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-md">

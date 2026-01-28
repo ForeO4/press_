@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useAuth } from '@/lib/auth/AuthProvider';
 import { useAppStore } from '@/stores';
 import { isMockMode } from '@/lib/env/public';
@@ -15,21 +16,19 @@ export function useCurrentUser(): CurrentUser | null {
   const userProfile = useAppStore((state) => state.userProfile);
   const { user } = useAuth();
 
-  if (isMockMode) {
-    return mockUser
-      ? {
-          id: mockUser.id,
-          email: mockUser.email,
-          name: mockUser.name,
-        }
-      : null;
-  }
+  return useMemo(() => {
+    if (isMockMode) {
+      return mockUser
+        ? { id: mockUser.id, email: mockUser.email, name: mockUser.name }
+        : null;
+    }
 
-  if (!user) return null;
+    if (!user) return null;
 
-  return {
-    id: user.id,
-    email: user.email ?? '',
-    name: userProfile?.display_name ?? user.email?.split('@')[0] ?? 'User',
-  };
+    return {
+      id: user.id,
+      email: user.email ?? '',
+      name: userProfile?.display_name ?? user.email?.split('@')[0] ?? 'User',
+    };
+  }, [mockUser, userProfile, user]);
 }

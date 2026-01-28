@@ -23,7 +23,15 @@ cd press_
 npm install
 ```
 
-### 3. Run in Mock Mode
+### 3. Install Playwright (for E2E tests)
+
+```bash
+npx playwright install
+```
+
+This installs browser binaries needed for Pinky E2E tests.
+
+### 4. Run in Mock Mode
 
 No backend needed - app uses static demo data:
 
@@ -33,7 +41,7 @@ npm run dev
 
 Open http://localhost:3000
 
-### 4. (Optional) Run with Local Supabase
+### 5. (Optional) Run with Local Supabase
 
 Start Supabase:
 
@@ -67,7 +75,7 @@ Run app:
 npm run dev
 ```
 
-### 5. (Optional) Run R2 Worker
+### 6. (Optional) Run R2 Worker
 
 ```bash
 cd workers/media-proxy
@@ -100,6 +108,31 @@ Open Supabase Studio at http://localhost:54323
 ```bash
 npm test
 ```
+
+### Run Pinky & Brain Cycle
+
+The full testing cycle (recommended before PRs):
+
+```bash
+# Run Brain phase (lint, types, unit tests)
+npm run cycle:brain
+
+# Run Pinky phase (E2E tests)
+npm run cycle:pinky
+
+# Run Pinky with visible browser
+npm run cycle:pinky:headed
+
+# Generate report
+npm run cycle:report
+
+# Run full cycle (all phases)
+npm run cycle:full
+```
+
+View results:
+- HTML Report: `pinky/html-report/index.html`
+- Markdown Report: `pinky/PINKY_REPORT.md`
 
 ### Lint
 

@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Pinky & Brain Automated Testing Cycle** - Complete E2E testing infrastructure
+  - 3-phase workflow: Brain (static) → Pinky (E2E) → Report (summary)
+  - `npm run cycle:brain` - Lint, TypeScript, unit tests
+  - `npm run cycle:pinky` - Playwright E2E tests with screenshots
+  - `npm run cycle:report` - Generate actionable markdown report
+  - `npm run cycle:full` - Run all phases sequentially
+- **Happy Path E2E Tests** - 8 tests covering core user flows
+  - Auth: Login, signup, mock mode authentication
+  - Events: Creation and navigation
+  - Games: Setup, player selection
+  - Scoring: Entry and persistence
+  - Settlement: Match completion flow
+- **Narf Chaos Tests** - 3 tests for edge cases and security
+  - Input chaos: XSS, SQL injection, unicode boundaries
+  - Timing chaos: Rapid actions, double submits, race conditions
+  - Navigation chaos: Back button, deep links, invalid routes
+- **Report Generator** - `scripts/pinky-report.mjs`
+  - Parses Playwright JSON output
+  - Generates markdown with pass/fail summary
+  - Identifies slow and flaky tests
+  - Provides actionable recommendations
+- **Test Helpers**
+  - `PinkyScreenshot` - Consistent screenshot capture with metadata
+  - `ActionLogger` - Timing and action tracking for debugging
+  - Chaos input fixtures for security testing
+
 ### Fixed
 - **Create Game Flow - Empty Player Dropdowns** - Critical fix for production
   - Current user always appears in player dropdown even if membership query fails

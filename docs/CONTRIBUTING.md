@@ -34,9 +34,23 @@ refactor: extract settlement logic
 
 1. Create feature branch from `main`
 2. Make changes with atomic commits
-3. Ensure tests pass (`npm test`)
-4. Update relevant documentation
-5. Request review
+3. Run full test cycle before opening PR:
+   ```bash
+   npm run cycle:full
+   ```
+4. Ensure all tests pass:
+   - Brain phase (lint, types, unit tests) - **must pass**
+   - Happy path E2E tests - **must pass**
+   - Narf chaos tests - review failures, document known issues
+5. Update relevant documentation
+6. Request review
+
+**PR Checklist:**
+- [ ] `npm run cycle:brain` passes
+- [ ] `npm run cycle:pinky` happy path tests pass
+- [ ] Narf failures reviewed and documented
+- [ ] CHANGELOG updated if user-facing
+- [ ] Docs updated if applicable
 
 ## Code Standards
 

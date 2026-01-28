@@ -28,6 +28,59 @@
 - Lazy load routes and heavy components
 - Database queries: select only needed columns, use indexes
 
+## Testing (Pinky & Brain Cycle)
+
+### Pre-Commit: Run Brain
+Before committing, run the Brain phase for fast feedback:
+
+```bash
+npm run cycle:brain
+```
+
+This runs lint, TypeScript checks, and unit tests. Fix all errors before committing.
+
+### Pre-PR: Run Full Cycle
+Before opening a PR, run the complete cycle:
+
+```bash
+npm run cycle:full
+```
+
+This runs Brain + Pinky E2E tests + Report generation.
+
+**Requirements for PR:**
+- Brain phase passes (lint, types, unit tests)
+- Happy path tests pass (critical user flows)
+- Narf failures documented (chaos tests may fail - that's expected)
+
+### Test Categories
+
+| Category | Purpose | Must Pass? |
+|----------|---------|------------|
+| Unit (Vitest) | Domain logic | Yes |
+| Happy Path (Pinky) | User flows | Yes |
+| Narf (Chaos) | Edge cases | No (but review) |
+
+### Writing Tests
+
+**Happy Path Tests:**
+- Test what a naive user would do
+- Capture screenshots at every step
+- Use `PinkyScreenshot` helper
+
+**Narf Tests:**
+- Test what could break
+- Security inputs (XSS, SQL injection)
+- Timing edge cases (rapid clicks, race conditions)
+- Navigation abuse (back button, deep links)
+
+### Viewing Results
+
+After running Pinky:
+- HTML Report: `pinky/html-report/index.html`
+- Markdown Report: `pinky/PINKY_REPORT.md`
+- Screenshots: `pinky/results/screenshots/`
+
 ## TypeScript
 
 ### Strict Mode

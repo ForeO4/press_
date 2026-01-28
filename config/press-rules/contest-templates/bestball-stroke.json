@@ -1,0 +1,38 @@
+{
+  "$schema": "../contest-schema.json",
+  "name": "Best Ball Stroke Play",
+  "description": "2v2 team stroke play where each team's score is their best player's score",
+  "template": {
+    "type": "bestball_stroke",
+    "scoringBasis": "net",
+    "participants": [
+      {
+        "id": "team-a",
+        "name": "Team A",
+        "playerIds": ["player-1", "player-2"]
+      },
+      {
+        "id": "team-b",
+        "name": "Team B",
+        "playerIds": ["player-3", "player-4"]
+      }
+    ],
+    "stakesConfig": {
+      "unit": 20,
+      "payoutFormat": "total"
+    },
+    "handicapConfig": {
+      "useRelativeHandicap": true,
+      "allowBelow1": false
+    }
+  },
+  "requiredPlayers": 4,
+  "maxPlayers": 4,
+  "supportsTeams": true,
+  "supports9Hole": true,
+  "supports18Hole": true,
+  "notes": [
+    "Sum of best balls across all holes",
+    "Lower total wins"
+  ]
+}

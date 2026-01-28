@@ -1,0 +1,41 @@
+{
+  "$schema": "../contest-schema.json",
+  "name": "Nassau",
+  "description": "3-segment match play (front, back, total) with optional presses",
+  "template": {
+    "type": "nassau",
+    "scoringBasis": "net",
+    "participants": [
+      {
+        "id": "team-a",
+        "name": "Team A",
+        "playerIds": ["player-1", "player-2"]
+      },
+      {
+        "id": "team-b",
+        "name": "Team B",
+        "playerIds": ["player-3", "player-4"]
+      }
+    ],
+    "stakesConfig": {
+      "unit": 10,
+      "payoutFormat": "per_hole"
+    },
+    "handicapConfig": {
+      "useRelativeHandicap": true,
+      "allowBelow1": false
+    },
+    "options": {
+      "presses": []
+    }
+  },
+  "requiredPlayers": 4,
+  "maxPlayers": 4,
+  "supportsTeams": true,
+  "supports9Hole": true,
+  "supports18Hole": true,
+  "notes": [
+    "For 9-hole rounds, back segment is inactive",
+    "Presses can be added via options.presses or runtime events"
+  ]
+}

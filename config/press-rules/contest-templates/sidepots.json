@@ -1,0 +1,112 @@
+{
+  "$schema": "../contest-schema.json",
+  "name": "Side Pots",
+  "description": "Collection of side pot contest templates",
+  "templates": {
+    "ctp": {
+      "name": "Closest to Pin",
+      "description": "Closest to the pin on designated par 3s",
+      "template": {
+        "type": "ctp",
+        "scoringBasis": "gross",
+        "participants": [
+          { "id": "player-1", "name": "Player 1" },
+          { "id": "player-2", "name": "Player 2" },
+          { "id": "player-3", "name": "Player 3" },
+          { "id": "player-4", "name": "Player 4" }
+        ],
+        "stakesConfig": {
+          "unit": 5
+        },
+        "handicapConfig": {},
+        "options": {
+          "designatedHoles": [2, 6, 11, 15]
+        }
+      },
+      "notes": [
+        "Winners determined by round.meta.events.ctp",
+        "designatedHoles specifies which par 3s count"
+      ]
+    },
+    "long_drive": {
+      "name": "Long Drive",
+      "description": "Longest drive on designated holes",
+      "template": {
+        "type": "long_drive",
+        "scoringBasis": "gross",
+        "participants": [
+          { "id": "player-1", "name": "Player 1" },
+          { "id": "player-2", "name": "Player 2" },
+          { "id": "player-3", "name": "Player 3" },
+          { "id": "player-4", "name": "Player 4" }
+        ],
+        "stakesConfig": {
+          "unit": 5
+        },
+        "handicapConfig": {},
+        "options": {
+          "designatedHoles": [3, 12]
+        }
+      },
+      "notes": [
+        "Winners determined by round.meta.events.longDrive"
+      ]
+    },
+    "birdie_pool": {
+      "name": "Birdie Pool",
+      "description": "Pot split among players who make birdies",
+      "template": {
+        "type": "birdie_pool",
+        "scoringBasis": "net",
+        "participants": [
+          { "id": "player-1", "name": "Player 1" },
+          { "id": "player-2", "name": "Player 2" },
+          { "id": "player-3", "name": "Player 3" },
+          { "id": "player-4", "name": "Player 4" }
+        ],
+        "stakesConfig": {
+          "unit": 5,
+          "potTotal": 20
+        },
+        "handicapConfig": {
+          "useRelativeHandicap": true
+        },
+        "options": {
+          "perPlayerBuyIn": 5
+        }
+      },
+      "notes": [
+        "Pot split proportionally by birdie count",
+        "Net birdies count if scoringBasis is 'net'"
+      ]
+    },
+    "snake": {
+      "name": "Snake",
+      "description": "Last player to three-putt pays the pot",
+      "template": {
+        "type": "snake",
+        "scoringBasis": "gross",
+        "participants": [
+          { "id": "player-1", "name": "Player 1" },
+          { "id": "player-2", "name": "Player 2" },
+          { "id": "player-3", "name": "Player 3" },
+          { "id": "player-4", "name": "Player 4" }
+        ],
+        "stakesConfig": {
+          "unit": 5,
+          "potTotal": 20
+        },
+        "handicapConfig": {}
+      },
+      "notes": [
+        "Three-putts tracked via round.meta.events.threePutts",
+        "Last holder at round end pays potTotal to others"
+      ]
+    }
+  },
+  "requiredPlayers": 2,
+  "maxPlayers": 4,
+  "supportsTeams": false,
+  "supports9Hole": true,
+  "supports18Hole": true
+}

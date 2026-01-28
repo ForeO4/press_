@@ -1,0 +1,38 @@
+{
+  "$schema": "../contest-schema.json",
+  "name": "Best Ball Match Play",
+  "description": "2v2 team match play where each team's score is their best player's score",
+  "template": {
+    "type": "match_play_bestball",
+    "scoringBasis": "net",
+    "participants": [
+      {
+        "id": "team-a",
+        "name": "Team A",
+        "playerIds": ["player-1", "player-2"]
+      },
+      {
+        "id": "team-b",
+        "name": "Team B",
+        "playerIds": ["player-3", "player-4"]
+      }
+    ],
+    "stakesConfig": {
+      "unit": 10,
+      "payoutFormat": "per_hole"
+    },
+    "handicapConfig": {
+      "useRelativeHandicap": true,
+      "allowBelow1": false
+    }
+  },
+  "requiredPlayers": 4,
+  "maxPlayers": 4,
+  "supportsTeams": true,
+  "supports9Hole": true,
+  "supports18Hole": true,
+  "notes": [
+    "Each hole uses the best (lowest) score from each team",
+    "Audit tracks which player's score was counted"
+  ]
+}

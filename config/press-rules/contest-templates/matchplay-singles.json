@@ -1,0 +1,26 @@
+{
+  "$schema": "../contest-schema.json",
+  "name": "Match Play Singles",
+  "description": "1v1 match play where each hole is worth 1 point to the winner",
+  "template": {
+    "type": "match_play_singles",
+    "scoringBasis": "net",
+    "participants": [
+      { "id": "player-1", "name": "Player 1" },
+      { "id": "player-2", "name": "Player 2" }
+    ],
+    "stakesConfig": {
+      "unit": 5,
+      "payoutFormat": "per_hole"
+    },
+    "handicapConfig": {
+      "useRelativeHandicap": true,
+      "allowBelow1": false
+    }
+  },
+  "requiredPlayers": 2,
+  "maxPlayers": 2,
+  "supportsTeams": false,
+  "supports9Hole": true,
+  "supports18Hole": true
+}

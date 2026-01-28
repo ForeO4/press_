@@ -1,0 +1,35 @@
+{
+  "$schema": "../contest-schema.json",
+  "name": "Skins",
+  "description": "Lowest unique score wins the skin. Ties carry over to next hole.",
+  "template": {
+    "type": "skins",
+    "scoringBasis": "net",
+    "participants": [
+      { "id": "player-1", "name": "Player 1" },
+      { "id": "player-2", "name": "Player 2" },
+      { "id": "player-3", "name": "Player 3" },
+      { "id": "player-4", "name": "Player 4" }
+    ],
+    "stakesConfig": {
+      "unit": 2,
+      "payoutFormat": "per_skin"
+    },
+    "handicapConfig": {
+      "useRelativeHandicap": true,
+      "allowBelow1": false
+    },
+    "options": {
+      "carryOver": true
+    }
+  },
+  "requiredPlayers": 2,
+  "maxPlayers": 4,
+  "supportsTeams": false,
+  "supports9Hole": true,
+  "supports18Hole": true,
+  "notes": [
+    "Winner collects perSkin from EACH other player",
+    "Example: 4 players, $2/skin, 3 skins = $2 × 3 × 3 = $18"
+  ]
+}

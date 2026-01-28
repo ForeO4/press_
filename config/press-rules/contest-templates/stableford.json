@@ -1,0 +1,42 @@
+{
+  "$schema": "../contest-schema.json",
+  "name": "Stableford",
+  "description": "Points-based scoring relative to par",
+  "template": {
+    "type": "stableford",
+    "scoringBasis": "net",
+    "participants": [
+      { "id": "player-1", "name": "Player 1" },
+      { "id": "player-2", "name": "Player 2" },
+      { "id": "player-3", "name": "Player 3" }
+    ],
+    "stakesConfig": {
+      "unit": 5,
+      "payoutFormat": "total"
+    },
+    "handicapConfig": {
+      "useRelativeHandicap": true,
+      "allowBelow1": false
+    },
+    "options": {
+      "stablefordTable": {
+        "albatross": 5,
+        "eagle": 4,
+        "birdie": 3,
+        "par": 2,
+        "bogey": 1,
+        "doubleBogey": 0,
+        "worse": 0
+      }
+    }
+  },
+  "requiredPlayers": 2,
+  "maxPlayers": 4,
+  "supportsTeams": false,
+  "supports9Hole": true,
+  "supports18Hole": true,
+  "notes": [
+    "Higher point total wins",
+    "Point table is customizable"
+  ]
+}

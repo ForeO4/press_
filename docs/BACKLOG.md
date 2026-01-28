@@ -28,6 +28,13 @@
 - **Added**: 2026-01-27
 - **Status**: Backlog
 
+### Add Player - Search by Username
+- **Feature**: In "Add New Player" modal, add option to search for existing registered users
+- **Context**: Currently only manual entry; should allow finding users by username/email
+- **UI**: Add search field or toggle between "Search existing" / "Create new"
+- **Added**: 2026-01-27
+- **Status**: Backlog
+
 ---
 
 ## Medium Priority

@@ -8,11 +8,12 @@ import { GolfClubsIcon } from '@/components/ui/GolfClubsIcon';
 import { CreateGameModal, type CreateGameData } from '@/components/games/CreateGameModal';
 import { getGamesForEvent, createGame } from '@/lib/services/games';
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
+import { getEventMembers } from '@/lib/services/players';
 import { useAppStore } from '@/stores';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { isMockMode } from '@/lib/env/public';
 import { mockUsers } from '@/lib/mock/users';
-import type { GameWithParticipants, HoleScore } from '@/types';
+import type { GameWithParticipants, HoleScore, MockUser } from '@/types';
 
 export default function GamesPage({
   params,
@@ -23,22 +24,45 @@ export default function GamesPage({
   const currentUser = useCurrentUser();
   const [games, setGames] = useState<GameWithParticipants[]>([]);
   const [scores, setScores] = useState<Record<string, HoleScore[]>>({});
+  const [players, setPlayers] = useState<MockUser[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load games and scores
+  // Load games, scores, and event members
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Fetch games and rounds/scores in parallel
-      const [gamesData, roundsData, scoresData] = await Promise.all([
+      // Fetch games, rounds/scores, and members in parallel
+      const [gamesData, roundsData, scoresData, membersData] = await Promise.all([
         getGamesForEvent(params.eventId),
         getEventRounds(params.eventId),
         getScoresForEvent(params.eventId),
+        getEventMembers(params.eventId),
       ]);
 
       setGames(gamesData);
+
+      // Convert members to MockUser format for the modal
+      const memberPlayers: MockUser[] = membersData.map((m) => ({
+        id: m.userId,
+        name: m.name || 'Unknown',
+        email: m.email || '',
+        role: 'PLAYER',
+      }));
+
+      // In mock mode, also include mockUsers that might have been added
+      if (isMockMode || params.eventId.startsWith('demo-')) {
+        // Merge with mockUsers, avoiding duplicates
+        const existingIds = new Set(memberPlayers.map((p) => p.id));
+        for (const mu of mockUsers) {
+          if (!existingIds.has(mu.id)) {
+            memberPlayers.push(mu);
+          }
+        }
+      }
+
+      setPlayers(memberPlayers);
 
       // Convert roundId -> scores to userId -> scores
       const userScores: Record<string, HoleScore[]> = {};
@@ -138,9 +162,13 @@ export default function GamesPage({
       {showCreateModal && (
         <CreateGameModal
           eventId={params.eventId}
-          players={mockUsers}
+          players={players}
           onSubmit={handleCreateGame}
           onClose={() => setShowCreateModal(false)}
+          onAddPlayer={(name) => {
+            // Refresh players list after adding a new player
+            loadData();
+          }}
         />
       )}
     </div>

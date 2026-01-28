@@ -45,7 +45,7 @@ export default defineConfig({
   /* Shared settings for all projects */
   use: {
     /* Base URL for the app */
-    baseURL: 'http://localhost:3000',
+    baseURL: 'https://press-4qf0.onrender.com',
 
     /* ALWAYS capture screenshots - the essence of Pinky testing */
     screenshot: 'on',
@@ -56,9 +56,9 @@ export default defineConfig({
     /* Video on first retry to catch flaky tests */
     video: 'on-first-retry',
 
-    /* Reasonable timeouts */
-    actionTimeout: 15000,
-    navigationTimeout: 30000,
+    /* Timeouts adjusted for remote server */
+    actionTimeout: 20000,
+    navigationTimeout: 45000,
   },
 
   /* Test timeout - generous for complex flows */
@@ -86,11 +86,11 @@ export default defineConfig({
     },
   ],
 
-  /* Run local dev server before tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000,
-  },
+  /* Web server disabled - testing against production Render URL */
+  // webServer: {
+  //   command: 'npm run dev',
+  //   url: 'http://localhost:3000',
+  //   reuseExistingServer: !process.env.CI,
+  //   timeout: 120000,
+  // },
 });

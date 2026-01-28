@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
+import dotenv from 'dotenv';
+
+// Load Pinky test credentials
+dotenv.config({ path: path.resolve(__dirname, '../.env.pinky') });
 
 /**
  * Pinky Test Suite Configuration

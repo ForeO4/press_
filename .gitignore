@@ -12,10 +12,12 @@ build/
 # Environment files (secrets)
 .env
 .env.local
+.env.pinky
 .env.development.local
 .env.test.local
 .env.production.local
 !.env.example
+!.env.pinky.example
 
 # Supabase
 supabase/.temp/
@@ -41,6 +43,11 @@ coverage/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Pinky Test Suite
+/pinky/results/
+/pinky/html-report/
+/pinky/PINKY_REPORT.md
 
 # Logs
 *.log

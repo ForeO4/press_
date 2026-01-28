@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { PinkyScreenshot } from '../../helpers/screenshot';
 import { ActionLogger } from '../../helpers/action-logger';
+import { loginAsTestUser } from '../../helpers/auth';
 
 /**
  * Happy Path: Settlement Flow
  *
- * Tests the naive user's journey through settling bets.
+ * Tests the user's journey through settling bets.
+ * Requires authentication first.
  */
 
 test.describe('Happy Path: Settlement', () => {
@@ -15,6 +17,9 @@ test.describe('Happy Path: Settlement', () => {
   test.beforeEach(async ({ page }) => {
     screenshot = new PinkyScreenshot(page, 'settlement');
     logger = new ActionLogger('settlement');
+
+    // Login first
+    await loginAsTestUser(page);
 
     // Start at the event
     await page.goto('/event/demo-event');

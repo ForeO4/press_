@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { PinkyScreenshot } from '../../helpers/screenshot';
 import { ActionLogger } from '../../helpers/action-logger';
+import { loginAsTestUser } from '../../helpers/auth';
 
 /**
  * Happy Path: Score Entry
  *
- * Tests the naive user's journey through entering scores.
+ * Tests the user's journey through entering scores.
+ * Requires authentication first.
  */
 
 test.describe('Happy Path: Score Entry', () => {
@@ -15,6 +17,9 @@ test.describe('Happy Path: Score Entry', () => {
   test.beforeEach(async ({ page }) => {
     screenshot = new PinkyScreenshot(page, 'scoring');
     logger = new ActionLogger('scoring');
+
+    // Login first
+    await loginAsTestUser(page);
 
     // Start at the games page
     await page.goto('/event/demo-event/games');

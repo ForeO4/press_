@@ -141,19 +141,47 @@ export interface CreatePressResult {
 // COURSES
 // ============================================
 
+export type CourseSource = 'manual' | 'imported' | 'ghin_api' | 'verified';
+
 export interface Course {
   id: string;
   name: string;
   city: string;
   state: string;
+  country?: string;
+  source: CourseSource;
+  verified: boolean;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateCourseInput {
+  name: string;
+  city?: string;
+  state?: string;
+  country?: string;
 }
 
 export interface TeeSet {
   id: string;
   courseId: string;
   name: string; // "Blue", "White", "Red"
+  color?: string; // Tee color for display
   rating: number; // 72.1
   slope: number; // 131
+  par?: number; // 72 (total par for the tee set)
+  yardage?: number; // Total yardage
+}
+
+export interface CreateTeeSetInput {
+  courseId: string;
+  name: string;
+  color?: string;
+  rating: number;
+  slope: number;
+  par?: number;
+  yardage?: number;
 }
 
 export interface Hole {
@@ -302,11 +330,16 @@ export interface EventMessage {
 // HANDICAPS
 // ============================================
 
+export type HandicapSource = 'manual' | 'ghin_verified';
+
 export interface HandicapProfile {
   id: string;
   userId: string;
   handicapIndex: number | null;
   ghinNumber: string | null;
+  source: HandicapSource;
+  homeCourseId?: string;
+  lastVerifiedAt?: string;
   updatedAt: string;
 }
 

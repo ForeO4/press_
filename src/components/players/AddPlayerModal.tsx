@@ -124,37 +124,54 @@ export function AddPlayerModal({ onSubmit, onClose }: AddPlayerModalProps) {
             />
           </div>
 
-          {/* GHIN Number - Optional */}
-          <div className="space-y-2">
-            <label htmlFor="ghin" className="text-sm font-medium flex items-center gap-2">
-              <Hash className="h-4 w-4 text-muted-foreground" />
-              GHIN Number
-            </label>
-            <Input
-              id="ghin"
-              type="text"
-              placeholder="1234567"
-              value={ghinNumber}
-              onChange={(e) => setGhinNumber(e.target.value)}
-            />
-          </div>
+          {/* Handicap Section */}
+          <div className="border-t border-border pt-4 mt-4">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Handicap Information</h3>
 
-          {/* Handicap Index - Optional */}
-          <div className="space-y-2">
-            <label htmlFor="handicap" className="text-sm font-medium">
-              Handicap Index
-              <span className="text-xs text-muted-foreground ml-2">(0-54)</span>
-            </label>
-            <Input
-              id="handicap"
-              type="number"
-              step="0.1"
-              min="0"
-              max="54"
-              placeholder="12.5"
-              value={handicapIndex}
-              onChange={(e) => setHandicapIndex(e.target.value)}
-            />
+            {/* GHIN Number - Optional */}
+            <div className="space-y-2">
+              <label htmlFor="ghin" className="text-sm font-medium flex items-center gap-2">
+                <Hash className="h-4 w-4 text-muted-foreground" />
+                GHIN Number
+              </label>
+              <Input
+                id="ghin"
+                type="text"
+                placeholder="1234567"
+                value={ghinNumber}
+                onChange={(e) => setGhinNumber(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                For future GHIN API integration. Enter now to be ready when auto-lookup is available.
+              </p>
+            </div>
+
+            {/* Handicap Index - Optional */}
+            <div className="space-y-2 mt-4">
+              <label htmlFor="handicap" className="text-sm font-medium flex items-center gap-2">
+                Handicap Index
+                <span className="text-xs text-muted-foreground">(0-54)</span>
+              </label>
+              <Input
+                id="handicap"
+                type="number"
+                step="0.1"
+                min="0"
+                max="54"
+                placeholder="12.5"
+                value={handicapIndex}
+                onChange={(e) => setHandicapIndex(e.target.value)}
+              />
+              {handicapIndex && !isNaN(parseFloat(handicapIndex)) && (
+                <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded-md">
+                  <span className="font-medium">Course Handicap Preview:</span>
+                  <br />
+                  • Standard (113 slope): {Math.round(parseFloat(handicapIndex) * (113 / 113))}
+                  <br />
+                  • Difficult (131 slope): {Math.round(parseFloat(handicapIndex) * (131 / 113))}
+                </div>
+              )}
+            </div>
           </div>
 
           {error && (

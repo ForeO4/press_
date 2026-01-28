@@ -9,6 +9,7 @@ const mockHandicapProfiles: Record<string, HandicapProfile> = {
     userId: 'user-1',
     handicapIndex: 12.4,
     ghinNumber: '1234567',
+    source: 'manual',
     updatedAt: '2024-01-01T00:00:00Z',
   },
   'user-2': {
@@ -16,6 +17,7 @@ const mockHandicapProfiles: Record<string, HandicapProfile> = {
     userId: 'user-2',
     handicapIndex: 8.2,
     ghinNumber: '2345678',
+    source: 'manual',
     updatedAt: '2024-01-01T00:00:00Z',
   },
   'user-3': {
@@ -23,6 +25,7 @@ const mockHandicapProfiles: Record<string, HandicapProfile> = {
     userId: 'user-3',
     handicapIndex: 15.8,
     ghinNumber: null,
+    source: 'manual',
     updatedAt: '2024-01-01T00:00:00Z',
   },
   'user-4': {
@@ -30,6 +33,7 @@ const mockHandicapProfiles: Record<string, HandicapProfile> = {
     userId: 'user-4',
     handicapIndex: 5.1,
     ghinNumber: '3456789',
+    source: 'manual',
     updatedAt: '2024-01-01T00:00:00Z',
   },
 };
@@ -45,11 +49,31 @@ function shouldUseMockData(eventId?: string): boolean {
 }
 
 /**
- * Calculate course handicap from handicap index and slope rating
- * Formula: Course Handicap = Handicap Index × (Slope / 113) rounded to nearest integer
+ * Calculate course handicap using the World Handicap System formula
+ * WHS Formula: Course Handicap = Handicap Index × (Slope / 113) + (Course Rating - Par)
+ *
+ * @param handicapIndex - Player's handicap index
+ * @param slope - Course slope rating (55-155, standard 113)
+ * @param courseRating - Course rating (optional, for full WHS calculation)
+ * @param par - Course par (optional, typically 72)
+ * @returns Calculated course handicap rounded to nearest integer
  */
-export function calculateCourseHandicap(handicapIndex: number, slope: number): number {
-  return Math.round(handicapIndex * (slope / 113));
+export function calculateCourseHandicap(
+  handicapIndex: number,
+  slope: number,
+  courseRating?: number,
+  par?: number
+): number {
+  // Base calculation: Index × (Slope / 113)
+  const baseHandicap = handicapIndex * (slope / 113);
+
+  // Full WHS formula includes course rating adjustment
+  if (courseRating !== undefined && par !== undefined) {
+    return Math.round(baseHandicap + (courseRating - par));
+  }
+
+  // Simplified formula when course rating/par not available
+  return Math.round(baseHandicap);
 }
 
 /**
@@ -214,6 +238,9 @@ function mapHandicapProfileFromDb(row: Record<string, unknown>): HandicapProfile
     userId: row.user_id as string,
     handicapIndex: row.handicap_index as number | null,
     ghinNumber: row.ghin_number as string | null,
+    source: (row.source as 'manual' | 'ghin_verified') || 'manual',
+    homeCourseId: row.home_course_id as string | undefined,
+    lastVerifiedAt: row.last_verified_at as string | undefined,
     updatedAt: row.updated_at as string,
   };
 }

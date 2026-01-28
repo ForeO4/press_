@@ -1,14 +1,30 @@
 import { createClient } from '@/lib/supabase/client';
 import { isMockMode } from '@/lib/env/public';
 import { mockCourse, mockTeeSets } from '@/lib/mock/course';
-import type { Course, TeeSet, TeeSetWithHoles, TeeSnapshot, HoleSnapshot } from '@/types';
+import type {
+  Course,
+  TeeSet,
+  TeeSetWithHoles,
+  TeeSnapshot,
+  HoleSnapshot,
+  CreateCourseInput,
+  CreateTeeSetInput,
+  CourseSource,
+} from '@/types';
 
 /**
  * Get all courses
  */
 export async function getCourses(): Promise<Course[]> {
   if (isMockMode) {
-    return [{ id: mockCourse.id, name: mockCourse.name, city: 'Pine Valley', state: 'NJ' }];
+    return [{
+      id: mockCourse.id,
+      name: mockCourse.name,
+      city: 'Pine Valley',
+      state: 'NJ',
+      source: 'manual' as CourseSource,
+      verified: false,
+    }];
   }
 
   const supabase = createClient();
@@ -30,7 +46,14 @@ export async function getCourses(): Promise<Course[]> {
 export async function getCourse(courseId: string): Promise<Course | null> {
   if (isMockMode) {
     return courseId === mockCourse.id
-      ? { id: mockCourse.id, name: mockCourse.name, city: 'Pine Valley', state: 'NJ' }
+      ? {
+          id: mockCourse.id,
+          name: mockCourse.name,
+          city: 'Pine Valley',
+          state: 'NJ',
+          source: 'manual' as CourseSource,
+          verified: false,
+        }
       : null;
   }
 
@@ -265,8 +288,14 @@ function mapCourseFromDb(row: Record<string, unknown>): Course {
   return {
     id: row.id as string,
     name: row.name as string,
-    city: row.city as string,
-    state: row.state as string,
+    city: (row.city as string) || '',
+    state: (row.state as string) || '',
+    country: row.country as string | undefined,
+    source: (row.source as CourseSource) || 'manual',
+    verified: (row.verified as boolean) || false,
+    createdBy: row.created_by as string | undefined,
+    createdAt: row.created_at as string | undefined,
+    updatedAt: row.updated_at as string | undefined,
   };
 }
 
@@ -278,8 +307,11 @@ function mapTeeSetFromDb(row: Record<string, unknown>): TeeSet {
     id: row.id as string,
     courseId: row.course_id as string,
     name: row.name as string,
+    color: row.color as string | undefined,
     rating: row.rating as number,
     slope: row.slope as number,
+    par: row.par as number | undefined,
+    yardage: row.yardage as number | undefined,
   };
 }
 
@@ -292,8 +324,11 @@ function mapTeeSetWithHolesFromDb(row: Record<string, unknown>): TeeSetWithHoles
     id: row.id as string,
     courseId: row.course_id as string,
     name: row.name as string,
+    color: row.color as string | undefined,
     rating: row.rating as number,
     slope: row.slope as number,
+    par: row.par as number | undefined,
+    yardage: row.yardage as number | undefined,
     holes: holes.map((h) => ({
       id: h.id as string,
       teeSetId: h.tee_set_id as string,
@@ -320,4 +355,176 @@ function mapTeeSnapshotFromDb(row: Record<string, unknown>): TeeSnapshot {
     holes: row.holes as HoleSnapshot[],
     createdAt: row.created_at as string,
   };
+}
+
+// ============================================
+// COURSE CREATION & SEARCH
+// ============================================
+
+/**
+ * Search courses by name or location
+ * Returns courses matching the query, ordered by relevance
+ */
+export async function searchCourses(query: string): Promise<Course[]> {
+  if (isMockMode || !query.trim()) {
+    // In mock mode, filter mock course by query
+    const mockCourseData: Course = {
+      id: mockCourse.id,
+      name: mockCourse.name,
+      city: 'Pine Valley',
+      state: 'NJ',
+      source: 'manual' as CourseSource,
+      verified: false,
+    };
+
+    if (query.trim()) {
+      const lowerQuery = query.toLowerCase();
+      if (
+        mockCourseData.name.toLowerCase().includes(lowerQuery) ||
+        mockCourseData.city.toLowerCase().includes(lowerQuery) ||
+        mockCourseData.state.toLowerCase().includes(lowerQuery)
+      ) {
+        return [mockCourseData];
+      }
+      return [];
+    }
+    return [mockCourseData];
+  }
+
+  const supabase = createClient();
+  if (!supabase) throw new Error('Supabase client not available');
+
+  // Search by name, city, or state using ILIKE for case-insensitive matching
+  const searchTerm = `%${query.trim()}%`;
+  const { data, error } = await supabase
+    .from('courses')
+    .select('*')
+    .or(`name.ilike.${searchTerm},city.ilike.${searchTerm},state.ilike.${searchTerm}`)
+    .order('name')
+    .limit(20);
+
+  if (error) throw error;
+
+  return (data || []).map(mapCourseFromDb);
+}
+
+/**
+ * Create a new course
+ * Returns the created course with its generated ID
+ */
+export async function createCourse(input: CreateCourseInput): Promise<Course> {
+  if (isMockMode) {
+    // In mock mode, return a fake created course
+    const newCourse: Course = {
+      id: crypto.randomUUID(),
+      name: input.name,
+      city: input.city || '',
+      state: input.state || '',
+      country: input.country || 'US',
+      source: 'manual',
+      verified: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    return newCourse;
+  }
+
+  const supabase = createClient();
+  if (!supabase) throw new Error('Supabase client not available');
+
+  const { data, error } = await supabase
+    .from('courses')
+    .insert({
+      name: input.name,
+      city: input.city || null,
+      state: input.state || null,
+      country: input.country || 'US',
+      source: 'manual',
+      verified: false,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return mapCourseFromDb(data);
+}
+
+/**
+ * Create a new tee set for a course
+ * Returns the created tee set with its generated ID
+ */
+export async function createTeeSet(input: CreateTeeSetInput): Promise<TeeSet> {
+  if (isMockMode) {
+    // In mock mode, return a fake created tee set
+    const newTeeSet: TeeSet = {
+      id: crypto.randomUUID(),
+      courseId: input.courseId,
+      name: input.name,
+      color: input.color,
+      rating: input.rating,
+      slope: input.slope,
+      par: input.par,
+      yardage: input.yardage,
+    };
+    return newTeeSet;
+  }
+
+  const supabase = createClient();
+  if (!supabase) throw new Error('Supabase client not available');
+
+  const { data, error } = await supabase
+    .from('tee_sets')
+    .insert({
+      course_id: input.courseId,
+      name: input.name,
+      color: input.color || null,
+      rating: input.rating,
+      slope: input.slope,
+      par: input.par || 72,
+      yardage: input.yardage || null,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return mapTeeSetFromDb(data);
+}
+
+/**
+ * Create a course with tee sets in a single transaction
+ * Useful for the course entry form
+ */
+export async function createCourseWithTeeSets(
+  courseInput: CreateCourseInput,
+  teeSets: Omit<CreateTeeSetInput, 'courseId'>[]
+): Promise<{ course: Course; teeSets: TeeSet[] }> {
+  // Create the course first
+  const course = await createCourse(courseInput);
+
+  // Create all tee sets for this course
+  const createdTeeSets: TeeSet[] = [];
+  for (const teeSetInput of teeSets) {
+    const teeSet = await createTeeSet({
+      ...teeSetInput,
+      courseId: course.id,
+    });
+    createdTeeSets.push(teeSet);
+  }
+
+  return { course, teeSets: createdTeeSets };
+}
+
+/**
+ * Get course with its tee sets
+ */
+export async function getCourseWithTeeSets(
+  courseId: string
+): Promise<{ course: Course; teeSets: TeeSet[] } | null> {
+  const course = await getCourse(courseId);
+  if (!course) return null;
+
+  const teeSets = await getCourseTeeSets(courseId);
+  return { course, teeSets };
 }

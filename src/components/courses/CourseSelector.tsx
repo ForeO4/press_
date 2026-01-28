@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getCourses, getCourseTeeSets } from '@/lib/services/courses';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { getCourses, getCourseTeeSets, searchCourses } from '@/lib/services/courses';
+import { CourseEntryForm } from './CourseEntryForm';
 import type { Course, TeeSet } from '@/types';
 
 export interface ManualCourseData {
   courseName: string;
   slopeRating: number;
   courseRating?: number;
+  par?: number;
 }
 
 interface CourseSelectorProps {
@@ -18,8 +20,12 @@ interface CourseSelectorProps {
   disabled?: boolean;
 }
 
-const selectClassName =
+const inputClassName =
   'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
+
+const selectClassName = inputClassName;
+
+type ViewMode = 'search' | 'manual' | 'create';
 
 export function CourseSelector({
   value,
@@ -29,16 +35,24 @@ export function CourseSelector({
   disabled = false,
 }: CourseSelectorProps) {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [searchResults, setSearchResults] = useState<Course[]>([]);
   const [teeSets, setTeeSets] = useState<TeeSet[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showManualInput, setShowManualInput] = useState(!!manualCourse);
+  const [viewMode, setViewMode] = useState<ViewMode>(manualCourse ? 'manual' : 'search');
+  const [showDropdown, setShowDropdown] = useState(false);
   const [manualData, setManualData] = useState<ManualCourseData>(
-    manualCourse || { courseName: '', slopeRating: 113 }
+    manualCourse || { courseName: '', slopeRating: 113, par: 72 }
   );
 
-  // Load courses on mount
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load initial courses on mount
   useEffect(() => {
     async function loadCourses() {
       setLoading(true);
@@ -46,6 +60,7 @@ export function CourseSelector({
       try {
         const data = await getCourses();
         setCourses(data);
+        setSearchResults(data);
       } catch (err) {
         setError('Failed to load courses');
         console.error('[CourseSelector] Failed to load courses:', err);
@@ -56,6 +71,51 @@ export function CourseSelector({
 
     loadCourses();
   }, []);
+
+  // Handle search with debounce
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults(courses);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const results = await searchCourses(query);
+      setSearchResults(results);
+    } catch (err) {
+      console.error('[CourseSelector] Search failed:', err);
+      // Fall back to local filtering
+      const lowerQuery = query.toLowerCase();
+      setSearchResults(
+        courses.filter(
+          (c) =>
+            c.name.toLowerCase().includes(lowerQuery) ||
+            c.city.toLowerCase().includes(lowerQuery) ||
+            c.state.toLowerCase().includes(lowerQuery)
+        )
+      );
+    } finally {
+      setSearching(false);
+    }
+  }, [courses]);
+
+  // Debounced search effect
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      handleSearch(searchQuery);
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery, handleSearch]);
 
   // Load tee sets when course changes
   useEffect(() => {
@@ -81,26 +141,37 @@ export function CourseSelector({
     loadTeeSets();
   }, [selectedCourseId]);
 
-  // Clear tee set selection when course changes
-  const handleCourseChange = (courseId: string) => {
-    setSelectedCourseId(courseId);
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleCourseSelect = (course: Course) => {
+    setSelectedCourseId(course.id);
+    setSearchQuery(course.name);
+    setShowDropdown(false);
     onChange(undefined); // Clear tee set selection
+    onManualCourseChange?.(undefined);
   };
 
   const handleTeeSetChange = (teeSetId: string) => {
     onChange(teeSetId || undefined);
   };
 
-  const handleManualInputToggle = () => {
-    const newShowManual = !showManualInput;
-    setShowManualInput(newShowManual);
-    if (newShowManual) {
-      // Switching to manual - clear course selection
+  const switchToMode = (mode: ViewMode) => {
+    setViewMode(mode);
+    if (mode === 'manual') {
       setSelectedCourseId('');
       onChange(undefined);
       onManualCourseChange?.(manualData);
-    } else {
-      // Switching to course list - clear manual data
+    } else if (mode === 'search') {
       onManualCourseChange?.(undefined);
     }
   };
@@ -111,18 +182,57 @@ export function CourseSelector({
     onManualCourseChange?.(updated);
   };
 
-  const inputClassName =
-    'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
+  const handleCourseCreated = (course: Course, newTeeSets: TeeSet[]) => {
+    // Add new course to the list
+    setCourses((prev) => [course, ...prev]);
+    setSearchResults((prev) => [course, ...prev]);
 
-  // Show manual input form
-  if (showManualInput) {
+    // Select the new course
+    setSelectedCourseId(course.id);
+    setSearchQuery(course.name);
+    setTeeSets(newTeeSets);
+
+    // Switch back to search view
+    setViewMode('search');
+
+    // Auto-select first tee set if available
+    if (newTeeSets.length > 0) {
+      onChange(newTeeSets[0].id);
+    }
+  };
+
+  // Create new course view
+  if (viewMode === 'create') {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-foreground">Add New Course</h3>
+          <button
+            type="button"
+            onClick={() => switchToMode('search')}
+            className="text-sm text-primary hover:underline"
+          >
+            Back to search
+          </button>
+        </div>
+        <CourseEntryForm
+          onSuccess={handleCourseCreated}
+          onCancel={() => switchToMode('search')}
+          disabled={disabled}
+        />
+      </div>
+    );
+  }
+
+  // Manual input form
+  if (viewMode === 'manual') {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-medium text-foreground">Manual Course Entry</h3>
           <button
             type="button"
-            onClick={handleManualInputToggle}
+            onClick={() => switchToMode('search')}
             className="text-sm text-primary hover:underline"
           >
             Search courses instead
@@ -144,7 +254,7 @@ export function CourseSelector({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <label htmlFor="manual-slope" className="block text-sm font-medium text-foreground">
               Slope Rating *
@@ -159,7 +269,7 @@ export function CourseSelector({
               className={`${inputClassName} mt-1`}
               disabled={disabled}
             />
-            <p className="mt-1 text-xs text-muted-foreground">55-155, default 113</p>
+            <p className="mt-1 text-xs text-muted-foreground">55-155</p>
           </div>
 
           <div>
@@ -177,48 +287,146 @@ export function CourseSelector({
                 const val = parseFloat(e.target.value);
                 handleManualDataChange('courseRating', isNaN(val) ? undefined : val);
               }}
-              placeholder="Optional"
+              placeholder="72.5"
               className={`${inputClassName} mt-1`}
               disabled={disabled}
             />
-            <p className="mt-1 text-xs text-muted-foreground">e.g., 72.5</p>
+          </div>
+
+          <div>
+            <label htmlFor="manual-par" className="block text-sm font-medium text-foreground">
+              Par
+            </label>
+            <input
+              id="manual-par"
+              type="number"
+              min={60}
+              max={80}
+              value={manualData.par || ''}
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+                handleManualDataChange('par', isNaN(val) ? undefined : val);
+              }}
+              placeholder="72"
+              className={`${inputClassName} mt-1`}
+              disabled={disabled}
+            />
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => switchToMode('create')}
+          className="text-sm text-muted-foreground hover:text-primary hover:underline"
+        >
+          Want to save this course to the database?
+        </button>
       </div>
     );
   }
 
+  // Search view (default)
   return (
     <div className="space-y-3">
-      <div>
-        <label
-          htmlFor="course-select"
-          className="block text-sm font-medium text-foreground"
-        >
-          Course (Optional)
+      {/* Course Search */}
+      <div className="relative" ref={dropdownRef}>
+        <label htmlFor="course-search" className="block text-sm font-medium text-foreground">
+          Course
         </label>
-        <select
-          id="course-select"
-          value={selectedCourseId}
-          onChange={(e) => handleCourseChange(e.target.value)}
-          className={`${selectClassName} mt-1`}
-          disabled={disabled || loading}
-        >
-          <option value="">Select a course...</option>
-          {courses.map((course) => (
-            <option key={course.id} value={course.id}>
-              {course.name} - {course.city}, {course.state}
-            </option>
-          ))}
-        </select>
+        <div className="relative mt-1">
+          <input
+            ref={searchInputRef}
+            id="course-search"
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setShowDropdown(true);
+              if (!e.target.value) {
+                setSelectedCourseId('');
+                onChange(undefined);
+              }
+            }}
+            onFocus={() => setShowDropdown(true)}
+            placeholder="Search for a course..."
+            className={inputClassName}
+            disabled={disabled || loading}
+            autoComplete="off"
+          />
+          {searching && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            </div>
+          )}
+        </div>
+
+        {/* Search Results Dropdown */}
+        {showDropdown && !disabled && (
+          <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover shadow-lg max-h-60 overflow-y-auto">
+            {searchResults.length > 0 ? (
+              <>
+                {searchResults.map((course) => (
+                  <button
+                    key={course.id}
+                    type="button"
+                    onClick={() => handleCourseSelect(course)}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-muted flex items-center justify-between"
+                  >
+                    <span>
+                      <span className="font-medium">{course.name}</span>
+                      {course.city && course.state && (
+                        <span className="text-muted-foreground ml-2">
+                          {course.city}, {course.state}
+                        </span>
+                      )}
+                    </span>
+                    {course.verified && (
+                      <span className="text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded">
+                        Verified
+                      </span>
+                    )}
+                  </button>
+                ))}
+                <div className="border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDropdown(false);
+                      switchToMode('create');
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm text-primary hover:bg-muted"
+                  >
+                    + Add new course
+                  </button>
+                </div>
+              </>
+            ) : searchQuery ? (
+              <div className="p-3">
+                <p className="text-sm text-muted-foreground">No courses found</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDropdown(false);
+                    switchToMode('create');
+                  }}
+                  className="mt-2 text-sm text-primary hover:underline"
+                >
+                  + Add &quot;{searchQuery}&quot; as new course
+                </button>
+              </div>
+            ) : (
+              <div className="p-3 text-sm text-muted-foreground">
+                Type to search courses...
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Tee Set Selection */}
       {selectedCourseId && (
         <div>
-          <label
-            htmlFor="tee-set-select"
-            className="block text-sm font-medium text-foreground"
-          >
+          <label htmlFor="tee-set-select" className="block text-sm font-medium text-foreground">
             Tee Set
           </label>
           <select
@@ -231,7 +439,8 @@ export function CourseSelector({
             <option value="">Select a tee set...</option>
             {teeSets.map((teeSet) => (
               <option key={teeSet.id} value={teeSet.id}>
-                {teeSet.name} ({teeSet.rating}/{teeSet.slope})
+                {teeSet.name} ({teeSet.rating}/{teeSet.slope}
+                {teeSet.par ? `, Par ${teeSet.par}` : ''})
               </option>
             ))}
           </select>
@@ -243,44 +452,21 @@ export function CourseSelector({
         </div>
       )}
 
-      {/* Error state with manual entry option */}
+      {/* Error state */}
       {error && (
         <div className="rounded-md bg-destructive/10 p-3">
           <p className="text-sm text-destructive">{error}</p>
-          <button
-            type="button"
-            onClick={handleManualInputToggle}
-            className="mt-2 text-sm font-medium text-primary hover:underline"
-          >
-            Enter course manually
-          </button>
         </div>
       )}
 
-      {/* Show manual option when no courses available */}
-      {!error && !loading && courses.length === 0 && (
-        <div className="rounded-md bg-muted p-3">
-          <p className="text-sm text-muted-foreground">No courses available in the database.</p>
-          <button
-            type="button"
-            onClick={handleManualInputToggle}
-            className="mt-2 text-sm font-medium text-primary hover:underline"
-          >
-            Enter course manually
-          </button>
-        </div>
-      )}
-
-      {/* Always show manual option at bottom */}
-      {!error && (loading || courses.length > 0) && (
-        <button
-          type="button"
-          onClick={handleManualInputToggle}
-          className="text-sm text-muted-foreground hover:text-primary hover:underline"
-        >
-          or enter course manually
-        </button>
-      )}
+      {/* Manual entry option */}
+      <button
+        type="button"
+        onClick={() => switchToMode('manual')}
+        className="text-sm text-muted-foreground hover:text-primary hover:underline"
+      >
+        or enter course details manually
+      </button>
     </div>
   );
 }

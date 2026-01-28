@@ -120,6 +120,7 @@ async function createMockPlayer(
       userId: id,
       handicapIndex: input.handicapIndex,
       ghinNumber: input.ghinNumber ?? null,
+      source: 'manual',
       updatedAt: now,
     });
   }
@@ -314,6 +315,7 @@ function updateMockProfile(
         userId,
         handicapIndex: updates.handicapIndex,
         ghinNumber: updates.ghinNumber ?? null,
+        source: 'manual',
         updatedAt: now,
       });
     }
@@ -428,6 +430,9 @@ function mapHandicapFromDb(row: Record<string, unknown>): HandicapProfile {
     userId: row.user_id as string,
     handicapIndex: row.handicap_index as number | null,
     ghinNumber: row.ghin_number as string | null,
+    source: (row.source as 'manual' | 'ghin_verified') || 'manual',
+    homeCourseId: row.home_course_id as string | undefined,
+    lastVerifiedAt: row.last_verified_at as string | undefined,
     updatedAt: row.updated_at as string,
   };
 }

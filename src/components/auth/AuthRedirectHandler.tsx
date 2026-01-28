@@ -2,10 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 /**
  * Handles Supabase auth redirects that come with tokens in the URL hash.
  * Specifically handles password recovery flow by redirecting to reset-password page.
+ *
+ * IMPORTANT: Must let Supabase process the hash tokens and establish session
+ * BEFORE redirecting, otherwise the reset-password page won't have an active session.
  */
 export function AuthRedirectHandler() {
   const router = useRouter();
@@ -22,10 +26,19 @@ export function AuthRedirectHandler() {
 
     console.log('[AuthRedirectHandler] Hash params:', { accessToken: !!accessToken, type });
 
-    // If this is a recovery (password reset) flow, redirect to reset password page
+    // If this is a recovery (password reset) flow, let Supabase process the tokens first
     if (accessToken && type === 'recovery') {
-      console.log('[AuthRedirectHandler] Redirecting to reset-password');
-      router.push('/auth/reset-password');
+      const supabase = createClient();
+      if (!supabase) return;
+
+      // Let Supabase process the hash and establish session
+      // getSession() triggers Supabase to read the hash tokens and create a session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        console.log('[AuthRedirectHandler] Session established:', !!session);
+        if (session) {
+          router.push('/auth/reset-password');
+        }
+      });
     }
   }, [router]);
 

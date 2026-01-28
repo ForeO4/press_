@@ -362,20 +362,11 @@ export async function getEventMembers(eventId: string): Promise<PlayerProfile[]>
   }
 
   try {
-    // Fetch registered members and guest players in parallel
+    // Step 1: Fetch memberships and guest players in parallel
     const [membersResult, guestResult] = await Promise.all([
       supabase
         .from('event_memberships')
-        .select(`
-          user_id,
-          profiles!inner (
-            id,
-            display_name,
-            avatar_url,
-            created_at,
-            updated_at
-          )
-        `)
+        .select('user_id')
         .eq('event_id', eventId)
         .eq('status', 'ACTIVE'),
       supabase
@@ -402,25 +393,50 @@ export async function getEventMembers(eventId: string): Promise<PlayerProfile[]>
       // Don't throw - continue with empty guests
     }
 
-    // Get handicap profiles for registered members
-    const userIds = membersResult.data?.map(d => d.user_id) ?? [];
-    const { data: handicaps } = userIds.length > 0
-      ? await supabase
-          .from('handicap_profiles')
-          .select('*')
-          .in('user_id', userIds)
-      : { data: [] };
+    // Step 2: Get user IDs from memberships
+    const userIds = membersResult.data?.map(d => d.user_id).filter(Boolean) ?? [];
+    console.log('[players] User IDs from memberships:', userIds);
 
+    // Step 3: Fetch profiles and handicaps for those user IDs (separate queries - no FK needed)
+    const [profilesResult, handicapsResult] = userIds.length > 0
+      ? await Promise.all([
+          supabase
+            .from('profiles')
+            .select('id, display_name, avatar_url, created_at, updated_at')
+            .in('id', userIds),
+          supabase
+            .from('handicap_profiles')
+            .select('*')
+            .in('user_id', userIds),
+        ])
+      : [{ data: [], error: null }, { data: [], error: null }];
+
+    if (profilesResult.error) {
+      console.error('[players] Failed to fetch profiles:', profilesResult.error);
+    }
+
+    console.log('[players] Profiles fetched:', profilesResult.data?.length ?? 0);
+
+    // Create maps for quick lookup
+    const profileMap = new Map(
+      (profilesResult.data ?? []).map(p => [p.id, p])
+    );
     const handicapMap = new Map(
-      (handicaps ?? []).map(h => [h.user_id, h])
+      (handicapsResult.data ?? []).map(h => [h.user_id, h])
     );
 
     // Map registered members to profiles
-    const memberProfiles = (membersResult.data ?? []).map(d => {
-      const profile = d.profiles as unknown as Record<string, unknown>;
-      const handicap = handicapMap.get(d.user_id);
-      return mapProfileFromDb(profile, handicap, undefined);
-    });
+    const memberProfiles = userIds
+      .map(userId => {
+        const profile = profileMap.get(userId);
+        if (!profile) {
+          console.warn('[players] No profile found for user:', userId);
+          return null;
+        }
+        const handicap = handicapMap.get(userId);
+        return mapProfileFromDb(profile, handicap, undefined);
+      })
+      .filter((p): p is PlayerProfile => p !== null);
 
     // Map guest players to profiles
     const guestProfiles: PlayerProfile[] = (guestResult.data ?? []).map(g => ({

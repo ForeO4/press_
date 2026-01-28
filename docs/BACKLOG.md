@@ -1,5 +1,16 @@
 # Press! Backlog
 
+## Critical (Blocker)
+
+### Event Page Not Fetching Real Data
+- **Bug**: Event page shows "Event not found" after creating event in production
+- **Root Cause**: `src/app/event/[eventId]/page.tsx` line 19 only uses mock data, never fetches from Supabase
+- **Impact**: Blocks all event functionality (games, scores, invites)
+- **Added**: 2026-01-27
+- **Status**: In Progress
+
+---
+
 ## High Priority
 
 ### GHIN Official API Integration (Phase 5-6)
@@ -11,17 +22,33 @@
 - **Added**: 2026-01-27
 - **Status**: Backlog (Phase 1-4 Complete)
 
+### Manual Course Input - Add Tee Selection
+- **Feature**: Allow users to add multiple tees when entering course manually
+- **Context**: Currently only slope/rating, need full tee sets (name, slope, rating, par, yardage)
+- **Added**: 2026-01-27
+- **Status**: Backlog
+
 ---
 
 ## Medium Priority
 
-*(empty)*
+### Game Types UI Redesign
+- **Feature**: Improve game type selection on Step 3 of event wizard
+- **Requirements**:
+  - Remove Banker from list
+  - Show top 4 game types, rest in dropdown
+  - Add favorites feature with croc/gator icon (like a star)
+- **Added**: 2026-01-27
+- **Status**: Backlog
 
 ---
 
 ## Low Priority
 
-*(empty)*
+### Invite via Email/Phone
+- **Feature**: Send event invites via email or phone number (not just link/code)
+- **Added**: 2026-01-27
+- **Status**: Backlog
 
 ---
 

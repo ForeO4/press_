@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BalanceCard } from '@/components/gatorBucks/BalanceCard';
 import { mockEvent, mockMemberships, mockGatorBucksBalances } from '@/lib/mock/data';
@@ -7,6 +8,8 @@ import { mockUsers } from '@/lib/mock/users';
 import { formatDate, formatGatorBucks } from '@/lib/utils';
 import { isMockMode } from '@/lib/env/public';
 import { useAppStore } from '@/stores';
+import { getEvent } from '@/lib/services/events';
+import type { Event } from '@/types';
 
 export default function EventPage({
   params,
@@ -14,15 +17,56 @@ export default function EventPage({
   params: { eventId: string };
 }) {
   const mockUser = useAppStore((state) => state.mockUser);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [loading, setLoading] = useState(!isMockMode);
+  const [error, setError] = useState<string | null>(null);
 
-  // In mock mode, use demo data
-  const event = isMockMode ? mockEvent : null;
+  // In mock mode, use demo data; otherwise fetch from Supabase
   const memberships = isMockMode ? mockMemberships : [];
+
+  useEffect(() => {
+    if (isMockMode) {
+      setEvent(mockEvent);
+      return;
+    }
+
+    // Fetch event from Supabase
+    const fetchEvent = async () => {
+      try {
+        setLoading(true);
+        const eventData = await getEvent(params.eventId);
+        setEvent(eventData);
+      } catch (err) {
+        console.error('[EventPage] Failed to fetch event:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load event');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [params.eventId]);
 
   // Get current user's balance
   const userBalance = mockUser
     ? mockGatorBucksBalances.find((b) => b.userId === mockUser.id) ?? null
     : null;
+
+  if (loading) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-muted-foreground">Loading event...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-destructive">{error}</p>
+      </div>
+    );
+  }
 
   if (!event) {
     return (

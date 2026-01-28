@@ -2,16 +2,21 @@
 
 ## Test Objective
 
-Verify the three critical MVP blocker fixes deployed in commit `09beda8`:
+Verify the critical MVP blocker fixes and UI improvements:
 
 1. **RLS Policy Fix** - `threads_insert` policy added to unblock event creation
 2. **Manual Course Input** - Fallback when course API fails or returns empty
 3. **Sign-in Button** - "Select a user" prompt visible in mock mode
+4. **RPC Permissions** - Grant execute on `rpc_create_event` to authenticated users
+5. **Game Type Radio Buttons** - Single select instead of checkboxes
+6. **Coming Soon Games** - Show future game types as disabled
 
 **Previous Blockers:**
 - Event creation failed silently (RLS policy missing)
+- Event creation 403 error (RPC permissions not granted)
 - Course selection step blocked when no courses in database
 - Users confused by missing sign-in guidance in mock mode
+- Game types allowed multi-select (should be single)
 
 ---
 
@@ -23,8 +28,8 @@ Verify the three critical MVP blocker fixes deployed in commit `09beda8`:
 | **Date** | 2026-01-27 |
 | **Start Time** | |
 | **End Time** | |
-| **Build/Commit** | `09beda8` (fix: MVP blockers - RLS policy, manual course input, sign-in button) |
-| **Previous Commit** | `4666bad` |
+| **Build/Commit** | `80c93c2` (feat: Game type radio buttons + Coming Soon games) |
+| **Previous Commit** | `30e8d27` |
 | **App URL** | https://press-4qf0.onrender.com/ |
 | **Supabase Project** | njousvaobicmozxnzfaj |
 | **Environment** | [x] Production  [ ] Staging  [ ] Local |
@@ -39,9 +44,12 @@ Verify the three critical MVP blocker fixes deployed in commit `09beda8`:
 |------|--------|
 | `supabase/migrations/0002_rls.sql` | Added `threads_insert` policy |
 | `supabase/migrations/0005_fix_threads_rls.sql` | New migration for existing DBs |
+| `supabase/migrations/0006_grant_rpc_permissions.sql` | Grant RPC execute to authenticated |
 | `src/components/courses/CourseSelector.tsx` | Manual input mode + toggle |
 | `src/components/events/wizard/StepCourse.tsx` | Accept manual course data |
+| `src/components/events/wizard/StepRules.tsx` | Radio buttons + Coming Soon games |
 | `src/components/auth/AuthHeader.tsx` | "Select a user" prompt |
+| `src/lib/services/events.ts` | Better error messages |
 
 ---
 
@@ -52,9 +60,11 @@ Verify the three critical MVP blocker fixes deployed in commit `09beda8`:
 | 1 | Authentication | | | | |
 | 2 | Event Creation | | | | |
 | 3 | Manual Course Input | | | | |
-| 4 | Game Creation | | | | |
-| 5 | Score Entry | | | | |
-| 6 | Invite System | | | | |
+| 4 | Game Type Radio Buttons | | | | |
+| 5 | Coming Soon Games | | | | |
+| 6 | Game Creation | | | | |
+| 7 | Score Entry | | | | |
+| 8 | Invite System | | | | |
 
 **Overall:** [ ] PASS  [ ] PASS w/ Issues  [ ] FAIL  [ ] BLOCKED
 
@@ -165,19 +175,84 @@ Verify the three critical MVP blocker fixes deployed in commit `09beda8`:
 
 ---
 
-## Test 4: Game Creation (Regression)
+## Test 4: Game Type Radio Buttons (Fix #5 Verification)
+
+**Objective:** Verify game types use radio buttons (single select) instead of checkboxes
+
+**Fix Being Tested:** `StepRules.tsx` - Changed from checkboxes to radio buttons
+
+**Previous Behavior:** Checkboxes allowed multiple game types to be selected
+
+| Step | Action | Expected | P/F |
+|------|--------|----------|:---:|
+| 4.1 | Go to `/app/events/new`, reach Step 3 | Rules page loads | |
+| 4.2 | Observe game type controls | Radio buttons (circles), not checkboxes | |
+| 4.3 | Check default selection | Nassau pre-selected | |
+| 4.4 | Click "Match Play" | Match Play selected, Nassau deselects | |
+| 4.5 | Click "Nassau" | Nassau selected, Match Play deselects | |
+| 4.6 | Try to select both | Only one can be selected at a time | |
+
+**Selected Game Type:**
+
+```
+
+```
+
+**Issues:**
+
+```
+
+```
+
+---
+
+## Test 5: Coming Soon Games (Fix #6 Verification)
+
+**Objective:** Verify future game types show as disabled with "Coming Soon" badge
+
+**Fix Being Tested:** `StepRules.tsx` - Added coming soon games with disabled state
+
+| Step | Action | Expected | P/F |
+|------|--------|----------|:---:|
+| 5.1 | On Step 3, view game type list | 9 game types visible | |
+| 5.2 | Check available games | Match Play, Nassau are selectable | |
+| 5.3 | Check Coming Soon badge | 7 games show "Coming Soon" badge | |
+| 5.4 | Click a Coming Soon game (Skins) | Nothing happens (disabled) | |
+| 5.5 | Verify all Coming Soon games | Skins, Wolf, Round Robin, 2 Man Low Ball, Banker, 2 Man Scramble, 9 Point | |
+
+**Coming Soon Games Visible:**
+
+```
+[ ] Skins
+[ ] Wolf
+[ ] Round Robin
+[ ] 2 Man Low Ball
+[ ] Banker
+[ ] 2 Man Scramble
+[ ] 9 Point
+```
+
+**Issues:**
+
+```
+
+```
+
+---
+
+## Test 6: Game Creation (Regression)
 
 **Objective:** Verify game creation still works after fixes (depends on event creation working)
 
 | Step | Action | Expected | P/F |
 |------|--------|----------|:---:|
-| 4.1 | Go to event's Games tab | Games list loads | |
-| 4.2 | Click "New Game" or "+" | Create modal opens | |
-| 4.3 | Select "Match Play" | Game type selected | |
-| 4.4 | Select Player A | Player added | |
-| 4.5 | Select Player B | Player added | |
-| 4.6 | Enter stakes amount | Number accepted | |
-| 4.7 | Click "Create" | Game appears in list | |
+| 6.1 | Go to event's Games tab | Games list loads | |
+| 6.2 | Click "New Game" or "+" | Create modal opens | |
+| 6.3 | Select "Match Play" | Game type selected | |
+| 6.4 | Select Player A | Player added | |
+| 6.5 | Select Player B | Player added | |
+| 6.6 | Enter stakes amount | Number accepted | |
+| 6.7 | Click "Create" | Game appears in list | |
 
 **Game Type:**
 
@@ -205,18 +280,18 @@ Verify the three critical MVP blocker fixes deployed in commit `09beda8`:
 
 ---
 
-## Test 5: Score Entry (Regression)
+## Test 7: Score Entry (Regression)
 
 **Objective:** Verify score entry still works (depends on game creation working)
 
 | Step | Action | Expected | P/F |
 |------|--------|----------|:---:|
-| 5.1 | Click game to open details | Game detail page loads | |
-| 5.2 | Tap a score cell | Score entry modal opens | |
-| 5.3 | Enter Player A score | Score saved | |
-| 5.4 | Enter Player B score | Score saved | |
-| 5.5 | Observe match status | Updates correctly (e.g., "1 UP") | |
-| 5.6 | Enter scores for holes 1-9 | All scores persist | |
+| 7.1 | Click game to open details | Game detail page loads | |
+| 7.2 | Tap a score cell | Score entry modal opens | |
+| 7.3 | Enter Player A score | Score saved | |
+| 7.4 | Enter Player B score | Score saved | |
+| 7.5 | Observe match status | Updates correctly (e.g., "1 UP") | |
+| 7.6 | Enter scores for holes 1-9 | All scores persist | |
 
 **Hole 1 Scores:**
 
@@ -238,17 +313,17 @@ Player A:       Player B:
 
 ---
 
-## Test 6: Invite System (Regression)
+## Test 8: Invite System (Regression)
 
 **Objective:** Verify invite system still works (depends on event creation working)
 
 | Step | Action | Expected | P/F |
 |------|--------|----------|:---:|
-| 6.1 | Go to event Admin page | Admin page loads | |
-| 6.2 | Find invite button (UserPlus icon) | Button visible in header | |
-| 6.3 | Click to open invite modal | Modal with link appears | |
-| 6.4 | Copy invite link | Link copied to clipboard | |
-| 6.5 | Open link (incognito window) | Join page loads with event name | |
+| 8.1 | Go to event Admin page | Admin page loads | |
+| 8.2 | Find invite button (UserPlus icon) | Button visible in header | |
+| 8.3 | Click to open invite modal | Modal with link appears | |
+| 8.4 | Copy invite link | Link copied to clipboard | |
+| 8.5 | Open link (incognito window) | Join page loads with event name | |
 
 **Invite Link:**
 

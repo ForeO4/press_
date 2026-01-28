@@ -11,7 +11,9 @@ import { cn } from '@/lib/utils';
  * Only visible when running without backend
  */
 export function UserSwitcher() {
-  const { mockUser, setMockUser } = useAppStore();
+  // Use granular selectors to prevent re-renders when unrelated store state changes
+  const mockUser = useAppStore((state) => state.mockUser);
+  const setMockUser = useAppStore((state) => state.setMockUser);
 
   // Only show in mock mode
   if (!isMockMode) {

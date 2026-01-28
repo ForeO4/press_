@@ -1,5 +1,33 @@
 # Code Conventions
 
+## Core Development Principles
+
+### 1. Production-First Mindset
+- Write every line as if it ships tomorrow
+- Mock/dev code must be clearly isolated and NEVER leak to production
+- Use environment detection (`isMockMode`) to gate dev-only features
+- Test with production-like data and conditions
+
+### 2. Security is Non-Negotiable
+- Validate ALL user input at system boundaries
+- Use Row-Level Security (RLS) - never trust client-side checks alone
+- No secrets in code - use environment variables
+- Follow principle of least privilege for all permissions
+- See `/docs/04-security/` for detailed security requirements
+
+### 3. Build for Change ("Living Code")
+- Code will be read 10x more than written - prioritize clarity
+- Use explicit types - no `any`, no implicit inference where ambiguous
+- Small, focused functions over large monoliths
+- Prefer composition over inheritance
+- Delete dead code immediately - version control is your backup
+
+### 4. Performance by Default
+- Use Zustand selectors to prevent unnecessary re-renders
+- Memoize expensive computations (`useMemo`, `useCallback`)
+- Lazy load routes and heavy components
+- Database queries: select only needed columns, use indexes
+
 ## TypeScript
 
 ### Strict Mode

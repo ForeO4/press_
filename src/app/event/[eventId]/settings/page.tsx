@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EventForm } from '@/components/events/EventForm';
 import { getEvent, updateEvent, deleteEvent } from '@/lib/services/events';
+import { getEventTeeSnapshot } from '@/lib/services/courses';
 import type { Event, CreateEventInput } from '@/types';
 
 export default function EventSettingsPage({
@@ -21,12 +22,19 @@ export default function EventSettingsPage({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [selectedTeeSetId, setSelectedTeeSetId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    async function fetchEvent() {
+    async function fetchEventAndCourse() {
       try {
         const eventData = await getEvent(params.eventId);
         setEvent(eventData);
+
+        // Load existing tee snapshot to pre-populate course selection
+        const snapshot = await getEventTeeSnapshot(params.eventId);
+        if (snapshot?.teeSetId) {
+          setSelectedTeeSetId(snapshot.teeSetId);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load event');
       } finally {
@@ -34,7 +42,7 @@ export default function EventSettingsPage({
       }
     }
 
-    fetchEvent();
+    fetchEventAndCourse();
   }, [params.eventId]);
 
   const handleUpdate = async (values: CreateEventInput) => {
@@ -43,9 +51,9 @@ export default function EventSettingsPage({
     setSuccessMessage(null);
 
     try {
-      const updated = await updateEvent(params.eventId, values);
-      setEvent(updated);
-      setSuccessMessage('Event updated successfully');
+      await updateEvent(params.eventId, values);
+      // Navigate to event page after successful update
+      router.push(`/event/${params.eventId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update event');
     } finally {
@@ -110,10 +118,12 @@ export default function EventSettingsPage({
         </CardHeader>
         <CardContent>
           <EventForm
+            key={selectedTeeSetId ?? 'no-tee'}
             initialValues={{
               name: event.name,
               date: event.date,
               visibility: event.visibility,
+              teeSetId: selectedTeeSetId,
             }}
             onSubmit={handleUpdate}
             submitLabel="Save Changes"

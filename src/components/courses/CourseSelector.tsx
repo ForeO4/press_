@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getCourses, getCourseTeeSets, searchCourses } from '@/lib/services/courses';
+import { getCourses, getCourseTeeSets, searchCourses, getTeeSetWithHoles, getCourse } from '@/lib/services/courses';
 import { CourseEntryForm } from './CourseEntryForm';
 import type { Course, TeeSet } from '@/types';
 
@@ -71,6 +71,35 @@ export function CourseSelector({
 
     loadCourses();
   }, []);
+
+  // Reverse-lookup course when teeSetId (value) is provided on mount
+  useEffect(() => {
+    async function loadInitialSelection() {
+      if (!value) return;
+
+      try {
+        // Get the tee set to find its courseId
+        const teeSet = await getTeeSetWithHoles(value);
+        if (!teeSet) return;
+
+        // Get the course info
+        const course = await getCourse(teeSet.courseId);
+        if (!course) return;
+
+        // Set the course selection
+        setSelectedCourseId(course.id);
+        setSearchQuery(course.name);
+
+        // Load tee sets for this course
+        const courseTees = await getCourseTeeSets(course.id);
+        setTeeSets(courseTees);
+      } catch (err) {
+        console.error('[CourseSelector] Failed to load initial selection:', err);
+      }
+    }
+
+    loadInitialSelection();
+  }, [value]);
 
   // Handle search with debounce
   const handleSearch = useCallback(async (query: string) => {

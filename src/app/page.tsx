@@ -24,28 +24,8 @@ export default function HomePage() {
             Golf event games made fun with Gator Bucks
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/event/demo-event">
-              <Button size="lg">Event Home</Button>
-            </Link>
-            <Link href="/event/demo-event/games">
-              <Button size="lg" variant="secondary">
-                Games
-              </Button>
-            </Link>
-            <Link href="/event/demo-event/feed">
-              <Button size="lg" variant="secondary">
-                Feed
-              </Button>
-            </Link>
-            <Link href="/event/demo-event/admin">
-              <Button size="lg" variant="secondary">
-                Admin
-              </Button>
-            </Link>
-            <Link href="/event/demo-event/settlement">
-              <Button size="lg" variant="outline">
-                Settlement
-              </Button>
+            <Link href="/app">
+              <Button size="lg">Get Started</Button>
             </Link>
           </div>
         </div>

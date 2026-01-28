@@ -189,10 +189,19 @@ export async function updateEvent(
   eventId: string,
   input: UpdateEventInput
 ): Promise<Event> {
-  if (isMockMode) {
-    // In mock mode, return updated mock event
+  if (isMockMode || eventId.startsWith('demo-')) {
+    // In mock mode or demo events, create tee snapshot if provided
+    if (input.teeSetId) {
+      try {
+        await createEventTeeSnapshot(eventId, input.teeSetId);
+      } catch (snapshotError) {
+        console.error('[events] Failed to create tee snapshot in mock mode:', snapshotError);
+      }
+    }
+    // Return updated mock event
     return {
       ...mockEvent,
+      id: eventId,
       ...input,
       updatedAt: new Date().toISOString(),
     };
@@ -215,6 +224,22 @@ export async function updateEvent(
 
   if (error) throw error;
 
+  // Update tee snapshot if teeSetId provided
+  if (input.teeSetId) {
+    try {
+      // Delete existing snapshot first
+      await supabase
+        .from('event_tee_snapshots')
+        .delete()
+        .eq('event_id', eventId);
+
+      // Create new snapshot
+      await createEventTeeSnapshot(eventId, input.teeSetId);
+    } catch (snapshotError) {
+      console.error('[events] Failed to update tee snapshot:', snapshotError);
+    }
+  }
+
   return mapEventFromDb(data);
 }
 
@@ -222,8 +247,8 @@ export async function updateEvent(
  * Delete an event
  */
 export async function deleteEvent(eventId: string): Promise<void> {
-  if (isMockMode) {
-    // In mock mode, just pretend it worked
+  if (isMockMode || eventId.startsWith('demo-')) {
+    // In mock mode or demo events, just pretend it worked
     return;
   }
 

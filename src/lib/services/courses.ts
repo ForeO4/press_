@@ -203,17 +203,22 @@ export async function createEventTeeSnapshot(
       yardage: hole.yardage,
     }));
 
-  // Insert the snapshot
+  // Build snapshot data object
+  const snapshotData = {
+    course_name: course.name,
+    tee_set_name: teeSet.name,
+    rating: teeSet.rating,
+    slope: teeSet.slope,
+    holes: holesSnapshot,
+  };
+
+  // Insert the snapshot (using snapshot_data JSONB column)
   const { data, error } = await supabase
     .from('event_tee_snapshots')
     .insert({
       event_id: eventId,
       tee_set_id: teeSetId,
-      course_name: course.name,
-      tee_set_name: teeSet.name,
-      rating: teeSet.rating,
-      slope: teeSet.slope,
-      holes: holesSnapshot,
+      snapshot_data: snapshotData,
     })
     .select()
     .single();
@@ -228,7 +233,7 @@ export async function createEventTeeSnapshot(
  * Falls back to mock data if no snapshot exists in database
  */
 export async function getEventTeeSnapshot(eventId: string): Promise<TeeSnapshot | null> {
-  // Helper to create mock snapshot
+  // Helper to create mock snapshot (only for demo/mock events)
   const createMockSnapshot = (): TeeSnapshot | null => {
     const mockTee = mockTeeSets.find((t) => t.id === 'tee-set-blue');
     if (!mockTee) return null;
@@ -251,14 +256,15 @@ export async function getEventTeeSnapshot(eventId: string): Promise<TeeSnapshot 
     };
   };
 
-  if (isMockMode) {
+  // Only use mock data for demo events or mock mode
+  if (isMockMode || eventId.startsWith('demo-')) {
     return createMockSnapshot();
   }
 
   const supabase = createClient();
   if (!supabase) {
-    console.warn('[courses] Supabase client not available, using mock data');
-    return createMockSnapshot();
+    console.warn('[courses] Supabase client not available');
+    return null;
   }
 
   try {
@@ -269,15 +275,19 @@ export async function getEventTeeSnapshot(eventId: string): Promise<TeeSnapshot 
       .single();
 
     if (error) {
-      // No snapshot in DB or table doesn't exist - fall back to mock data
-      console.warn('[courses] DB query error, using mock data:', error.code, error.message);
-      return createMockSnapshot();
+      // No snapshot in DB - return null for real events
+      if (error.code === 'PGRST116') {
+        // Not found is expected - no snapshot yet
+        return null;
+      }
+      console.warn('[courses] DB query error:', error.code, error.message);
+      return null;
     }
 
     return mapTeeSnapshotFromDb(data);
   } catch (err) {
-    console.warn('[courses] Unexpected error, using mock data:', err);
-    return createMockSnapshot();
+    console.warn('[courses] Unexpected error:', err);
+    return null;
   }
 }
 
@@ -332,10 +342,10 @@ function mapTeeSetWithHolesFromDb(row: Record<string, unknown>): TeeSetWithHoles
     holes: holes.map((h) => ({
       id: h.id as string,
       teeSetId: h.tee_set_id as string,
-      number: h.number as number,
+      number: h.hole_number as number,
       par: h.par as number,
       handicap: h.handicap as number,
-      yardage: h.yardage as number,
+      yardage: h.yards as number,
     })),
   };
 }
@@ -344,15 +354,18 @@ function mapTeeSetWithHolesFromDb(row: Record<string, unknown>): TeeSetWithHoles
  * Map database row to TeeSnapshot type
  */
 function mapTeeSnapshotFromDb(row: Record<string, unknown>): TeeSnapshot {
+  // Data is stored in snapshot_data JSONB column
+  const snapshotData = row.snapshot_data as Record<string, unknown> | undefined;
+
   return {
     id: row.id as string,
     eventId: row.event_id as string,
     teeSetId: row.tee_set_id as string | null,
-    courseName: row.course_name as string,
-    teeSetName: row.tee_set_name as string,
-    rating: row.rating as number,
-    slope: row.slope as number,
-    holes: row.holes as HoleSnapshot[],
+    courseName: (snapshotData?.course_name as string) || '',
+    teeSetName: (snapshotData?.tee_set_name as string) || '',
+    rating: (snapshotData?.rating as number) || 0,
+    slope: (snapshotData?.slope as number) || 0,
+    holes: (snapshotData?.holes as HoleSnapshot[]) || [],
     createdAt: row.created_at as string,
   };
 }

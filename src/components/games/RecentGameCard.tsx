@@ -7,6 +7,7 @@ import { GameTypePill } from '@/components/ui/StatusPill';
 import { AlligatorIcon } from '@/components/ui/AlligatorIcon';
 import { cn } from '@/lib/utils';
 import type { GameWithParticipants, HoleScore } from '@/types';
+import { getParticipantPlayerId } from '@/types';
 import { mockUsers } from '@/lib/mock/users';
 import { Calendar, ChevronRight } from 'lucide-react';
 import {
@@ -28,28 +29,30 @@ export function RecentGameCard({
   // Get player info
   const playerA = game.participants[0];
   const playerB = game.participants[1];
+  const playerAId = playerA ? getParticipantPlayerId(playerA) : '';
+  const playerBId = playerB ? getParticipantPlayerId(playerB) : '';
   const playerAUser = playerA
-    ? mockUsers.find((u) => u.id === playerA.userId)
+    ? mockUsers.find((u) => u.id === playerAId)
     : null;
   const playerBUser = playerB
-    ? mockUsers.find((u) => u.id === playerB.userId)
+    ? mockUsers.find((u) => u.id === playerBId)
     : null;
   const playerAName = playerAUser?.name ?? 'Player A';
   const playerBName = playerBUser?.name ?? 'Player B';
-  const playerAScores = playerA ? (scores[playerA.userId] ?? []) : [];
-  const playerBScores = playerB ? (scores[playerB.userId] ?? []) : [];
+  const playerAScores = playerAId ? (scores[playerAId] ?? []) : [];
+  const playerBScores = playerBId ? (scores[playerBId] ?? []) : [];
 
   const isPress = game.parentGameId !== null;
   const isMatchPlay = game.type === 'match_play';
 
   // Calculate result
   const getResult = () => {
-    if (!playerA || !playerB) return null;
+    if (!playerAId || !playerBId) return null;
 
     const holeResults = computeHoleResults(
       game,
-      playerA.userId,
-      playerB.userId,
+      playerAId,
+      playerBId,
       playerAScores,
       playerBScores
     );
@@ -57,8 +60,8 @@ export function RecentGameCard({
     if (holeResults.length === 0) return { text: 'No result', teethWon: 0, winnerId: null };
 
     const matchResult = computeMatchPlayResult(
-      playerA.userId,
-      playerB.userId,
+      playerAId,
+      playerBId,
       holeResults
     );
 
@@ -66,7 +69,7 @@ export function RecentGameCard({
       return { text: 'Halved', teethWon: 0, winnerId: null };
     }
 
-    const winnerName = matchResult.winnerId === playerA.userId
+    const winnerName = matchResult.winnerId === playerAId
       ? playerAName.split(' ')[0]
       : playerBName.split(' ')[0];
 

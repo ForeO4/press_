@@ -37,6 +37,7 @@ import type {
   TeeSnapshot,
   HoleSnapshot,
 } from '@/types';
+import { getParticipantPlayerId } from '@/types';
 
 export default function GameDetailPage({
   params,
@@ -99,13 +100,18 @@ export default function GameDetailPage({
 
       // Load handicaps for all participants
       const handicapPromises = gameData.participants.map(async (p) => {
-        const snapshot = await getHandicapSnapshot(params.eventId, p.userId);
-        return { userId: p.userId, handicap: snapshot?.courseHandicap ?? 0 };
+        const participantId = getParticipantPlayerId(p);
+        // Only fetch handicap for registered users (not guests)
+        if (p.userId) {
+          const snapshot = await getHandicapSnapshot(params.eventId, p.userId);
+          return { playerId: participantId, handicap: snapshot?.courseHandicap ?? 0 };
+        }
+        return { playerId: participantId, handicap: 0 };
       });
       const handicapResults = await Promise.all(handicapPromises);
       const handicapMap: Record<string, number> = {};
-      for (const { userId, handicap } of handicapResults) {
-        handicapMap[userId] = handicap;
+      for (const { playerId, handicap } of handicapResults) {
+        handicapMap[playerId] = handicap;
       }
       setHandicaps(handicapMap);
     } catch (err) {
@@ -157,20 +163,22 @@ export default function GameDetailPage({
   // Get player info
   const playerA = game?.participants[0];
   const playerB = game?.participants[1];
+  const playerAId = playerA ? getParticipantPlayerId(playerA) : '';
+  const playerBId = playerB ? getParticipantPlayerId(playerB) : '';
   const playerAUser = playerA
-    ? mockUsers.find((u) => u.id === playerA.userId)
+    ? mockUsers.find((u) => u.id === playerAId)
     : null;
   const playerBUser = playerB
-    ? mockUsers.find((u) => u.id === playerB.userId)
+    ? mockUsers.find((u) => u.id === playerBId)
     : null;
   const playerAName = playerAUser?.name ?? 'Player A';
   const playerBName = playerBUser?.name ?? 'Player B';
   // Get handicaps from loaded data (defaults to 0 for scratch golfers)
-  const playerAHandicap = playerA ? (handicaps[playerA.userId] ?? 0) : 0;
-  const playerBHandicap = playerB ? (handicaps[playerB.userId] ?? 0) : 0;
+  const playerAHandicap = playerAId ? (handicaps[playerAId] ?? 0) : 0;
+  const playerBHandicap = playerBId ? (handicaps[playerBId] ?? 0) : 0;
   // Use store scores for live updates, fall back to loaded scores
-  const playerAScores = playerA ? getPlayerScoresFromStore(playerA.userId) : [];
-  const playerBScores = playerB ? getPlayerScoresFromStore(playerB.userId) : [];
+  const playerAScores = playerAId ? getPlayerScoresFromStore(playerAId) : [];
+  const playerBScores = playerBId ? getPlayerScoresFromStore(playerBId) : [];
 
   // Auto-navigate to current hole based on scores
   useEffect(() => {
@@ -178,7 +186,8 @@ export default function GameDetailPage({
     let maxHole = game.startHole;
 
     for (const participant of game.participants) {
-      const userScores = scores[participant.userId] ?? [];
+      const participantId = getParticipantPlayerId(participant);
+      const userScores = scores[participantId] ?? [];
       for (const score of userScores) {
         if (
           score.holeNumber >= game.startHole &&
@@ -218,22 +227,22 @@ export default function GameDetailPage({
     useScorecardStore.getState().setScore(playerId, currentHole, score);
 
     // Check for auto-press after both players have entered scores for this hole
-    if (game && autoPressConfig && playerA && playerB) {
+    if (game && autoPressConfig && playerAId && playerBId) {
       // Get current scores from store
       const storeScores = useScorecardStore.getState().scores;
-      const playerAScore = storeScores[playerA.userId]?.[currentHole];
-      const playerBScore = storeScores[playerB.userId]?.[currentHole];
+      const playerAScore = storeScores[playerAId]?.[currentHole];
+      const playerBScore = storeScores[playerBId]?.[currentHole];
 
       // Only check if both players have entered a score for this hole
       if (playerAScore && playerBScore) {
         // Get all scores as HoleScore arrays
-        const playerAAllScores = getPlayerScoresFromStore(playerA.userId);
-        const playerBAllScores = getPlayerScoresFromStore(playerB.userId);
+        const playerAAllScores = getPlayerScoresFromStore(playerAId);
+        const playerBAllScores = getPlayerScoresFromStore(playerBId);
 
         const result = checkAutoPress(
           game,
-          playerA.userId,
-          playerB.userId,
+          playerAId,
+          playerBId,
           playerAAllScores,
           playerBAllScores,
           autoPressConfig,
@@ -247,7 +256,7 @@ export default function GameDetailPage({
             await createPress(game, pressStake, currentHole);
 
             // Get losing player name
-            const losingPlayerName = result.losingPlayerId === playerA.userId
+            const losingPlayerName = result.losingPlayerId === playerAId
               ? playerAName
               : playerBName;
 
@@ -334,7 +343,7 @@ export default function GameDetailPage({
 
   const scoreEntryPlayers = [
     {
-      id: playerA?.userId ?? '',
+      id: playerAId,
       name: playerAName,
       handicap: playerAHandicap,
       getsStroke: currentHoleData?.handicap && playerAGetsStrokes
@@ -342,7 +351,7 @@ export default function GameDetailPage({
         : false,
     },
     {
-      id: playerB?.userId ?? '',
+      id: playerBId,
       name: playerBName,
       handicap: playerBHandicap,
       getsStroke: currentHoleData?.handicap && playerBGetsStrokes
@@ -353,13 +362,13 @@ export default function GameDetailPage({
 
   // Get current scores for entry
   const currentScores: Record<string, number | null> = {};
-  if (playerA) {
+  if (playerAId) {
     const score = playerAScores.find((s) => s.holeNumber === currentHole);
-    currentScores[playerA.userId] = score?.strokes ?? null;
+    currentScores[playerAId] = score?.strokes ?? null;
   }
-  if (playerB) {
+  if (playerBId) {
     const score = playerBScores.find((s) => s.holeNumber === currentHole);
-    currentScores[playerB.userId] = score?.strokes ?? null;
+    currentScores[playerBId] = score?.strokes ?? null;
   }
 
   return (
@@ -405,12 +414,12 @@ export default function GameDetailPage({
       </div>
 
       {/* Full Scorecard (collapsible) */}
-      {showFullScorecard && courseData && playerA && playerB && (
+      {showFullScorecard && courseData && playerAId && playerBId && (
         <div className="space-y-4">
           <GameScorecard
             game={game}
-            playerAId={playerA.userId}
-            playerBId={playerB.userId}
+            playerAId={playerAId}
+            playerBId={playerBId}
             playerAName={playerAName}
             playerBName={playerBName}
             playerAScores={playerAScores}
@@ -483,11 +492,11 @@ export default function GameDetailPage({
       </div>
 
       {/* Settle Modal */}
-      {showSettleModal && playerA && playerB && (
+      {showSettleModal && playerAId && playerBId && (
         <SettleGameModal
           game={game}
-          playerAId={playerA.userId}
-          playerBId={playerB.userId}
+          playerAId={playerAId}
+          playerBId={playerBId}
           playerAName={playerAName}
           playerBName={playerBName}
           playerAScores={playerAScores}

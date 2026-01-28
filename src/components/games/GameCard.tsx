@@ -10,6 +10,7 @@ import { MatchProgress } from './MatchProgress';
 import { cn } from '@/lib/utils';
 import { matchStatusStyles } from '@/lib/design/colors';
 import type { GameWithParticipants, HoleScore } from '@/types';
+import { getParticipantPlayerId } from '@/types';
 import { mockUsers } from '@/lib/mock/users';
 import { ChevronRight } from 'lucide-react';
 import {
@@ -33,28 +34,30 @@ export function GameCard({
   // Get player info
   const playerA = game.participants[0];
   const playerB = game.participants[1];
+  const playerAId = playerA ? getParticipantPlayerId(playerA) : '';
+  const playerBId = playerB ? getParticipantPlayerId(playerB) : '';
   const playerAUser = playerA
-    ? mockUsers.find((u) => u.id === playerA.userId)
+    ? mockUsers.find((u) => u.id === playerAId)
     : null;
   const playerBUser = playerB
-    ? mockUsers.find((u) => u.id === playerB.userId)
+    ? mockUsers.find((u) => u.id === playerBId)
     : null;
   const playerAName = playerAUser?.name ?? 'Player A';
   const playerBName = playerBUser?.name ?? 'Player B';
-  const playerAScores = playerA ? (scores[playerA.userId] ?? []) : [];
-  const playerBScores = playerB ? (scores[playerB.userId] ?? []) : [];
+  const playerAScores = playerAId ? (scores[playerAId] ?? []) : [];
+  const playerBScores = playerBId ? (scores[playerBId] ?? []) : [];
 
   const isPress = game.parentGameId !== null;
   const isMatchPlay = game.type === 'match_play';
 
   // Calculate match status for border styling
   const getMatchStatusStyle = () => {
-    if (!isMatchPlay || !playerA || !playerB) return '';
+    if (!isMatchPlay || !playerAId || !playerBId) return '';
 
     const holeResults = computeHoleResults(
       game,
-      playerA.userId,
-      playerB.userId,
+      playerAId,
+      playerBId,
       playerAScores,
       playerBScores
     );
@@ -62,14 +65,14 @@ export function GameCard({
     if (holeResults.length === 0) return matchStatusStyles.notStarted;
 
     const matchResult = computeMatchPlayResult(
-      playerA.userId,
-      playerB.userId,
+      playerAId,
+      playerBId,
       holeResults
     );
 
     if (matchResult.holesUp === 0) return matchStatusStyles.tied;
     // From Player A's perspective (first player listed)
-    return matchResult.winnerId === playerA.userId
+    return matchResult.winnerId === playerAId
       ? matchStatusStyles.winning
       : matchStatusStyles.losing;
   };
@@ -119,8 +122,8 @@ export function GameCard({
           {isMatchPlay ? (
             <MatchPlayContent
               game={game}
-              playerA={playerA}
-              playerB={playerB}
+              playerAId={playerAId}
+              playerBId={playerBId}
               playerAName={playerAName}
               playerBName={playerBName}
               playerAScores={playerAScores}
@@ -185,8 +188,8 @@ export function GameCard({
 // Match Play specific layout with progress bar
 interface MatchPlayContentProps {
   game: GameWithParticipants;
-  playerA: GameWithParticipants['participants'][0] | undefined;
-  playerB: GameWithParticipants['participants'][0] | undefined;
+  playerAId: string;
+  playerBId: string;
   playerAName: string;
   playerBName: string;
   playerAScores: HoleScore[];
@@ -195,14 +198,14 @@ interface MatchPlayContentProps {
 
 function MatchPlayContent({
   game,
-  playerA,
-  playerB,
+  playerAId,
+  playerBId,
   playerAName,
   playerBName,
   playerAScores,
   playerBScores,
 }: MatchPlayContentProps) {
-  if (!playerA || !playerB) {
+  if (!playerAId || !playerBId) {
     return (
       <div className="text-sm text-muted-foreground">
         Waiting for participants...
@@ -232,8 +235,8 @@ function MatchPlayContent({
       <div className="pt-2">
         <MatchProgress
           game={game}
-          playerAId={playerA.userId}
-          playerBId={playerB.userId}
+          playerAId={playerAId}
+          playerBId={playerBId}
           playerAScores={playerAScores}
           playerBScores={playerBScores}
           playerAName={playerAName}

@@ -135,14 +135,14 @@ export const mockGames: Game[] = [matchPlayGame, pressGame, nassauGame];
 
 export const mockGameParticipants: GameParticipant[] = [
   // Match play: Owner vs Admin
-  { id: 'gp-1', gameId: 'game-match-1', userId: 'demo-owner', teamId: null },
-  { id: 'gp-2', gameId: 'game-match-1', userId: 'demo-admin', teamId: null },
+  { id: 'gp-1', gameId: 'game-match-1', userId: 'demo-owner', guestPlayerId: null, teamId: null },
+  { id: 'gp-2', gameId: 'game-match-1', userId: 'demo-admin', guestPlayerId: null, teamId: null },
   // Press (same participants)
-  { id: 'gp-3', gameId: 'game-press-1', userId: 'demo-owner', teamId: null },
-  { id: 'gp-4', gameId: 'game-press-1', userId: 'demo-admin', teamId: null },
+  { id: 'gp-3', gameId: 'game-press-1', userId: 'demo-owner', guestPlayerId: null, teamId: null },
+  { id: 'gp-4', gameId: 'game-press-1', userId: 'demo-admin', guestPlayerId: null, teamId: null },
   // Nassau: Player1 vs Player2
-  { id: 'gp-5', gameId: 'game-nassau-1', userId: 'demo-player1', teamId: null },
-  { id: 'gp-6', gameId: 'game-nassau-1', userId: 'demo-player2', teamId: null },
+  { id: 'gp-5', gameId: 'game-nassau-1', userId: 'demo-player1', guestPlayerId: null, teamId: null },
+  { id: 'gp-6', gameId: 'game-nassau-1', userId: 'demo-player2', guestPlayerId: null, teamId: null },
 ];
 
 /**

@@ -56,9 +56,22 @@ export async function createGame(
       createdAt: now,
     };
 
+    // Handle guest vs regular players for mock mode
     const participants: GameParticipant[] = [
-      { id: `gp-${gameId}-a`, gameId, userId: playerAId, teamId: null },
-      { id: `gp-${gameId}-b`, gameId, userId: playerBId, teamId: null },
+      {
+        id: `gp-${gameId}-a`,
+        gameId,
+        userId: isGuestPlayer(playerAId) ? null : playerAId,
+        guestPlayerId: isGuestPlayer(playerAId) ? getGuestPlayerId(playerAId) : null,
+        teamId: null,
+      },
+      {
+        id: `gp-${gameId}-b`,
+        gameId,
+        userId: isGuestPlayer(playerBId) ? null : playerBId,
+        guestPlayerId: isGuestPlayer(playerBId) ? getGuestPlayerId(playerBId) : null,
+        teamId: null,
+      },
     ];
 
     mockGameStore.push(game);
@@ -90,13 +103,29 @@ export async function createGame(
 
   if (gameError) throw gameError;
 
+  // Build participant records, handling guest vs regular players
+  const participantRecords = [playerAId, playerBId].map((playerId) => {
+    if (isGuestPlayer(playerId)) {
+      return {
+        game_id: gameData.id,
+        user_id: null,
+        guest_player_id: getGuestPlayerId(playerId),
+        team_id: null,
+      };
+    } else {
+      return {
+        game_id: gameData.id,
+        user_id: playerId,
+        guest_player_id: null,
+        team_id: null,
+      };
+    }
+  });
+
   // Create participants
   const { data: participantsData, error: participantsError } = await supabase
     .from('game_participants')
-    .insert([
-      { game_id: gameData.id, user_id: playerAId, team_id: null },
-      { game_id: gameData.id, user_id: playerBId, team_id: null },
-    ])
+    .insert(participantRecords)
     .select();
 
   if (participantsError) throw participantsError;
@@ -283,9 +312,10 @@ export async function createPress(
     };
 
     const participants: GameParticipant[] = parentParticipants.map((p) => ({
-      id: `gp-${gameId}-${p.userId}`,
+      id: `gp-${gameId}-${p.userId || p.guestPlayerId}`,
       gameId,
       userId: p.userId,
+      guestPlayerId: p.guestPlayerId,
       teamId: p.teamId,
     }));
 
@@ -333,6 +363,7 @@ export async function createPress(
       (parentParticipants || []).map((p) => ({
         game_id: gameData.id,
         user_id: p.user_id,
+        guest_player_id: p.guest_player_id,
         team_id: p.team_id,
       }))
     )
@@ -370,7 +401,23 @@ function mapParticipantFromDb(row: Record<string, unknown>): GameParticipant {
   return {
     id: row.id as string,
     gameId: row.game_id as string,
-    userId: row.user_id as string,
+    userId: row.user_id as string | null,
+    guestPlayerId: row.guest_player_id as string | null,
     teamId: row.team_id as string | null,
   };
+}
+
+/**
+ * Helper to determine if a player ID is a guest player
+ * Guest player IDs are prefixed with "guest-"
+ */
+function isGuestPlayer(playerId: string): boolean {
+  return playerId.startsWith('guest-');
+}
+
+/**
+ * Extract the actual guest player UUID from a prefixed ID
+ */
+function getGuestPlayerId(playerId: string): string {
+  return playerId.replace('guest-', '');
 }

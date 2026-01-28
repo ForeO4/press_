@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import { isMockMode } from '@/lib/env/public';
-import type { PlayerProfile, CreatePlayerInput, HandicapProfile, MockUser } from '@/types';
+import type { PlayerProfile, CreatePlayerInput, HandicapProfile, MockUser, GuestPlayer } from '@/types';
 import { mockUsers } from '@/lib/mock/users';
 import { initializeBalance } from './gatorBucks';
 
@@ -12,7 +12,7 @@ const mockHandicapProfiles: Map<string, HandicapProfile> = new Map();
 
 /**
  * Create a new player in an event context
- * In Supabase mode, this creates a handicap_profile for an existing user
+ * In Supabase mode, this creates a guest player (no account required)
  * In mock mode, this creates an in-memory player
  */
 export async function createPlayer(
@@ -24,60 +24,26 @@ export async function createPlayer(
     return createMockPlayer(eventId, input);
   }
 
-  const supabase = createClient();
-  if (!supabase) throw new Error('Supabase client not available');
+  // In production, create a guest player
+  const guestPlayer = await createGuestPlayer(eventId, input);
 
-  // In Supabase mode, we need an existing user to create a player
-  // For now, we'll check if there's an authenticated user
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Must be authenticated to create player');
-
-  const now = new Date().toISOString();
-
-  // Upsert handicap profile
-  if (input.handicapIndex !== undefined || input.ghinNumber) {
-    const { error: handicapError } = await supabase
-      .from('handicap_profiles')
-      .upsert({
-        user_id: user.id,
-        handicap_index: input.handicapIndex ?? null,
-        ghin_number: input.ghinNumber ?? null,
-      }, { onConflict: 'user_id' });
-
-    if (handicapError) throw handicapError;
-  }
-
-  // Update profile display name if provided
-  if (input.name) {
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ display_name: input.name })
-      .eq('id', user.id);
-
-    if (profileError) throw profileError;
-  }
-
-  // Initialize Gator Bucks balance for this event
-  await initializeBalance(eventId, user.id, 100);
-
-  // Return unified player data
+  // Convert to MockUser/PlayerProfile format for compatibility
   const player: MockUser = {
-    id: user.id,
-    name: input.name,
-    email: user.email ?? input.email ?? '',
+    id: `guest-${guestPlayer.id}`, // Prefix to identify as guest
+    name: guestPlayer.name,
+    email: guestPlayer.email || '',
     role: 'PLAYER',
   };
 
   const profile: PlayerProfile = {
-    id: user.id,
-    userId: user.id,
-    name: input.name,
-    email: user.email ?? input.email,
-    phone: input.phone,
-    ghinNumber: input.ghinNumber,
-    handicapIndex: input.handicapIndex,
-    createdAt: now,
-    updatedAt: now,
+    id: guestPlayer.id,
+    userId: `guest-${guestPlayer.id}`,
+    name: guestPlayer.name,
+    email: guestPlayer.email,
+    phone: guestPlayer.phone,
+    handicapIndex: guestPlayer.handicapIndex,
+    createdAt: guestPlayer.createdAt,
+    updatedAt: guestPlayer.createdAt,
   };
 
   return { player, profile };
@@ -347,12 +313,12 @@ export async function linkToUser(
 }
 
 /**
- * Get all members of an event with their profiles
+ * Get all members of an event with their profiles (includes guest players)
  */
 export async function getEventMembers(eventId: string): Promise<PlayerProfile[]> {
   if (isMockMode || eventId.startsWith('demo-')) {
-    // Return mock users as profiles
-    return mockUsers.map(u => ({
+    // Return mock users as profiles plus any mock guest players
+    const mockProfiles = mockUsers.map(u => ({
       id: u.id,
       userId: u.id,
       name: u.name,
@@ -360,45 +326,85 @@ export async function getEventMembers(eventId: string): Promise<PlayerProfile[]>
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }));
+
+    // Add mock guest players
+    const guestProfiles = Array.from(mockGuestPlayers.values())
+      .filter(g => g.eventId === eventId)
+      .map(g => ({
+        id: g.id,
+        userId: `guest-${g.id}`,
+        name: g.name,
+        email: g.email,
+        phone: g.phone,
+        handicapIndex: g.handicapIndex,
+        createdAt: g.createdAt,
+        updatedAt: g.createdAt,
+      }));
+
+    return [...mockProfiles, ...guestProfiles];
   }
 
   const supabase = createClient();
   if (!supabase) throw new Error('Supabase client not available');
 
-  const { data, error } = await supabase
-    .from('event_memberships')
-    .select(`
-      user_id,
-      profiles!inner (
-        id,
-        display_name,
-        avatar_url,
-        created_at,
-        updated_at
-      )
-    `)
-    .eq('event_id', eventId)
-    .eq('status', 'ACTIVE');
+  // Fetch registered members and guest players in parallel
+  const [membersResult, guestResult] = await Promise.all([
+    supabase
+      .from('event_memberships')
+      .select(`
+        user_id,
+        profiles!inner (
+          id,
+          display_name,
+          avatar_url,
+          created_at,
+          updated_at
+        )
+      `)
+      .eq('event_id', eventId)
+      .eq('status', 'ACTIVE'),
+    supabase
+      .from('event_guest_players')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true }),
+  ]);
 
-  if (error) throw error;
+  if (membersResult.error) throw membersResult.error;
 
-  // Get handicap profiles for all members
-  const userIds = data?.map(d => d.user_id) ?? [];
-  const { data: handicaps } = await supabase
-    .from('handicap_profiles')
-    .select('*')
-    .in('user_id', userIds);
+  // Get handicap profiles for registered members
+  const userIds = membersResult.data?.map(d => d.user_id) ?? [];
+  const { data: handicaps } = userIds.length > 0
+    ? await supabase
+        .from('handicap_profiles')
+        .select('*')
+        .in('user_id', userIds)
+    : { data: [] };
 
   const handicapMap = new Map(
     (handicaps ?? []).map(h => [h.user_id, h])
   );
 
-  return (data ?? []).map(d => {
-    // profiles is a single object from !inner join, not an array
+  // Map registered members to profiles
+  const memberProfiles = (membersResult.data ?? []).map(d => {
     const profile = d.profiles as unknown as Record<string, unknown>;
     const handicap = handicapMap.get(d.user_id);
     return mapProfileFromDb(profile, handicap, undefined);
   });
+
+  // Map guest players to profiles
+  const guestProfiles: PlayerProfile[] = (guestResult.data ?? []).map(g => ({
+    id: g.id as string,
+    userId: `guest-${g.id}`,
+    name: g.name as string,
+    email: g.email as string | undefined,
+    phone: g.phone as string | undefined,
+    handicapIndex: g.handicap_index as number | undefined,
+    createdAt: g.created_at as string,
+    updatedAt: g.created_at as string,
+  }));
+
+  return [...memberProfiles, ...guestProfiles];
 }
 
 /**
@@ -434,5 +440,107 @@ function mapHandicapFromDb(row: Record<string, unknown>): HandicapProfile {
     homeCourseId: row.home_course_id as string | undefined,
     lastVerifiedAt: row.last_verified_at as string | undefined,
     updatedAt: row.updated_at as string,
+  };
+}
+
+// ============================================
+// GUEST PLAYER FUNCTIONS
+// ============================================
+
+// In-memory store for mock mode guest players
+const mockGuestPlayers: Map<string, GuestPlayer> = new Map();
+
+/**
+ * Create a guest player (no Supabase account required)
+ */
+export async function createGuestPlayer(
+  eventId: string,
+  input: CreatePlayerInput
+): Promise<GuestPlayer> {
+  if (isMockMode || eventId.startsWith('demo-')) {
+    // Mock mode: store in memory
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const guestPlayer: GuestPlayer = {
+      id,
+      eventId,
+      name: input.name,
+      email: input.email,
+      phone: input.phone,
+      handicapIndex: input.handicapIndex,
+      createdAt: now,
+    };
+    mockGuestPlayers.set(id, guestPlayer);
+    return guestPlayer;
+  }
+
+  const supabase = createClient();
+  if (!supabase) throw new Error('Supabase client not available');
+
+  // Get current user for created_by
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { data, error } = await supabase
+    .from('event_guest_players')
+    .insert({
+      event_id: eventId,
+      name: input.name,
+      email: input.email || null,
+      phone: input.phone || null,
+      handicap_index: input.handicapIndex ?? null,
+      created_by: user?.id || null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[players] Failed to create guest player:', error);
+    throw new Error(error.message || 'Failed to create guest player');
+  }
+
+  return mapGuestPlayerFromDb(data);
+}
+
+/**
+ * Get all guest players for an event
+ */
+export async function getGuestPlayers(eventId: string): Promise<GuestPlayer[]> {
+  if (isMockMode || eventId.startsWith('demo-')) {
+    // Mock mode: filter from memory
+    return Array.from(mockGuestPlayers.values()).filter(
+      (p) => p.eventId === eventId
+    );
+  }
+
+  const supabase = createClient();
+  if (!supabase) throw new Error('Supabase client not available');
+
+  const { data, error } = await supabase
+    .from('event_guest_players')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('[players] Failed to get guest players:', error);
+    throw error;
+  }
+
+  return (data || []).map(mapGuestPlayerFromDb);
+}
+
+/**
+ * Map database row to GuestPlayer type
+ */
+function mapGuestPlayerFromDb(row: Record<string, unknown>): GuestPlayer {
+  return {
+    id: row.id as string,
+    eventId: row.event_id as string,
+    name: row.name as string,
+    email: row.email as string | undefined,
+    phone: row.phone as string | undefined,
+    handicapIndex: row.handicap_index as number | undefined,
+    createdAt: row.created_at as string,
+    createdBy: row.created_by as string | undefined,
   };
 }

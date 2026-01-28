@@ -9,6 +9,7 @@ import { AlligatorIcon } from '@/components/ui/AlligatorIcon';
 import { cn } from '@/lib/utils';
 import { matchStatusStyles } from '@/lib/design/colors';
 import type { GameWithParticipants, HoleScore } from '@/types';
+import { getParticipantPlayerId } from '@/types';
 import { mockUsers } from '@/lib/mock/users';
 import { ChevronRight, Play } from 'lucide-react';
 import {
@@ -30,16 +31,18 @@ export function ActiveGameCard({
   // Get player info
   const playerA = game.participants[0];
   const playerB = game.participants[1];
+  const playerAId = playerA ? getParticipantPlayerId(playerA) : '';
+  const playerBId = playerB ? getParticipantPlayerId(playerB) : '';
   const playerAUser = playerA
-    ? mockUsers.find((u) => u.id === playerA.userId)
+    ? mockUsers.find((u) => u.id === playerAId)
     : null;
   const playerBUser = playerB
-    ? mockUsers.find((u) => u.id === playerB.userId)
+    ? mockUsers.find((u) => u.id === playerBId)
     : null;
   const playerAName = playerAUser?.name ?? 'Player A';
   const playerBName = playerBUser?.name ?? 'Player B';
-  const playerAScores = playerA ? (scores[playerA.userId] ?? []) : [];
-  const playerBScores = playerB ? (scores[playerB.userId] ?? []) : [];
+  const playerAScores = playerAId ? (scores[playerAId] ?? []) : [];
+  const playerBScores = playerBId ? (scores[playerBId] ?? []) : [];
 
   const isPress = game.parentGameId !== null;
   const isMatchPlay = game.type === 'match_play';
@@ -48,7 +51,8 @@ export function ActiveGameCard({
   const getCurrentHole = (): number => {
     let maxHole = 0;
     for (const participant of game.participants) {
-      const userScores = scores[participant.userId] ?? [];
+      const participantId = getParticipantPlayerId(participant);
+      const userScores = scores[participantId] ?? [];
       for (const score of userScores) {
         if (score.holeNumber >= game.startHole && score.holeNumber <= game.endHole) {
           maxHole = Math.max(maxHole, score.holeNumber);
@@ -63,12 +67,12 @@ export function ActiveGameCard({
 
   // Calculate match status
   const getMatchStatus = () => {
-    if (!isMatchPlay || !playerA || !playerB) return null;
+    if (!isMatchPlay || !playerAId || !playerBId) return null;
 
     const holeResults = computeHoleResults(
       game,
-      playerA.userId,
-      playerB.userId,
+      playerAId,
+      playerBId,
       playerAScores,
       playerBScores
     );
@@ -76,20 +80,20 @@ export function ActiveGameCard({
     if (holeResults.length === 0) return { text: 'All Square', color: 'text-amber-400' };
 
     const matchResult = computeMatchPlayResult(
-      playerA.userId,
-      playerB.userId,
+      playerAId,
+      playerBId,
       holeResults
     );
 
     if (matchResult.holesUp === 0) return { text: 'All Square', color: 'text-amber-400' };
 
-    const winnerName = matchResult.winnerId === playerA.userId
+    const winnerName = matchResult.winnerId === playerAId
       ? playerAName.split(' ')[0]
       : playerBName.split(' ')[0];
 
     return {
       text: `${winnerName} +${matchResult.holesUp}`,
-      color: matchResult.winnerId === playerA.userId ? 'text-primary' : 'text-blue-400',
+      color: matchResult.winnerId === playerAId ? 'text-primary' : 'text-blue-400',
     };
   };
 
@@ -99,8 +103,8 @@ export function ActiveGameCard({
 
     const holeResults = computeHoleResults(
       game,
-      playerA?.userId ?? '',
-      playerB?.userId ?? '',
+      playerAId,
+      playerBId,
       playerAScores,
       playerBScores
     );
@@ -114,12 +118,12 @@ export function ActiveGameCard({
 
   // Match status border styling
   const getMatchStatusStyle = () => {
-    if (!isMatchPlay || !playerA || !playerB) return '';
+    if (!isMatchPlay || !playerAId || !playerBId) return '';
 
     const holeResults = computeHoleResults(
       game,
-      playerA.userId,
-      playerB.userId,
+      playerAId,
+      playerBId,
       playerAScores,
       playerBScores
     );
@@ -127,13 +131,13 @@ export function ActiveGameCard({
     if (holeResults.length === 0) return matchStatusStyles.notStarted;
 
     const matchResult = computeMatchPlayResult(
-      playerA.userId,
-      playerB.userId,
+      playerAId,
+      playerBId,
       holeResults
     );
 
     if (matchResult.holesUp === 0) return matchStatusStyles.tied;
-    return matchResult.winnerId === playerA.userId
+    return matchResult.winnerId === playerAId
       ? matchStatusStyles.winning
       : matchStatusStyles.losing;
   };

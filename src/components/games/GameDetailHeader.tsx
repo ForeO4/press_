@@ -9,6 +9,7 @@ import { AlligatorIcon } from '@/components/ui/AlligatorIcon';
 import { MatchProgress } from './MatchProgress';
 import { cn } from '@/lib/utils';
 import type { GameWithParticipants, HoleScore } from '@/types';
+import { getParticipantPlayerId } from '@/types';
 
 interface GameDetailHeaderProps {
   game: GameWithParticipants;
@@ -29,6 +30,8 @@ export function GameDetailHeader({
 }: GameDetailHeaderProps) {
   const playerA = game.participants[0];
   const playerB = game.participants[1];
+  const playerAId = playerA ? getParticipantPlayerId(playerA) : '';
+  const playerBId = playerB ? getParticipantPlayerId(playerB) : '';
   const isPress = game.parentGameId !== null;
   const isMatchPlay = game.type === 'match_play';
 
@@ -92,12 +95,12 @@ export function GameDetailHeader({
         </div>
 
         {/* Match progress for match play games */}
-        {isMatchPlay && playerA && playerB && (
+        {isMatchPlay && playerAId && playerBId && (
           <div className="mt-6 border-t border-border/30 pt-6">
             <MatchProgress
               game={game}
-              playerAId={playerA.userId}
-              playerBId={playerB.userId}
+              playerAId={playerAId}
+              playerBId={playerBId}
               playerAScores={playerAScores}
               playerBScores={playerBScores}
               playerAName={playerAName}

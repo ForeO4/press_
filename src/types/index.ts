@@ -110,8 +110,35 @@ export interface Game {
 export interface GameParticipant {
   id: string;
   gameId: string;
-  userId: string;
+  userId: string | null;
+  guestPlayerId: string | null;
   teamId: string | null;
+}
+
+/**
+ * Get the effective player ID from a participant
+ * Returns either userId or "guest-{guestPlayerId}" for guest players
+ */
+export function getParticipantPlayerId(participant: GameParticipant): string {
+  if (participant.userId) {
+    return participant.userId;
+  }
+  if (participant.guestPlayerId) {
+    return `guest-${participant.guestPlayerId}`;
+  }
+  return ''; // Shouldn't happen if constraint is enforced
+}
+
+// Guest player (no Supabase account required)
+export interface GuestPlayer {
+  id: string;
+  eventId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  handicapIndex?: number;
+  createdAt: string;
+  createdBy?: string;
 }
 
 export interface GameWithParticipants extends Game {

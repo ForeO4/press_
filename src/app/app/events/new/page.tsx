@@ -37,7 +37,7 @@ export default function CreateEventWizardPage() {
   });
 
   const [rules, setRules] = useState<RulesFormData>({
-    allowedGameTypes: ['match_play', 'nassau'],
+    allowedGameTypes: ['nassau'],
     defaultStake: 5,
     autoPressConfig: DEFAULT_AUTO_PRESS_CONFIG,
   });

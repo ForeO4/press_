@@ -42,10 +42,14 @@ export async function createEventWithRPC(
     p_visibility: input.visibility,
   });
 
-  if (error) throw error;
+  if (error) {
+    console.error('[events] RPC error:', error);
+    throw new Error(error.message || 'Database error creating event');
+  }
 
   if (!data?.success || !data?.event) {
-    throw new Error('Failed to create event');
+    console.error('[events] RPC returned invalid data:', data);
+    throw new Error(data?.message || 'Failed to create event - no data returned');
   }
 
   const event = mapEventFromDb(data.event);

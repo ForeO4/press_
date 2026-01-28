@@ -4,11 +4,75 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import type { AutoPressConfig } from '@/types';
 
+export type GameType = 'match_play' | 'nassau';
+
 export interface RulesFormData {
-  allowedGameTypes: ('match_play' | 'nassau')[];
+  allowedGameTypes: GameType[];
   defaultStake: number;
   autoPressConfig: AutoPressConfig;
 }
+
+interface GameTypeOption {
+  value: GameType | string;
+  label: string;
+  desc: string;
+  comingSoon?: boolean;
+}
+
+const GAME_TYPE_OPTIONS: GameTypeOption[] = [
+  {
+    value: 'match_play',
+    label: 'Match Play',
+    desc: 'Hole-by-hole competition, player with most holes won wins',
+  },
+  {
+    value: 'nassau',
+    label: 'Nassau',
+    desc: 'Three bets in one: front 9, back 9, and overall 18',
+  },
+  {
+    value: 'skins',
+    label: 'Skins',
+    desc: 'Win the hole outright to claim the skin',
+    comingSoon: true,
+  },
+  {
+    value: 'wolf',
+    label: 'Wolf',
+    desc: 'Strategic team selection each hole',
+    comingSoon: true,
+  },
+  {
+    value: 'round_robin',
+    label: 'Round Robin',
+    desc: 'Rotate partners every 6 holes',
+    comingSoon: true,
+  },
+  {
+    value: 'two_man_low_ball',
+    label: '2 Man Low Ball',
+    desc: 'Best ball of each team per hole',
+    comingSoon: true,
+  },
+  {
+    value: 'banker',
+    label: 'Banker',
+    desc: 'One player banks against the field each hole',
+    comingSoon: true,
+  },
+  {
+    value: 'two_man_scramble',
+    label: '2 Man Scramble',
+    desc: 'Teams pick best shot and play from there',
+    comingSoon: true,
+  },
+  {
+    value: 'nine_point',
+    label: '9 Point',
+    desc: '9 points distributed each hole among 3 players',
+    comingSoon: true,
+  },
+];
 
 interface StepRulesProps {
   data: RulesFormData;
@@ -18,22 +82,11 @@ interface StepRulesProps {
 }
 
 export function StepRules({ data, onChange, onNext, onBack }: StepRulesProps) {
-  const toggleGameType = (type: 'match_play' | 'nassau') => {
-    const current = data.allowedGameTypes;
-    if (current.includes(type)) {
-      // Don't allow removing the last game type
-      if (current.length > 1) {
-        onChange({
-          ...data,
-          allowedGameTypes: current.filter((t) => t !== type),
-        });
-      }
-    } else {
-      onChange({
-        ...data,
-        allowedGameTypes: [...current, type],
-      });
-    }
+  const selectGameType = (type: GameType) => {
+    onChange({
+      ...data,
+      allowedGameTypes: [type],
+    });
   };
 
   const updateAutoPress = (updates: Partial<AutoPressConfig>) => {
@@ -55,68 +108,59 @@ export function StepRules({ data, onChange, onNext, onBack }: StepRulesProps) {
       {/* Game Types */}
       <div>
         <label className="block text-sm font-medium text-foreground mb-2">
-          Allowed Game Types
+          Game Type
         </label>
         <div className="space-y-2">
-          {[
-            {
-              value: 'match_play' as const,
-              label: 'Match Play',
-              desc: 'Hole-by-hole competition, player with most holes won wins',
-            },
-            {
-              value: 'nassau' as const,
-              label: 'Nassau',
-              desc: 'Three bets in one: front 9, back 9, and overall 18',
-            },
-          ].map((option) => (
-            <label
-              key={option.value}
-              className={`flex cursor-pointer items-center rounded-lg border p-3 transition-colors ${
-                data.allowedGameTypes.includes(option.value)
-                  ? 'border-primary bg-primary/5'
-                  : 'border-input hover:bg-accent'
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={data.allowedGameTypes.includes(option.value)}
-                onChange={() => toggleGameType(option.value)}
-                className="sr-only"
-              />
-              <div className="flex items-center gap-3">
-                <div
-                  className={`flex h-5 w-5 items-center justify-center rounded border ${
-                    data.allowedGameTypes.includes(option.value)
-                      ? 'border-primary bg-primary'
-                      : 'border-input'
-                  }`}
-                >
-                  {data.allowedGameTypes.includes(option.value) && (
-                    <svg
-                      className="h-3 w-3 text-primary-foreground"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+          {GAME_TYPE_OPTIONS.map((option) => {
+            const isSelected = data.allowedGameTypes.includes(option.value as GameType);
+            const isDisabled = option.comingSoon;
+
+            return (
+              <label
+                key={option.value}
+                className={`flex items-center rounded-lg border p-3 transition-colors ${
+                  isDisabled
+                    ? 'cursor-not-allowed opacity-50 border-input'
+                    : isSelected
+                    ? 'cursor-pointer border-primary bg-primary/5'
+                    : 'cursor-pointer border-input hover:bg-accent'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="gameType"
+                  checked={isSelected}
+                  disabled={isDisabled}
+                  onChange={() => !isDisabled && selectGameType(option.value as GameType)}
+                  className="sr-only"
+                />
+                <div className="flex items-center gap-3 flex-1">
+                  <div
+                    className={`flex h-5 w-5 items-center justify-center rounded-full border ${
+                      isSelected
+                        ? 'border-primary bg-primary'
+                        : 'border-input'
+                    }`}
+                  >
+                    {isSelected && (
+                      <div className="h-2 w-2 rounded-full bg-primary-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <span className="font-medium text-foreground">
+                      {option.label}
+                    </span>
+                    <p className="text-sm text-muted-foreground">{option.desc}</p>
+                  </div>
+                  {option.comingSoon && (
+                    <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded">
+                      Coming Soon
+                    </span>
                   )}
                 </div>
-                <div>
-                  <span className="font-medium text-foreground">
-                    {option.label}
-                  </span>
-                  <p className="text-sm text-muted-foreground">{option.desc}</p>
-                </div>
-              </div>
-            </label>
-          ))}
+              </label>
+            );
+          })}
         </div>
       </div>
 

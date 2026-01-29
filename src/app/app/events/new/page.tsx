@@ -94,7 +94,7 @@ export default function CreateEventWizardPage() {
 
   const handleSubmit = async () => {
     if (!user?.id) {
-      setError('You must be logged in to create an event');
+      setError('You must be logged in to create a clubhouse');
       return;
     }
 
@@ -113,7 +113,7 @@ export default function CreateEventWizardPage() {
       // Navigate to the new event
       router.push(`/event/${event.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create event');
+      setError(err instanceof Error ? err.message : 'Failed to create clubhouse');
       setIsLoading(false);
     }
   };
@@ -173,7 +173,7 @@ export default function CreateEventWizardPage() {
           <Link href="/app" className="text-2xl font-bold text-primary">
             Press!
           </Link>
-          <span className="text-muted-foreground">Create Event</span>
+          <span className="text-muted-foreground">Create Clubhouse</span>
         </div>
       </header>
 

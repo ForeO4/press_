@@ -19,7 +19,7 @@ export function EventForm({
   initialValues,
   onSubmit,
   onCancel,
-  submitLabel = 'Create Event',
+  submitLabel = 'Create Clubhouse',
   isLoading = false,
   showCourseSelector = true,
 }: EventFormProps) {
@@ -37,11 +37,11 @@ export function EventForm({
     const newErrors: Record<string, string> = {};
 
     if (!name.trim()) {
-      newErrors.name = 'Event name is required';
+      newErrors.name = 'Clubhouse name is required';
     }
 
     if (!date) {
-      newErrors.date = 'Event date is required';
+      newErrors.date = 'Clubhouse date is required';
     }
 
     setErrors(newErrors);
@@ -68,7 +68,7 @@ export function EventForm({
           htmlFor="event-name"
           className="block text-sm font-medium text-foreground"
         >
-          Event Name
+          Clubhouse Name
         </label>
         <Input
           id="event-name"
@@ -89,7 +89,7 @@ export function EventForm({
           htmlFor="event-date"
           className="block text-sm font-medium text-foreground"
         >
-          Event Date
+          Date
         </label>
         <Input
           id="event-date"

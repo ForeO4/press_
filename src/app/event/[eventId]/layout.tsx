@@ -90,7 +90,7 @@ export default function EventLayout({
       {/* Invite Modal */}
       <InviteModal
         eventId={params.eventId}
-        eventName="Event"
+        eventName="Clubhouse"
         isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}
       />

@@ -36,7 +36,7 @@ export default function EventSettingsPage({
           setSelectedTeeSetId(snapshot.teeSetId);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load event');
+        setError(err instanceof Error ? err.message : 'Failed to load clubhouse');
       } finally {
         setIsLoading(false);
       }
@@ -55,7 +55,7 @@ export default function EventSettingsPage({
       // Navigate to event page after successful update
       router.push(`/event/${params.eventId}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update event');
+      setError(err instanceof Error ? err.message : 'Failed to update clubhouse');
     } finally {
       setIsSaving(false);
     }
@@ -69,7 +69,7 @@ export default function EventSettingsPage({
       await deleteEvent(params.eventId);
       router.push('/app');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete event');
+      setError(err instanceof Error ? err.message : 'Failed to delete clubhouse');
       setIsDeleting(false);
     }
   };
@@ -77,7 +77,7 @@ export default function EventSettingsPage({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Loading event settings...</p>
+        <p className="text-muted-foreground">Loading clubhouse settings...</p>
       </div>
     );
   }
@@ -85,7 +85,7 @@ export default function EventSettingsPage({
   if (!event) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-destructive">Event not found</p>
+        <p className="text-destructive">Clubhouse not found</p>
       </div>
     );
   }
@@ -93,9 +93,9 @@ export default function EventSettingsPage({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Event Settings</h1>
+        <h1 className="text-2xl font-bold text-foreground">Clubhouse Settings</h1>
         <p className="text-muted-foreground">
-          Manage your event configuration
+          Manage your clubhouse configuration
         </p>
       </div>
 
@@ -114,7 +114,7 @@ export default function EventSettingsPage({
       {/* Edit Event */}
       <Card>
         <CardHeader>
-          <CardTitle>Event Details</CardTitle>
+          <CardTitle>Clubhouse Details</CardTitle>
         </CardHeader>
         <CardContent>
           <EventForm
@@ -141,16 +141,16 @@ export default function EventSettingsPage({
           {!showDeleteConfirm ? (
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-foreground">Delete Event</p>
+                <p className="font-medium text-foreground">Delete Clubhouse</p>
                 <p className="text-sm text-muted-foreground">
-                  Permanently delete this event and all associated data
+                  Permanently delete this clubhouse and all associated data
                 </p>
               </div>
               <Button
                 variant="destructive"
                 onClick={() => setShowDeleteConfirm(true)}
               >
-                Delete Event
+                Delete Clubhouse
               </Button>
             </div>
           ) : (
@@ -172,7 +172,7 @@ export default function EventSettingsPage({
                   onClick={handleDelete}
                   disabled={isDeleting}
                 >
-                  {isDeleting ? 'Deleting...' : 'Yes, Delete Event'}
+                  {isDeleting ? 'Deleting...' : 'Yes, Delete Clubhouse'}
                 </Button>
               </div>
             </div>

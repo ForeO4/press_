@@ -27,7 +27,7 @@ export function StepBasics({ data, onChange, onNext, onCancel }: StepBasicsProps
     const newErrors: Partial<Record<keyof BasicFormData, string>> = {};
 
     if (!data.name.trim()) {
-      newErrors.name = 'Event name is required';
+      newErrors.name = 'Clubhouse name is required';
     }
 
     if (!data.startDate) {
@@ -61,20 +61,20 @@ export function StepBasics({ data, onChange, onNext, onCancel }: StepBasicsProps
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-foreground">Event Basics</h2>
+        <h2 className="text-xl font-semibold text-foreground">Clubhouse Basics</h2>
         <p className="text-sm text-muted-foreground">
-          Set up your golf event with a name and dates.
+          Set up your golf clubhouse with a name and dates.
         </p>
       </div>
 
       <div className="space-y-4">
-        {/* Event Name */}
+        {/* Clubhouse Name */}
         <div>
           <label
             htmlFor="name"
             className="block text-sm font-medium text-foreground"
           >
-            Event Name *
+            Clubhouse Name *
           </label>
           <Input
             id="name"
@@ -101,7 +101,7 @@ export function StepBasics({ data, onChange, onNext, onCancel }: StepBasicsProps
             id="description"
             value={data.description}
             onChange={(e) => handleChange('description', e.target.value)}
-            placeholder="Add any details about your event..."
+            placeholder="Add any details about your clubhouse..."
             rows={3}
             className="mt-1 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
@@ -152,7 +152,7 @@ export function StepBasics({ data, onChange, onNext, onCancel }: StepBasicsProps
         {/* Visibility */}
         <div>
           <label className="block text-sm font-medium text-foreground">
-            Event Visibility
+            Clubhouse Visibility
           </label>
           <div className="mt-2 space-y-2">
             {[

@@ -403,3 +403,67 @@ export interface CreatePlayerInput {
   ghinNumber?: string;
   handicapIndex?: number;
 }
+
+// ============================================
+// PLAYER STATS
+// ============================================
+
+export interface PlayerRoundStats {
+  roundId: string;
+  eventId: string;
+  courseName: string;
+  date: string;
+  totalScore: number;
+  par: number;
+  relativeToPar: number;
+  eagles: number;
+  birdies: number;
+  pars: number;
+  bogeys: number;
+  doubleBogeys: number;
+  triplePlus: number;
+}
+
+export interface CareerStats {
+  totalRounds: number;
+  eagles: number;
+  birdies: number;
+  pars: number;
+  bogeys: number;
+  doubleBogeys: number;
+  triplePlus: number;
+  bestRound?: PlayerRoundStats;
+  avgScore?: number;
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+  totalWinnings: number;
+}
+
+export type StatsPeriod = 'lifetime' | 'ytd' | 'today';
+
+// ============================================
+// FAVORITES
+// ============================================
+
+export interface FavoriteClubhouse {
+  id: string;
+  eventId: string;
+  event: Event;
+  createdAt: string;
+}
+
+export interface RecentGameResult {
+  gameId: string;
+  eventId: string;
+  winner: {
+    id: string;
+    name: string;
+  };
+  loser: {
+    id: string;
+    name: string;
+  };
+  amount: number;
+  date: string;
+}

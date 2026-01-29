@@ -37,7 +37,7 @@ export function StepReview({
       <div>
         <h2 className="text-xl font-semibold text-foreground">Review & Create</h2>
         <p className="text-sm text-muted-foreground">
-          Review your event settings before creating.
+          Review your clubhouse settings before creating.
         </p>
       </div>
 
@@ -46,7 +46,7 @@ export function StepReview({
         {/* Basics */}
         <div className="p-4">
           <h3 className="text-sm font-medium text-muted-foreground mb-2">
-            Event Details
+            Clubhouse Details
           </h3>
           <div className="space-y-2">
             <div className="flex justify-between">
@@ -143,7 +143,7 @@ export function StepReview({
           <div>
             <h4 className="font-medium text-foreground">Ready to create</h4>
             <p className="text-sm text-muted-foreground">
-              You can edit these settings anytime after creating the event.
+              You can edit these settings anytime after creating the clubhouse.
               Invite players and start tracking games right away.
             </p>
           </div>
@@ -156,7 +156,7 @@ export function StepReview({
           Back
         </Button>
         <Button onClick={onSubmit} disabled={isLoading}>
-          {isLoading ? 'Creating...' : 'Create Event'}
+          {isLoading ? 'Creating...' : 'Create Clubhouse'}
         </Button>
       </div>
     </div>

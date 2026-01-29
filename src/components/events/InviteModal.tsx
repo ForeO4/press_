@@ -128,7 +128,7 @@ export function InviteModal({ eventId, eventName, isOpen, onClose }: InviteModal
         </div>
 
         <p className="text-sm text-muted-foreground mb-6">
-          Share an invite link or code to let players join <strong>{eventName}</strong>.
+          Share an invite link or code to let players join your clubhouse.
         </p>
 
         {error && (

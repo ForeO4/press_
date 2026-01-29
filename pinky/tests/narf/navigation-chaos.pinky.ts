@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { PinkyScreenshot } from '../../helpers/screenshot';
 import { ActionLogger } from '../../helpers/action-logger';
-import { loginAsTestUser } from '../../helpers/auth';
 
 /**
  * Narf Tests: Navigation Chaos
@@ -13,6 +12,8 @@ import { loginAsTestUser } from '../../helpers/auth';
  * - Deep links directly to pages
  * - Page refresh mid-flow
  * - Invalid URLs and 404s
+ *
+ * Already authenticated via storageState from config.
  */
 
 test.describe('Narf: Navigation Chaos', () => {
@@ -22,9 +23,7 @@ test.describe('Narf: Navigation Chaos', () => {
   test.beforeEach(async ({ page }) => {
     screenshot = new PinkyScreenshot(page, 'narf-nav');
     logger = new ActionLogger('narf-nav');
-
-    // Login before accessing protected pages
-    await loginAsTestUser(page);
+    // Already authenticated via storageState
   });
 
   test.describe('Back Button Behavior', () => {

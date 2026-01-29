@@ -1,7 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import { PinkyScreenshot } from '../../helpers/screenshot';
 import { ActionLogger } from '../../helpers/action-logger';
-import { loginAsTestUser } from '../../helpers/auth';
 import {
   FULL_ROUND_SCORES,
   getFront9Scores,
@@ -41,9 +40,7 @@ test.describe('Full Journey: Event Creation to Settlement', () => {
   test.beforeEach(async ({ page }) => {
     screenshot = new PinkyScreenshot(page, 'full-journey');
     logger = new ActionLogger('full-journey');
-
-    // Login first
-    await loginAsTestUser(page);
+    // Already authenticated via storageState - no need to login
   });
 
   test.describe.configure({ mode: 'serial' });

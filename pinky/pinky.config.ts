@@ -6,19 +6,29 @@ import dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../.env.pinky') });
 
 /**
+ * Storage state path for cached authentication
+ */
+const AUTH_STATE_PATH = './results/.auth/user.json';
+
+/**
  * Pinky Test Suite Configuration
  *
  * "The same thing we do every night, Pinky - try to test the app!"
  *
- * This configuration extends the base Playwright config with:
+ * This configuration includes:
+ * - Global setup to warm up Render server before tests
+ * - Auth setup project that logs in once and caches session
+ * - Increased timeouts for Render cold starts
  * - Always-on screenshots and traces for debugging
  * - JSON + HTML reporters for report generation
  * - Desktop Chrome + iPhone 12 projects for coverage
- * - Separate output directories from main e2e tests
  */
 export default defineConfig({
   testDir: './tests',
   testMatch: '**/*.pinky.ts',
+
+  /* Global setup to warm server before any tests run */
+  globalSetup: './global-setup',
 
   /* Run tests in parallel for speed */
   fullyParallel: true,
@@ -26,8 +36,8 @@ export default defineConfig({
   /* Fail the build on CI if you accidentally left test.only in the source code */
   forbidOnly: !!process.env.CI,
 
-  /* Retry failed tests once to catch flaky behavior */
-  retries: process.env.CI ? 2 : 1,
+  /* Retry failed tests - increased for flaky network conditions */
+  retries: process.env.CI ? 3 : 2,
 
   /* Limit workers for predictable ordering */
   workers: process.env.CI ? 1 : 2,
@@ -56,33 +66,47 @@ export default defineConfig({
     /* Video on first retry to catch flaky tests */
     video: 'on-first-retry',
 
-    /* Timeouts adjusted for remote server */
-    actionTimeout: 20000,
-    navigationTimeout: 45000,
+    /* Timeouts increased for Render cold starts */
+    actionTimeout: 30000,      // 30s (was 20s)
+    navigationTimeout: 90000,  // 90s (was 45s)
   },
 
-  /* Test timeout - generous for complex flows */
-  timeout: 60000,
+  /* Test timeout - generous for complex flows + cold starts */
+  timeout: 120000,  // 2 minutes (was 60s)
 
   /* Expect timeout for assertions */
   expect: {
-    timeout: 10000,
+    timeout: 15000,  // 15s (was 10s)
   },
 
   /* Configure projects for key device coverage */
   projects: [
+    /* Setup project: Logs in once, saves session for all other tests */
+    {
+      name: 'setup',
+      testDir: './',  // auth.setup.ts is in pinky root, not tests/
+      testMatch: /auth\.setup\.ts/,
+    },
+
+    /* Desktop Chrome - depends on setup, reuses cached auth */
     {
       name: 'Desktop Chrome',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1280, height: 720 },
+        storageState: AUTH_STATE_PATH,
       },
+      dependencies: ['setup'],
     },
+
+    /* iPhone 12 - depends on setup, reuses cached auth */
     {
       name: 'iPhone 12',
       use: {
         ...devices['iPhone 12'],
+        storageState: AUTH_STATE_PATH,
       },
+      dependencies: ['setup'],
     },
   ],
 

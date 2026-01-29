@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { PinkyScreenshot } from '../../helpers/screenshot';
 import { ActionLogger } from '../../helpers/action-logger';
-import { loginAsTestUser } from '../../helpers/auth';
 
 /**
  * Happy Path: Event Management
  *
  * Tests the user's journey through event features.
- * Requires authentication first.
+ * Already authenticated via storageState from config.
  */
 
 test.describe('Happy Path: Event Features', () => {
@@ -17,13 +16,9 @@ test.describe('Happy Path: Event Features', () => {
   test.beforeEach(async ({ page }) => {
     screenshot = new PinkyScreenshot(page, 'event');
     logger = new ActionLogger('event');
-
-    // Login first
-    await loginAsTestUser(page);
-
-    // Then navigate to demo event
+    // Already authenticated via storageState - navigate directly to demo event
     await page.goto('/event/demo-event');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('user can view event overview', async ({ page }) => {

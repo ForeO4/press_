@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { PinkyScreenshot } from '../../helpers/screenshot';
 import { ActionLogger } from '../../helpers/action-logger';
-import { loginAsTestUser } from '../../helpers/auth';
 import {
   CHAOS_INPUTS,
   EMPTY_INPUTS,
@@ -30,9 +29,7 @@ test.describe('Narf: Input Chaos', () => {
   test.beforeEach(async ({ page }) => {
     screenshot = new PinkyScreenshot(page, 'narf-input');
     logger = new ActionLogger('narf-input');
-
-    // Login before accessing protected pages
-    await loginAsTestUser(page);
+    // Already authenticated via storageState
   });
 
   test.describe('Create Game Form - Stake Input', () => {

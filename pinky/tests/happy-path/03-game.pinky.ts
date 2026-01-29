@@ -1,14 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { PinkyScreenshot } from '../../helpers/screenshot';
 import { ActionLogger } from '../../helpers/action-logger';
-import { loginAsTestUser } from '../../helpers/auth';
 
 /**
  * Happy Path: Game Creation
  *
  * Tests the user's journey through creating games.
  * Covers Match Play, Nassau, and Skins game types.
- * Requires authentication first.
+ * Already authenticated via storageState from config.
  */
 
 test.describe('Happy Path: Game Creation', () => {
@@ -18,13 +17,9 @@ test.describe('Happy Path: Game Creation', () => {
   test.beforeEach(async ({ page }) => {
     screenshot = new PinkyScreenshot(page, 'game');
     logger = new ActionLogger('game');
-
-    // Login first
-    await loginAsTestUser(page);
-
-    // Start at the games page
+    // Already authenticated via storageState - navigate directly
     await page.goto('/event/demo-event/games');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('user can view games list', async ({ page }) => {

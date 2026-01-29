@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { PinkyScreenshot } from '../../helpers/screenshot';
 import { ActionLogger } from '../../helpers/action-logger';
-import { loginAsTestUser } from '../../helpers/auth';
 
 /**
  * Happy Path: Settlement Flow
  *
  * Tests the user's journey through settling bets.
- * Requires authentication first.
+ * Already authenticated via storageState from config.
  */
 
 test.describe('Happy Path: Settlement', () => {
@@ -17,13 +16,9 @@ test.describe('Happy Path: Settlement', () => {
   test.beforeEach(async ({ page }) => {
     screenshot = new PinkyScreenshot(page, 'settlement');
     logger = new ActionLogger('settlement');
-
-    // Login first
-    await loginAsTestUser(page);
-
-    // Start at the event
+    // Already authenticated via storageState - navigate directly
     await page.goto('/event/demo-event');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('user can view Gator Bucks balance', async ({ page }) => {

@@ -102,3 +102,103 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Clubhouse Theme Variables */
+@layer base {
+  /* Dark theme (default) */
+  [data-clubhouse-theme="dark"] {
+    --clubhouse-bg: 224 71% 4%;
+    --clubhouse-surface-1: 224 71% 6%;
+    --clubhouse-surface-2: 222.2 47.4% 15%;
+    --clubhouse-text: 213 31% 91%;
+    --clubhouse-text-muted: 215.4 16.3% 56.9%;
+    --clubhouse-border: 216 34% 17%;
+    --clubhouse-primary: 142.1 70.6% 45.3%;
+    --clubhouse-primary-foreground: 144.9 80.4% 10%;
+    --clubhouse-success: 142.1 70.6% 45.3%;
+    --clubhouse-warning: 38 92% 50%;
+    --clubhouse-error: 0 63% 45%;
+    --clubhouse-accent: 222.2 47.4% 15%;
+    --clubhouse-accent-foreground: 210 40% 98%;
+  }
+
+  /* Light theme */
+  [data-clubhouse-theme="light"] {
+    --clubhouse-bg: 0 0% 100%;
+    --clubhouse-surface-1: 0 0% 98%;
+    --clubhouse-surface-2: 210 40% 96.1%;
+    --clubhouse-text: 222.2 84% 4.9%;
+    --clubhouse-text-muted: 215.4 16.3% 46.9%;
+    --clubhouse-border: 214.3 31.8% 91.4%;
+    --clubhouse-primary: 142.1 76.2% 36.3%;
+    --clubhouse-primary-foreground: 355.7 100% 97.3%;
+    --clubhouse-success: 142.1 76.2% 36.3%;
+    --clubhouse-warning: 38 92% 50%;
+    --clubhouse-error: 0 84.2% 60.2%;
+    --clubhouse-accent: 210 40% 96.1%;
+    --clubhouse-accent-foreground: 222.2 47.4% 11.2%;
+  }
+
+  /* Masters theme - Augusta green/yellow/azalea */
+  [data-clubhouse-theme="masters"] {
+    --clubhouse-bg: 150 60% 5%;
+    --clubhouse-surface-1: 150 50% 8%;
+    --clubhouse-surface-2: 150 40% 12%;
+    --clubhouse-text: 60 80% 95%;
+    --clubhouse-text-muted: 150 20% 60%;
+    --clubhouse-border: 150 30% 18%;
+    --clubhouse-primary: 60 80% 55%;
+    --clubhouse-primary-foreground: 150 60% 10%;
+    --clubhouse-success: 150 60% 40%;
+    --clubhouse-warning: 60 80% 55%;
+    --clubhouse-error: 340 70% 55%;
+    --clubhouse-accent: 340 60% 45%;
+    --clubhouse-accent-foreground: 0 0% 100%;
+  }
+
+  /* Links theme - Scottish heather/sand/sea */
+  [data-clubhouse-theme="links"] {
+    --clubhouse-bg: 220 30% 8%;
+    --clubhouse-surface-1: 220 25% 12%;
+    --clubhouse-surface-2: 220 20% 16%;
+    --clubhouse-text: 45 30% 90%;
+    --clubhouse-text-muted: 220 15% 55%;
+    --clubhouse-border: 220 20% 22%;
+    --clubhouse-primary: 280 30% 55%;
+    --clubhouse-primary-foreground: 0 0% 100%;
+    --clubhouse-success: 150 40% 45%;
+    --clubhouse-warning: 45 70% 55%;
+    --clubhouse-error: 0 50% 50%;
+    --clubhouse-accent: 45 60% 50%;
+    --clubhouse-accent-foreground: 220 30% 10%;
+  }
+
+  /* Ryder theme - Navy/gold team colors */
+  [data-clubhouse-theme="ryder"] {
+    --clubhouse-bg: 220 60% 8%;
+    --clubhouse-surface-1: 220 55% 12%;
+    --clubhouse-surface-2: 220 45% 18%;
+    --clubhouse-text: 45 90% 95%;
+    --clubhouse-text-muted: 220 30% 55%;
+    --clubhouse-border: 220 40% 24%;
+    --clubhouse-primary: 45 90% 50%;
+    --clubhouse-primary-foreground: 220 60% 10%;
+    --clubhouse-success: 150 50% 45%;
+    --clubhouse-warning: 45 90% 50%;
+    --clubhouse-error: 0 60% 50%;
+    --clubhouse-accent: 220 60% 45%;
+    --clubhouse-accent-foreground: 45 90% 95%;
+  }
+}
+
+/* Utility classes */
+@layer utilities {
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

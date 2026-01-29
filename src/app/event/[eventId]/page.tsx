@@ -3,23 +3,27 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { getEvent } from '@/lib/services/events';
+import { getEvent, updateEvent } from '@/lib/services/events';
 import { getEventMembers } from '@/lib/services/players';
 import { getEventTeeSnapshot } from '@/lib/services/courses';
 import { getLeaderboard } from '@/lib/services/leaderboard';
+import { getGamesForEvent } from '@/lib/services/games';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { Settings } from 'lucide-react';
-import type { Event, TeeSnapshot, PlayerProfile, MembershipRole } from '@/types';
+import { ClubhouseThemeProvider } from '@/components/providers/ClubhouseThemeProvider';
+import type { Event, TeeSnapshot, PlayerProfile, MembershipRole, GameWithParticipants, ClubhouseTheme } from '@/types';
 import type { LeaderboardEntry } from '@/lib/services/leaderboard';
+import type { TabId } from '@/components/events';
 
 import {
   InviteModal,
-  CompactActionBar,
-  QuickSettingsPanel,
-  EventLeaderboard,
-  EventChat,
-  MemberList,
+  ClubhouseHeader,
+  RoleActionBar,
+  ClubhouseTabs,
+  OverviewTabContent,
+  RoundsTabContent,
+  GamesTabContent,
+  StatsTabContent,
+  ClubhouseTabContent,
 } from '@/components/events';
 
 interface MemberWithRole extends PlayerProfile {
@@ -36,32 +40,20 @@ export default function EventPage({
   const [members, setMembers] = useState<MemberWithRole[]>([]);
   const [teeSnapshot, setTeeSnapshot] = useState<TeeSnapshot | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [games, setGames] = useState<GameWithParticipants[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   const isDemoEvent = params.eventId.startsWith('demo-');
 
-  // Mock chat messages (would come from a real-time service)
-  const [chatMessages, setChatMessages] = useState([
-    {
-      id: 'msg-1',
-      authorId: 'user-2',
-      authorName: 'Mike',
-      authorInitial: 'M',
-      content: 'Great round today! That birdie on 18 was clutch.',
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: 'msg-2',
-      authorId: 'user-3',
-      authorName: 'John',
-      authorInitial: 'J',
-      content: "Who's playing this weekend?",
-      createdAt: new Date(Date.now() - 1800000).toISOString(),
-    },
-  ]);
+  // Get current user's role in the event
+  const userMembership = members.find((m) => m.userId === user?.id);
+  const userRole: MembershipRole = userMembership?.role || 'VIEWER';
+
+  // Count active players (mock for now)
+  const activePlayers = games.filter((g) => g.status === 'active').length > 0 ? members.length : 0;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,17 +64,19 @@ export default function EventPage({
         const eventData = await getEvent(params.eventId);
         setEvent(eventData);
 
-        // Fetch members, tee snapshot, and leaderboard in parallel
+        // Fetch members, tee snapshot, leaderboard, and games in parallel
         if (eventData) {
-          const [membersData, snapshot, leaderboardData] = await Promise.all([
+          const [membersData, snapshot, leaderboardData, gamesData] = await Promise.all([
             getEventMembers(params.eventId).catch(() => []),
             getEventTeeSnapshot(params.eventId).catch(() => null),
             getLeaderboard(params.eventId).catch(() => []),
+            getGamesForEvent(params.eventId).catch(() => []),
           ]);
 
           setMembers(membersData as MemberWithRole[]);
           setTeeSnapshot(snapshot);
           setLeaderboard(leaderboardData);
+          setGames(gamesData);
         }
       } catch (err) {
         console.error('[EventPage] Failed to fetch event:', err);
@@ -95,18 +89,74 @@ export default function EventPage({
     fetchData();
   }, [params.eventId]);
 
-  const handleSendMessage = useCallback(async (content: string) => {
-    // Mock sending - would integrate with real-time service
-    const newMessage = {
-      id: `msg-${Date.now()}`,
-      authorId: user?.id || 'current-user',
-      authorName: user?.name || 'You',
-      authorInitial: user?.name?.charAt(0) || 'Y',
-      content,
-      createdAt: new Date().toISOString(),
-    };
-    setChatMessages((prev) => [...prev, newMessage]);
-  }, [user]);
+  const handleThemeChange = useCallback(async (theme: ClubhouseTheme) => {
+    if (!event) return;
+
+    // Optimistic update
+    setEvent({ ...event, theme });
+
+    try {
+      await updateEvent(params.eventId, { theme });
+    } catch (err) {
+      console.error('[EventPage] Failed to update theme:', err);
+      // Revert on error
+      setEvent(event);
+    }
+  }, [event, params.eventId]);
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <OverviewTabContent
+            eventId={params.eventId}
+            members={members}
+            games={games}
+            leaderboard={leaderboard}
+            courseName={teeSnapshot?.courseName}
+            userRole={userRole}
+            isLoading={loading}
+          />
+        );
+      case 'rounds':
+        return (
+          <RoundsTabContent
+            eventId={params.eventId}
+            courseName={teeSnapshot?.courseName}
+            isLoading={loading}
+          />
+        );
+      case 'games':
+        return (
+          <GamesTabContent
+            eventId={params.eventId}
+            games={games}
+            members={members}
+            isLocked={event?.isLocked}
+            isLoading={loading}
+          />
+        );
+      case 'stats':
+        return (
+          <StatsTabContent
+            eventId={params.eventId}
+            members={members}
+            isLoading={loading}
+          />
+        );
+      case 'clubhouse':
+        return (
+          <ClubhouseTabContent
+            eventId={params.eventId}
+            members={members}
+            userRole={userRole}
+            isLoading={loading}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   if (loading) {
     return (
@@ -140,96 +190,49 @@ export default function EventPage({
   }
 
   return (
-    <div className="space-y-4 pb-20">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{event.name}</h1>
-          <div className="mt-1 flex items-center gap-2">
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                event.visibility === 'PUBLIC'
-                  ? 'bg-green-500/20 text-green-400'
-                  : event.visibility === 'UNLISTED'
-                    ? 'bg-blue-500/20 text-blue-400'
-                    : 'bg-gray-500/20 text-gray-400'
-              }`}
-            >
-              {event.visibility === 'PRIVATE' ? 'Private' : event.visibility === 'UNLISTED' ? 'Unlisted' : 'Public'}
-            </span>
-            {event.isLocked && (
-              <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-                Complete
-              </span>
-            )}
-          </div>
-        </div>
-        <Link href={`/event/${params.eventId}/settings`}>
-          <Button variant="ghost" size="icon">
-            <Settings className="h-5 w-5" />
-          </Button>
-        </Link>
+    <ClubhouseThemeProvider themeId={event.theme}>
+      <div className="space-y-4 pb-20">
+        {/* Clubhouse Header */}
+        <ClubhouseHeader
+          event={event}
+          memberCount={members.length}
+          activePlayers={activePlayers}
+          isLive={games.some((g) => g.status === 'active')}
+          onThemeChange={handleThemeChange}
+        />
+
+        {/* Role-Based Action Bar */}
+        <RoleActionBar
+          eventId={params.eventId}
+          role={userRole}
+          isLocked={event.isLocked}
+          onInviteClick={() => setIsInviteModalOpen(true)}
+        />
+
+        {/* Clubhouse Tabs */}
+        <ClubhouseTabs activeTab={activeTab} onTabChange={setActiveTab}>
+          {renderTabContent()}
+        </ClubhouseTabs>
+
+        {/* Demo Mode Notice */}
+        {isDemoEvent && (
+          <Card className="border-yellow-500/50 bg-yellow-500/10">
+            <CardContent className="py-4">
+              <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                <strong>Demo Mode:</strong> This is a demo clubhouse. Create a real one to save your data.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Invite Modal */}
+        <InviteModal
+          eventId={params.eventId}
+          eventName={event.name}
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+        />
       </div>
-
-      {/* Compact Action Bar */}
-      <CompactActionBar
-        eventId={params.eventId}
-        onInviteClick={() => setIsInviteModalOpen(true)}
-        isLocked={event.isLocked}
-      />
-
-      {/* Quick Settings */}
-      <QuickSettingsPanel
-        date={event.date}
-        playerCount={members.length}
-        teeSnapshot={teeSnapshot}
-        gameType="Match Play"
-      />
-
-      {/* Leaderboard Preview */}
-      <EventLeaderboard
-        eventId={params.eventId}
-        entries={leaderboard}
-        isLoading={loading}
-        limit={3}
-      />
-
-      {/* Members */}
-      <MemberList
-        eventId={params.eventId}
-        members={members}
-        onInviteClick={() => setIsInviteModalOpen(true)}
-        isLoading={loading}
-      />
-
-      {/* Chat */}
-      <EventChat
-        eventId={params.eventId}
-        messages={chatMessages}
-        currentUserId={user?.id || ''}
-        onSendMessage={handleSendMessage}
-        isExpanded={isChatExpanded}
-        onToggleExpand={() => setIsChatExpanded(!isChatExpanded)}
-      />
-
-      {/* Demo Mode Notice */}
-      {isDemoEvent && (
-        <Card className="border-yellow-500/50 bg-yellow-500/10">
-          <CardContent className="py-4">
-            <p className="text-sm text-yellow-600 dark:text-yellow-400">
-              <strong>Demo Mode:</strong> This is a demo clubhouse. Create a real one to save your data.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Invite Modal */}
-      <InviteModal
-        eventId={params.eventId}
-        eventName={event.name}
-        isOpen={isInviteModalOpen}
-        onClose={() => setIsInviteModalOpen(false)}
-      />
-    </div>
+    </ClubhouseThemeProvider>
   );
 }

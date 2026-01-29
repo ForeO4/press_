@@ -1,6 +1,41 @@
 // Press! Core Types
 
 // ============================================
+// CLUBHOUSE THEMES
+// ============================================
+
+export type ClubhouseTheme = 'dark' | 'light' | 'masters' | 'links' | 'ryder';
+
+// ============================================
+// ACTIVITY EVENTS
+// ============================================
+
+export type ActivityType =
+  | 'birdie'
+  | 'eagle'
+  | 'albatross'
+  | 'ace'
+  | 'press'
+  | 'settlement'
+  | 'tee_time'
+  | 'round_start'
+  | 'round_end'
+  | 'game_start'
+  | 'game_complete'
+  | 'player_joined';
+
+export interface ActivityEvent {
+  id: string;
+  eventId: string;
+  userId?: string;
+  activityType: ActivityType;
+  referenceType?: string;
+  referenceId?: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
+// ============================================
 // GATOR BUCKS
 // ============================================
 
@@ -20,8 +55,13 @@ export interface Event {
   id: string;
   name: string;
   date: string;
+  endDate?: string; // For multi-day events
   visibility: EventVisibility;
   isLocked: boolean;
+  numRounds?: number; // Number of rounds (1-10)
+  numHoles?: number; // Holes per round (9 or 18)
+  defaultGameType?: GameType; // Default game type
+  theme?: ClubhouseTheme; // Visual theme for the clubhouse
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -52,7 +92,12 @@ export interface CreateEventInput {
 export interface UpdateEventInput {
   name?: string;
   date?: string;
+  endDate?: string;
   visibility?: EventVisibility;
+  numRounds?: number;
+  numHoles?: number;
+  defaultGameType?: GameType;
+  theme?: ClubhouseTheme;
   teeSetId?: string; // Optional tee set to update snapshot
 }
 

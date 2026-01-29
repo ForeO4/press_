@@ -11,6 +11,7 @@ import type {
   EventPost,
   EventMessage,
   Settlement,
+  ActivityEvent,
 } from '@/types';
 import { mockUsers } from './users';
 
@@ -20,13 +21,18 @@ import { mockUsers } from './users';
 
 export const mockEvent: Event = {
   id: 'demo-event',
-  name: 'Spring Classic 2024',
-  date: '2024-04-15',
-  visibility: 'UNLISTED',
+  name: 'Bandon Dunes 2026',
+  date: '2026-01-28',
+  endDate: '2026-01-30',
+  visibility: 'PRIVATE',
   isLocked: false,
+  numRounds: 3,
+  numHoles: 18,
+  defaultGameType: 'match_play',
+  theme: 'dark',
   createdBy: 'demo-owner',
-  createdAt: '2024-04-01T10:00:00Z',
-  updatedAt: '2024-04-15T08:00:00Z',
+  createdAt: '2026-01-20T10:00:00Z',
+  updatedAt: '2026-01-28T08:00:00Z',
 };
 
 export const mockEventSettings: EventSettings = {
@@ -241,9 +247,9 @@ export const mockMessages: EventMessage[] = [
     id: 'msg-1',
     threadId: 'thread-general',
     authorId: null,
-    content: 'Welcome to Spring Classic 2024!',
+    content: 'Welcome to Bandon Dunes 2026!',
     isSystem: true,
-    createdAt: '2024-04-01T10:00:00Z',
+    createdAt: '2026-01-20T10:00:00Z',
   },
   {
     id: 'msg-2',
@@ -251,7 +257,7 @@ export const mockMessages: EventMessage[] = [
     authorId: 'demo-owner',
     content: 'Looking forward to a great round today!',
     isSystem: false,
-    createdAt: '2024-04-15T07:00:00Z',
+    createdAt: '2026-01-28T07:00:00Z',
   },
   {
     id: 'msg-3',
@@ -259,6 +265,67 @@ export const mockMessages: EventMessage[] = [
     authorId: 'demo-admin',
     content: 'Weather looks perfect',
     isSystem: false,
-    createdAt: '2024-04-15T07:30:00Z',
+    createdAt: '2026-01-28T07:30:00Z',
+  },
+];
+
+// ============================================
+// ACTIVITY EVENTS
+// ============================================
+
+export const mockActivityEvents: ActivityEvent[] = [
+  {
+    id: 'activity-1',
+    eventId: 'demo-event',
+    userId: 'demo-owner',
+    activityType: 'eagle',
+    metadata: { playerName: 'John', hole: 7 },
+    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5m ago
+  },
+  {
+    id: 'activity-2',
+    eventId: 'demo-event',
+    activityType: 'press',
+    metadata: { hole: 12, amount: 10 },
+    createdAt: new Date(Date.now() - 12 * 60 * 1000).toISOString(), // 12m ago
+  },
+  {
+    id: 'activity-3',
+    eventId: 'demo-event',
+    userId: 'demo-admin',
+    activityType: 'settlement',
+    metadata: { playerName: 'Mike', amount: 15 },
+    createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(), // 1h ago
+  },
+  {
+    id: 'activity-4',
+    eventId: 'demo-event',
+    userId: 'demo-player1',
+    activityType: 'birdie',
+    metadata: { playerName: 'Sarah', hole: 4 },
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2h ago
+  },
+  {
+    id: 'activity-5',
+    eventId: 'demo-event',
+    userId: 'demo-player2',
+    activityType: 'round_start',
+    metadata: { playerName: 'Dave' },
+    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3h ago
+  },
+  {
+    id: 'activity-6',
+    eventId: 'demo-event',
+    activityType: 'game_start',
+    metadata: { gameType: 'Match Play', players: ['John', 'Mike'] },
+    createdAt: new Date(Date.now() - 3.5 * 60 * 60 * 1000).toISOString(), // 3.5h ago
+  },
+  {
+    id: 'activity-7',
+    eventId: 'demo-event',
+    userId: 'demo-player1',
+    activityType: 'player_joined',
+    metadata: { playerName: 'Sarah' },
+    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1d ago
   },
 ];

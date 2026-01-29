@@ -213,7 +213,12 @@ export async function updateEvent(
   const updates: Record<string, unknown> = {};
   if (input.name !== undefined) updates.name = input.name;
   if (input.date !== undefined) updates.date = input.date;
+  if (input.endDate !== undefined) updates.end_date = input.endDate;
   if (input.visibility !== undefined) updates.visibility = input.visibility;
+  if (input.numRounds !== undefined) updates.num_rounds = input.numRounds;
+  if (input.numHoles !== undefined) updates.num_holes = input.numHoles;
+  if (input.defaultGameType !== undefined) updates.default_game_type = input.defaultGameType;
+  if (input.theme !== undefined) updates.theme = input.theme;
 
   const { data, error } = await supabase
     .from('events')
@@ -268,8 +273,13 @@ function mapEventFromDb(row: Record<string, unknown>): Event {
     id: row.id as string,
     name: row.name as string,
     date: row.date as string,
+    endDate: row.end_date as string | undefined,
     visibility: row.visibility as Event['visibility'],
     isLocked: row.is_locked as boolean,
+    numRounds: row.num_rounds as number | undefined,
+    numHoles: row.num_holes as number | undefined,
+    defaultGameType: row.default_game_type as Event['defaultGameType'],
+    theme: row.theme as Event['theme'],
     createdBy: row.created_by as string,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,

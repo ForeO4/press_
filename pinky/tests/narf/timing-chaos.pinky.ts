@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { PinkyScreenshot } from '../../helpers/screenshot';
 import { ActionLogger } from '../../helpers/action-logger';
+import { loginAsTestUser } from '../../helpers/auth';
 
 /**
  * Narf Tests: Timing Chaos
@@ -21,71 +22,79 @@ test.describe('Narf: Timing Chaos', () => {
   test.beforeEach(async ({ page }) => {
     screenshot = new PinkyScreenshot(page, 'narf-timing');
     logger = new ActionLogger('narf-timing');
+
+    // Login before accessing protected pages
+    await loginAsTestUser(page);
   });
 
   test.describe('Double-Click Prevention', () => {
-    test('double-clicking create game button', async ({ page }) => {
+    test('double-clicking Create Game button', async ({ page }) => {
       await page.goto('/event/demo-event/games');
       await page.waitForLoadState('networkidle');
 
+      // Click "New Game" button to expand the form first
+      const newGameButton = page.getByRole('button', { name: 'New Game' });
+      if (await newGameButton.isVisible()) {
+        await newGameButton.click();
+        await page.waitForTimeout(500);
+      }
+
       await screenshot.capture('01-games-page');
 
-      const createButton = page.getByRole('button', { name: /create|new|add/i });
+      // The Create Game button is inline, not a modal trigger
+      const createButton = page.getByRole('button', { name: 'Create Game' });
 
-      if (await createButton.isVisible()) {
-        await logger.action('Double-click create button', async () => {
-          await createButton.dblclick();
-        });
+      await logger.action('Double-click Create Game button', async () => {
+        // Scroll into view to avoid bottom nav bar blocking
+        await createButton.scrollIntoViewIfNeeded();
+        await createButton.dblclick();
+      });
 
-        await page.waitForTimeout(500);
-        await screenshot.capture('02-after-double-click');
+      await page.waitForTimeout(500);
+      await screenshot.capture('02-after-double-click');
 
-        // Should only open one modal
-        const dialogs = page.getByRole('dialog');
-        const dialogCount = await dialogs.count();
-        console.log(`[Pinky] Dialog count after double-click: ${dialogCount}`);
-        expect(dialogCount).toBeLessThanOrEqual(1);
-      }
+      // Page should still be functional
+      await expect(page.locator('body')).toBeVisible();
+      console.log(`[Pinky] Page still functional after double-click`);
 
       logger.summary();
     });
 
-    test('rapid clicks on submit button', async ({ page }) => {
+    test('rapid clicks on Create Game button', async ({ page }) => {
       await page.goto('/event/demo-event/games');
       await page.waitForLoadState('networkidle');
 
-      // Open create game modal
-      const createButton = page.getByRole('button', { name: /create|new|add/i });
-      await createButton.click();
-      await expect(page.getByRole('dialog')).toBeVisible();
-
-      await screenshot.capture('01-modal-open');
-
-      // Fill required fields quickly
-      const stakeInput = page.locator('input[type="number"]').first();
-      if (await stakeInput.isVisible()) {
-        await stakeInput.fill('5');
+      // Click "New Game" button to expand the form first
+      const newGameButton = page.getByRole('button', { name: 'New Game' });
+      if (await newGameButton.isVisible()) {
+        await newGameButton.click();
+        await page.waitForTimeout(500);
       }
 
-      // Find submit button
-      const submitButton = page.getByRole('button', { name: /create.*game|start/i });
+      await screenshot.capture('01-games-page');
 
-      if (await submitButton.isVisible()) {
-        await logger.action('Rapid click submit (5x)', async () => {
-          // Click rapidly 5 times
-          for (let i = 0; i < 5; i++) {
-            await submitButton.click({ delay: 50 });
-          }
-        });
+      // The form is inline on the page
+      const submitButton = page.getByRole('button', { name: 'Create Game' });
 
-        await page.waitForTimeout(1000);
-        await screenshot.capture('02-after-rapid-submit');
+      await logger.action('Rapid click Create Game (5x)', async () => {
+        // Scroll into view to avoid bottom nav bar blocking
+        await submitButton.scrollIntoViewIfNeeded();
+        // Click rapidly 5 times
+        for (let i = 0; i < 5; i++) {
+          await submitButton.click({ delay: 50 }).catch(() => {});
+        }
+      });
 
-        // Check for error messages or duplicate creation
-        const errors = page.getByText(/error|failed|duplicate/i);
-        const errorCount = await errors.count();
-        console.log(`[Pinky] Error count after rapid submit: ${errorCount}`);
-      }
+      await page.waitForTimeout(1000);
+      await screenshot.capture('02-after-rapid-submit');
+
+      // Check for error messages or duplicate creation
+      const errors = page.getByText(/error|failed|duplicate/i);
+      const errorCount = await errors.count();
+      console.log(`[Pinky] Error count after rapid submit: ${errorCount}`);
+
+      // Page should still be functional
+      await expect(page.locator('body')).toBeVisible();
 
       logger.summary();
     });
@@ -94,13 +103,14 @@ test.describe('Narf: Timing Chaos', () => {
       await page.goto('/event/demo-event/games');
       await page.waitForLoadState('networkidle');
 
-      const gameCards = page.getByTestId('game-card');
+      // Look for game links (Continue buttons)
+      const gameLinks = page.getByRole('link', { name: 'Continue' });
 
-      if (await gameCards.count() > 0) {
+      if (await gameLinks.count() > 0) {
         await screenshot.capture('01-games-list');
 
-        await logger.action('Double-click game card', async () => {
-          await gameCards.first().dblclick();
+        await logger.action('Double-click game link', async () => {
+          await gameLinks.first().dblclick();
         });
 
         await page.waitForTimeout(500);
@@ -108,6 +118,8 @@ test.describe('Narf: Timing Chaos', () => {
 
         // Should navigate once, not break
         await expect(page.locator('body')).toBeVisible();
+      } else {
+        console.log('[Pinky] No game links found to test');
       }
 
       logger.summary();
@@ -142,33 +154,39 @@ test.describe('Narf: Timing Chaos', () => {
       logger.summary();
     });
 
-    test('form submission during async validation', async ({ page }) => {
+    test('form submission during typing', async ({ page }) => {
       await page.goto('/event/demo-event/games');
       await page.waitForLoadState('networkidle');
 
-      const createButton = page.getByRole('button', { name: /create|new|add/i });
-      await createButton.click();
-      await expect(page.getByRole('dialog')).toBeVisible();
+      // Click "New Game" button to expand the form first
+      const newGameButton = page.getByRole('button', { name: 'New Game' });
+      if (await newGameButton.isVisible()) {
+        await newGameButton.click();
+        await page.waitForTimeout(500);
+      }
 
-      await screenshot.capture('01-modal-open');
+      await screenshot.capture('01-games-page');
 
-      // Fill and submit immediately without waiting
-      const stakeInput = page.locator('input[type="number"]').first();
-      const submitButton = page.getByRole('button', { name: /create.*game|start/i });
+      // The form is inline on the page
+      const stakeInput = page.getByRole('textbox', { name: 'Stake' });
+      const submitButton = page.getByRole('button', { name: 'Create Game' });
 
       await logger.action('Quick fill and submit', async () => {
-        if (await stakeInput.isVisible()) {
-          await stakeInput.fill('10');
-        }
+        // Clear and start typing
+        await stakeInput.clear();
+        await stakeInput.pressSequentially('15', { delay: 50 });
 
-        // Immediately try to submit
-        if (await submitButton.isVisible()) {
-          await submitButton.click();
-        }
+        // Scroll into view to avoid bottom nav bar blocking
+        await submitButton.scrollIntoViewIfNeeded();
+        // Immediately try to submit while typing
+        await submitButton.click();
       });
 
       await page.waitForTimeout(500);
       await screenshot.capture('02-after-quick-submit');
+
+      // Page should still be functional
+      await expect(page.locator('body')).toBeVisible();
 
       logger.summary();
     });
@@ -229,58 +247,59 @@ test.describe('Narf: Timing Chaos', () => {
   });
 
   test.describe('Concurrent Actions', () => {
-    test('opening multiple modals', async ({ page }) => {
+    test('clicking multiple buttons rapidly', async ({ page }) => {
       await page.goto('/event/demo-event/games');
       await page.waitForLoadState('networkidle');
 
-      // Open create modal
-      const createButton = page.getByRole('button', { name: /create|new|add/i });
-      await createButton.click();
+      await screenshot.capture('01-games-page');
 
-      await screenshot.capture('01-first-modal');
+      // Get all buttons on the page
+      const buttons = page.getByRole('button');
+      const buttonCount = await buttons.count();
 
-      // Try to open another modal while first is open
-      await logger.action('Try second modal trigger', async () => {
-        // Try clicking any other modal trigger
-        const otherButtons = page.getByRole('button').filter({ hasNot: page.getByRole('dialog') });
-        const count = await otherButtons.count();
-        if (count > 1) {
-          await otherButtons.nth(1).click({ timeout: 1000 }).catch(() => {});
+      await logger.action('Click multiple buttons rapidly', async () => {
+        // Click first few buttons rapidly
+        for (let i = 0; i < Math.min(buttonCount, 3); i++) {
+          await buttons.nth(i).click({ timeout: 500 }).catch(() => {});
         }
       });
 
       await page.waitForTimeout(300);
-      await screenshot.capture('02-modal-state');
+      await screenshot.capture('02-after-rapid-clicks');
 
-      // Count open dialogs
-      const dialogCount = await page.getByRole('dialog').count();
-      console.log(`[Pinky] Open dialog count: ${dialogCount}`);
+      // Page should still be functional
+      await expect(page.locator('body')).toBeVisible();
+      console.log(`[Pinky] Page functional after rapid button clicks`);
 
       logger.summary();
     });
 
-    test('typing while dropdown is opening', async ({ page }) => {
+    test('typing while interacting with dropdown', async ({ page }) => {
       await page.goto('/event/demo-event/games');
       await page.waitForLoadState('networkidle');
 
-      const createButton = page.getByRole('button', { name: /create|new|add/i });
-      await createButton.click();
-      await expect(page.getByRole('dialog')).toBeVisible();
-
+      // The inline form has comboboxes for player selection
       const comboboxes = page.getByRole('combobox');
 
       if (await comboboxes.count() > 0) {
-        await logger.action('Click and type simultaneously', async () => {
-          // Click to open dropdown
-          await comboboxes.first().click();
+        await screenshot.capture('01-form-with-dropdowns');
 
-          // Immediately start typing
+        await logger.action('Interact with dropdown while typing', async () => {
+          // Focus on the first combobox
+          await comboboxes.first().focus();
+
+          // Start typing while dropdown might be opening
           await page.keyboard.type('Alex', { delay: 50 });
         });
 
         await page.waitForTimeout(300);
-        await screenshot.capture('01-type-during-dropdown');
+        await screenshot.capture('02-after-type-during-dropdown');
+      } else {
+        console.log('[Pinky] No comboboxes found');
       }
+
+      // Page should still be functional
+      await expect(page.locator('body')).toBeVisible();
 
       logger.summary();
     });

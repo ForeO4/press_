@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { PinkyScreenshot } from '../../helpers/screenshot';
 import { ActionLogger } from '../../helpers/action-logger';
+import { loginAsTestUser } from '../../helpers/auth';
 
 /**
  * Narf Tests: Navigation Chaos
@@ -21,6 +22,9 @@ test.describe('Narf: Navigation Chaos', () => {
   test.beforeEach(async ({ page }) => {
     screenshot = new PinkyScreenshot(page, 'narf-nav');
     logger = new ActionLogger('narf-nav');
+
+    // Login before accessing protected pages
+    await loginAsTestUser(page);
   });
 
   test.describe('Back Button Behavior', () => {
@@ -54,15 +58,15 @@ test.describe('Narf: Navigation Chaos', () => {
       logger.summary();
     });
 
-    test('back button from modal (should close modal)', async ({ page }) => {
+    test('back button from games page', async ({ page }) => {
+      // Navigate to event first, then games to build history
+      await page.goto('/event/demo-event');
+      await page.waitForLoadState('networkidle');
+
       await page.goto('/event/demo-event/games');
       await page.waitForLoadState('networkidle');
 
-      const createButton = page.getByRole('button', { name: /create|new|add/i });
-      await createButton.click();
-      await expect(page.getByRole('dialog')).toBeVisible();
-
-      await screenshot.capture('01-modal-open');
+      await screenshot.capture('01-games-page');
 
       await logger.action('Press browser back', async () => {
         await page.goBack();
@@ -71,9 +75,9 @@ test.describe('Narf: Navigation Chaos', () => {
 
       await screenshot.capture('02-after-back');
 
-      // Modal should be closed or we navigated away
-      const modalVisible = await page.getByRole('dialog').isVisible().catch(() => false);
-      console.log(`[Pinky] Modal visible after back: ${modalVisible}`);
+      // Should be back at event page
+      await expect(page).toHaveURL(/demo-event/);
+      console.log(`[Pinky] Current URL after back: ${page.url()}`);
 
       logger.summary();
     });
@@ -194,26 +198,43 @@ test.describe('Narf: Navigation Chaos', () => {
       logger.summary();
     });
 
-    test('refresh with modal open', async ({ page }) => {
+    test('refresh with form filled', async ({ page }) => {
       await page.goto('/event/demo-event/games');
       await page.waitForLoadState('networkidle');
 
-      const createButton = page.getByRole('button', { name: /create|new|add/i });
-      await createButton.click();
-      await expect(page.getByRole('dialog')).toBeVisible();
+      // Click "New Game" button to expand the form first
+      const newGameButton = page.getByRole('button', { name: 'New Game' });
+      if (await newGameButton.isVisible()) {
+        await newGameButton.click();
+        await page.waitForTimeout(500);
+      }
 
-      await screenshot.capture('01-modal-before-refresh');
+      // Fill the inline create game form
+      const stakeInput = page.getByRole('textbox', { name: 'Stake' });
+      await stakeInput.clear();
+      await stakeInput.fill('25');
 
-      await logger.action('Refresh with modal open', async () => {
+      await screenshot.capture('01-form-before-refresh');
+
+      await logger.action('Refresh with form filled', async () => {
         await page.reload();
         await page.waitForLoadState('networkidle');
       });
 
       await screenshot.capture('02-after-refresh');
 
-      // Modal should be closed after refresh
-      const modalVisible = await page.getByRole('dialog').isVisible().catch(() => false);
-      expect(modalVisible).toBe(false);
+      // After refresh, we need to expand form again to check it's there
+      const newGameButtonAfter = page.getByRole('button', { name: 'New Game' });
+      if (await newGameButtonAfter.isVisible()) {
+        await newGameButtonAfter.click();
+        await page.waitForTimeout(500);
+      }
+
+      // Form should be visible but data may be lost
+      await expect(page.getByRole('heading', { name: 'Create Game' })).toBeVisible();
+      const newStakeInput = page.getByRole('textbox', { name: 'Stake' });
+      const newValue = await newStakeInput.inputValue();
+      console.log(`[Pinky] Stake value after refresh: "${newValue}"`);
 
       logger.summary();
     });
@@ -222,14 +243,22 @@ test.describe('Narf: Navigation Chaos', () => {
       await page.goto('/event/demo-event/games');
       await page.waitForLoadState('networkidle');
 
-      const createButton = page.getByRole('button', { name: /create|new|add/i });
-      await createButton.click();
-      await expect(page.getByRole('dialog')).toBeVisible();
+      // Click "New Game" button to expand the form first
+      const newGameButton = page.getByRole('button', { name: 'New Game' });
+      if (await newGameButton.isVisible()) {
+        await newGameButton.click();
+        await page.waitForTimeout(500);
+      }
 
-      // Fill some fields
-      const stakeInput = page.locator('input[type="number"]').first();
-      if (await stakeInput.isVisible()) {
-        await stakeInput.fill('25');
+      // Start filling the inline form
+      const stakeInput = page.getByRole('textbox', { name: 'Stake' });
+      await stakeInput.clear();
+      await stakeInput.fill('50');
+
+      // Select a different player
+      const player1Combo = page.getByRole('combobox', { name: 'Player 1' });
+      if (await player1Combo.isVisible()) {
+        await player1Combo.selectOption({ index: 2 });
       }
 
       await screenshot.capture('01-form-partially-filled');
@@ -241,8 +270,15 @@ test.describe('Narf: Navigation Chaos', () => {
 
       await screenshot.capture('02-after-refresh');
 
-      // Data should be lost (no persistence expected)
-      await expect(page.locator('body')).toBeVisible();
+      // After refresh, we need to expand form again to check it's there
+      const newGameButtonAfter = page.getByRole('button', { name: 'New Game' });
+      if (await newGameButtonAfter.isVisible()) {
+        await newGameButtonAfter.click();
+        await page.waitForTimeout(500);
+      }
+
+      // Form should be visible, data lost (no persistence expected)
+      await expect(page.getByRole('heading', { name: 'Create Game' })).toBeVisible();
 
       logger.summary();
     });

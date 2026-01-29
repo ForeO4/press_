@@ -280,6 +280,7 @@ function mapEventFromDb(row: Record<string, unknown>): Event {
     numHoles: row.num_holes as number | undefined,
     defaultGameType: row.default_game_type as Event['defaultGameType'],
     theme: row.theme as Event['theme'],
+    clubhouseId: row.clubhouse_id as string | undefined,
     createdBy: row.created_by as string,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,

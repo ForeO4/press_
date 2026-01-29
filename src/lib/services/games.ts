@@ -421,3 +421,201 @@ function isGuestPlayer(playerId: string): boolean {
 function getGuestPlayerId(playerId: string): string {
   return playerId.replace('guest-', '');
 }
+
+/**
+ * Input for creating a game via the wizard
+ */
+export interface CreateGameInput {
+  eventId: string;
+  type: GameType;
+  stakeTeethInt: AlligatorTeeth;
+  startHole?: number;
+  endHole?: number;
+  playerIds: string[];
+  guestNames?: string[];
+}
+
+/**
+ * Create a game with multiple players (wizard flow)
+ */
+export async function createGameWithPlayers(
+  input: CreateGameInput
+): Promise<GameWithParticipants> {
+  const { eventId, type, stakeTeethInt, startHole = 1, endHole = 18, playerIds, guestNames = [] } = input;
+
+  if (shouldUseMockData(eventId)) {
+    const gameId = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    const game: Game = {
+      id: gameId,
+      eventId,
+      type,
+      stakeTeethInt,
+      parentGameId: null,
+      startHole,
+      endHole,
+      status: 'active',
+      createdAt: now,
+    };
+
+    // Create participants for regular players
+    const participants: GameParticipant[] = playerIds.map((userId) => ({
+      id: crypto.randomUUID(),
+      gameId,
+      userId: isGuestPlayer(userId) ? null : userId,
+      guestPlayerId: isGuestPlayer(userId) ? getGuestPlayerId(userId) : null,
+      teamId: null,
+    }));
+
+    // Create participants for guest players
+    guestNames.forEach((name) => {
+      const guestId = crypto.randomUUID();
+      participants.push({
+        id: crypto.randomUUID(),
+        gameId,
+        userId: null,
+        guestPlayerId: guestId,
+        teamId: null,
+      });
+    });
+
+    mockGameStore.push(game);
+    mockParticipantStore.push(...participants);
+
+    return {
+      ...game,
+      participants,
+    };
+  }
+
+  const supabase = createClient();
+  if (!supabase) throw new Error('Supabase client not available');
+
+  // Create the game
+  const { data: gameData, error: gameError } = await supabase
+    .from('games')
+    .insert({
+      event_id: eventId,
+      type,
+      stake_teeth_int: stakeTeethInt,
+      parent_game_id: null,
+      start_hole: startHole,
+      end_hole: endHole,
+      status: 'active',
+    })
+    .select()
+    .single();
+
+  if (gameError) throw gameError;
+
+  // Build participant records
+  const participantRecords: Array<Record<string, unknown>> = [];
+
+  // Add regular players
+  for (const playerId of playerIds) {
+    if (isGuestPlayer(playerId)) {
+      participantRecords.push({
+        game_id: gameData.id,
+        user_id: null,
+        guest_player_id: getGuestPlayerId(playerId),
+        team_id: null,
+      });
+    } else {
+      participantRecords.push({
+        game_id: gameData.id,
+        user_id: playerId,
+        guest_player_id: null,
+        team_id: null,
+      });
+    }
+  }
+
+  // Create guest players first if needed
+  if (guestNames.length > 0) {
+    const { data: guestPlayers, error: guestError } = await supabase
+      .from('guest_players')
+      .insert(
+        guestNames.map((name) => ({
+          event_id: eventId,
+          name,
+        }))
+      )
+      .select();
+
+    if (guestError) throw guestError;
+
+    // Add guest participants
+    (guestPlayers || []).forEach((guest) => {
+      participantRecords.push({
+        game_id: gameData.id,
+        user_id: null,
+        guest_player_id: guest.id,
+        team_id: null,
+      });
+    });
+  }
+
+  // Create all participants
+  const { data: participantsData, error: participantsError } = await supabase
+    .from('game_participants')
+    .insert(participantRecords)
+    .select();
+
+  if (participantsError) throw participantsError;
+
+  return {
+    ...mapGameFromDb(gameData),
+    participants: (participantsData || []).map(mapParticipantFromDb),
+  };
+}
+
+/**
+ * Get a game by ID
+ */
+export async function getGame(
+  eventId: string,
+  gameId: string
+): Promise<GameWithParticipants | null> {
+  return getGameWithParticipants(gameId);
+}
+
+/**
+ * Get game results (placeholder - would compute from scores)
+ */
+export async function getGameResults(
+  eventId: string,
+  gameId: string
+): Promise<Array<{
+  userId: string;
+  name: string;
+  totalScore: number;
+  relativeToPar: number;
+  netAmount: number;
+  isWinner: boolean;
+}>> {
+  // This is a placeholder - real implementation would compute from hole scores
+  if (shouldUseMockData(eventId)) {
+    return [
+      {
+        userId: 'user-1',
+        name: 'Player 1',
+        totalScore: 82,
+        relativeToPar: 10,
+        netAmount: 50,
+        isWinner: true,
+      },
+      {
+        userId: 'user-2',
+        name: 'Player 2',
+        totalScore: 88,
+        relativeToPar: 16,
+        netAmount: -50,
+        isWinner: false,
+      },
+    ];
+  }
+
+  // Real implementation would query scores and compute results
+  return [];
+}

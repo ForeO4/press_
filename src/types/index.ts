@@ -7,6 +7,67 @@
 export type ClubhouseTheme = 'dark' | 'light' | 'masters' | 'links' | 'ryder';
 
 // ============================================
+// CLUBHOUSES
+// ============================================
+
+export type ClubhouseType = 'trip' | 'league' | 'event' | 'social';
+export type ClubhousePrivacy = 'private' | 'public';
+export type ClubhouseMemberRole = 'OWNER' | 'ADMIN' | 'MEMBER';
+export type ClubhouseMemberStatus = 'PENDING' | 'ACTIVE' | 'REMOVED';
+
+export interface Clubhouse {
+  id: string;
+  name: string;
+  description?: string;
+  type: ClubhouseType;
+  privacy: ClubhousePrivacy;
+  inviteCode: string;
+  inviteCodeEnabled: boolean;
+  theme: ClubhouseTheme;
+  logoUrl?: string;
+  bannerUrl?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClubhouseMembership {
+  id: string;
+  clubhouseId: string;
+  userId: string;
+  role: ClubhouseMemberRole;
+  status: ClubhouseMemberStatus;
+  nickname?: string;
+  joinedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClubhouseWithMemberCount extends Clubhouse {
+  memberCount: number;
+  eventCount: number;
+}
+
+export interface ClubhouseWithMembers extends Clubhouse {
+  members: ClubhouseMembership[];
+}
+
+export interface CreateClubhouseInput {
+  name: string;
+  description?: string;
+  type?: ClubhouseType;
+  privacy?: ClubhousePrivacy;
+}
+
+export interface UpdateClubhouseInput {
+  name?: string;
+  description?: string;
+  theme?: ClubhouseTheme;
+  privacy?: ClubhousePrivacy;
+  inviteCodeEnabled?: boolean;
+}
+
+// ============================================
 // ACTIVITY EVENTS
 // ============================================
 
@@ -62,6 +123,7 @@ export interface Event {
   numHoles?: number; // Holes per round (9 or 18)
   defaultGameType?: GameType; // Default game type
   theme?: ClubhouseTheme; // Visual theme for the clubhouse
+  clubhouseId?: string; // Optional parent clubhouse
   createdBy: string;
   createdAt: string;
   updatedAt: string;

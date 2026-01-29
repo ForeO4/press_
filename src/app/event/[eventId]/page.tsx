@@ -1,27 +1,25 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { getEvent, updateEvent } from '@/lib/services/events';
+import { getEvent } from '@/lib/services/events';
 import { getEventMembers } from '@/lib/services/players';
 import { getEventTeeSnapshot } from '@/lib/services/courses';
 import { getLeaderboard } from '@/lib/services/leaderboard';
 import { getGamesForEvent } from '@/lib/services/games';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { ClubhouseThemeProvider } from '@/components/providers/ClubhouseThemeProvider';
-import type { Event, TeeSnapshot, PlayerProfile, MembershipRole, GameWithParticipants, ClubhouseTheme } from '@/types';
+import type { Event, TeeSnapshot, PlayerProfile, MembershipRole, GameWithParticipants } from '@/types';
 import type { LeaderboardEntry } from '@/lib/services/leaderboard';
 import type { TabId } from '@/components/events';
 
 import {
   InviteModal,
   ClubhouseHeader,
-  RoleActionBar,
   ClubhouseTabs,
   OverviewTabContent,
   RoundsTabContent,
-  GamesTabContent,
   StatsTabContent,
   ClubhouseTabContent,
 } from '@/components/events';
@@ -89,21 +87,6 @@ export default function EventPage({
     fetchData();
   }, [params.eventId]);
 
-  const handleThemeChange = useCallback(async (theme: ClubhouseTheme) => {
-    if (!event) return;
-
-    // Optimistic update
-    setEvent({ ...event, theme });
-
-    try {
-      await updateEvent(params.eventId, { theme });
-    } catch (err) {
-      console.error('[EventPage] Failed to update theme:', err);
-      // Revert on error
-      setEvent(event);
-    }
-  }, [event, params.eventId]);
-
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
@@ -123,16 +106,6 @@ export default function EventPage({
           <RoundsTabContent
             eventId={params.eventId}
             courseName={teeSnapshot?.courseName}
-            isLoading={loading}
-          />
-        );
-      case 'games':
-        return (
-          <GamesTabContent
-            eventId={params.eventId}
-            games={games}
-            members={members}
-            isLocked={event?.isLocked}
             isLoading={loading}
           />
         );
@@ -160,63 +133,60 @@ export default function EventPage({
 
   if (loading) {
     return (
-      <div className="py-12 text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <p className="mt-2 text-muted-foreground">Loading clubhouse...</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="py-12 text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="mt-2 text-muted-foreground">Loading clubhouse...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="py-12 text-center">
-        <p className="text-destructive">{error}</p>
-        <Link href="/app" className="mt-4 text-primary hover:underline">
-          Back to Clubhouses
-        </Link>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="py-12 text-center">
+          <p className="text-destructive">{error}</p>
+          <Link href="/app" className="mt-4 text-primary hover:underline">
+            Back to Clubhouses
+          </Link>
+        </div>
       </div>
     );
   }
 
   if (!event) {
     return (
-      <div className="py-12 text-center">
-        <p className="text-muted-foreground">Clubhouse not found</p>
-        <Link href="/app" className="mt-4 text-primary hover:underline">
-          Back to Clubhouses
-        </Link>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="py-12 text-center">
+          <p className="text-muted-foreground">Clubhouse not found</p>
+          <Link href="/app" className="mt-4 text-primary hover:underline">
+            Back to Clubhouses
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
     <ClubhouseThemeProvider themeId={event.theme}>
-      <div className="space-y-4 pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Clubhouse Header */}
         <ClubhouseHeader
           event={event}
           memberCount={members.length}
           activePlayers={activePlayers}
           isLive={games.some((g) => g.status === 'active')}
-          onThemeChange={handleThemeChange}
         />
 
-        {/* Role-Based Action Bar */}
-        <RoleActionBar
-          eventId={params.eventId}
-          role={userRole}
-          isLocked={event.isLocked}
-          onInviteClick={() => setIsInviteModalOpen(true)}
-        />
-
-        {/* Clubhouse Tabs */}
+        {/* Navigation Tabs */}
         <ClubhouseTabs activeTab={activeTab} onTabChange={setActiveTab}>
           {renderTabContent()}
         </ClubhouseTabs>
 
         {/* Demo Mode Notice */}
         {isDemoEvent && (
-          <Card className="border-yellow-500/50 bg-yellow-500/10">
+          <Card className="mt-6 border-yellow-500/50 bg-yellow-500/10">
             <CardContent className="py-4">
               <p className="text-sm text-yellow-600 dark:text-yellow-400">
                 <strong>Demo Mode:</strong> This is a demo clubhouse. Create a real one to save your data.

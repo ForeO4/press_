@@ -1,30 +1,15 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  Settings,
-  Users,
-  Lock,
-  Globe,
-  Link as LinkIcon,
-  Palette,
-  ChevronDown,
-  Check,
-} from 'lucide-react';
-import { getAllThemes } from '@/lib/design/themes';
-import type { Event, ClubhouseTheme } from '@/types';
+import { Settings, Users } from 'lucide-react';
+import type { Event } from '@/types';
 
 interface ClubhouseHeaderProps {
   event: Event;
   memberCount: number;
   activePlayers?: number;
   isLive?: boolean;
-  currentHole?: number;
-  totalHoles?: number;
-  onThemeChange?: (theme: ClubhouseTheme) => void;
 }
 
 export function ClubhouseHeader({
@@ -32,35 +17,7 @@ export function ClubhouseHeader({
   memberCount,
   activePlayers = 0,
   isLive = false,
-  currentHole,
-  totalHoles = 18,
-  onThemeChange,
 }: ClubhouseHeaderProps) {
-  const [showThemeMenu, setShowThemeMenu] = useState(false);
-  const themes = getAllThemes();
-  const currentTheme = themes.find((t) => t.id === event.theme) || themes[0];
-
-  // Get round context label based on current hole
-  const getRoundContext = () => {
-    if (!currentHole) return null;
-    if (currentHole <= 9) return 'Front 9';
-    if (currentHole <= 18) return 'Back 9';
-    return `Hole ${currentHole}`;
-  };
-
-  const roundContext = getRoundContext();
-
-  const getVisibilityIcon = () => {
-    switch (event.visibility) {
-      case 'PUBLIC':
-        return <Globe className="h-3 w-3" />;
-      case 'UNLISTED':
-        return <LinkIcon className="h-3 w-3" />;
-      default:
-        return <Lock className="h-3 w-3" />;
-    }
-  };
-
   const getVisibilityLabel = () => {
     switch (event.visibility) {
       case 'PUBLIC':
@@ -72,123 +29,40 @@ export function ClubhouseHeader({
     }
   };
 
+  // Get first letter for avatar
+  const initial = event.name.charAt(0).toUpperCase();
+
   return (
-    <div className="space-y-3">
-      {/* Main Header Row */}
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-2xl font-bold text-foreground truncate">
-              {event.name}
-            </h1>
-            {isLive && (
-              <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-red-500/20 to-red-600/10 px-2.5 py-1 text-xs font-semibold animate-glow-pulse">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-                </span>
-                <span className="text-red-400">LIVE ACTION</span>
-                {roundContext && (
-                  <>
-                    <span className="text-red-500/50">|</span>
-                    <span className="text-red-300">{roundContext}</span>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Meta badges */}
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
-            {/* Visibility */}
-            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              {getVisibilityIcon()}
-              {getVisibilityLabel()}
-            </span>
-
-            {/* Member count */}
-            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              <Users className="h-3 w-3" />
-              {memberCount} {memberCount === 1 ? 'member' : 'members'}
-            </span>
-
-            {/* Active players */}
-            {activePlayers > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-500">
-                {activePlayers} playing
-              </span>
-            )}
-
-            {/* Locked status */}
-            {event.isLocked && (
-              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-500">
-                Complete
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Settings button */}
-        <Link href={`/event/${event.id}/settings`}>
-          <Button variant="ghost" size="icon" className="shrink-0">
-            <Settings className="h-5 w-5" />
-          </Button>
-        </Link>
+    <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+      {/* Clubhouse Avatar */}
+      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-3xl font-bold text-primary-foreground border-4 border-border shrink-0">
+        {initial}
       </div>
 
-      {/* Theme selector */}
-      {onThemeChange && (
-        <div className="relative">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 gap-1.5 text-xs"
-            onClick={() => setShowThemeMenu(!showThemeMenu)}
-          >
-            <Palette className="h-3 w-3" />
-            {currentTheme.name} Theme
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-
-          {/* Theme dropdown */}
-          {showThemeMenu && (
-            <>
-              {/* Backdrop */}
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowThemeMenu(false)}
-              />
-
-              {/* Menu */}
-              <Card className="absolute left-0 top-full z-50 mt-1 w-48 shadow-lg">
-                <CardContent className="p-1">
-                  {themes.map((theme) => (
-                    <button
-                      key={theme.id}
-                      onClick={() => {
-                        onThemeChange(theme.id);
-                        setShowThemeMenu(false);
-                      }}
-                      className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted"
-                    >
-                      <div
-                        className="h-3 w-3 rounded-full"
-                        style={{
-                          backgroundColor: `hsl(${theme.colors.primary})`,
-                        }}
-                      />
-                      <span className="flex-1 text-left">{theme.name}</span>
-                      {theme.id === currentTheme.id && (
-                        <Check className="h-3 w-3 text-primary" />
-                      )}
-                    </button>
-                  ))}
-                </CardContent>
-              </Card>
-            </>
+      <div className="flex-1 min-w-0">
+        <h1 className="text-3xl font-bold text-foreground mb-1">{event.name}</h1>
+        <p className="text-muted-foreground">
+          {getVisibilityLabel()} • {memberCount} {memberCount === 1 ? 'member' : 'members'}
+        </p>
+        <div className="flex gap-2 mt-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/20 border border-primary/30 px-2.5 py-0.5 text-xs font-medium text-primary">
+            <Users className="h-3 w-3" />
+            {memberCount} {memberCount === 1 ? 'member' : 'members'}
+          </span>
+          {activePlayers > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 border border-green-500/30 px-2.5 py-0.5 text-xs font-medium text-green-500">
+              {activePlayers} playing
+            </span>
           )}
         </div>
-      )}
+      </div>
+
+      <Link href={`/event/${event.id}/settings`} className="shrink-0 md:self-start">
+        <Button variant="outline" size="sm" className="gap-2">
+          <Settings className="h-4 w-4" />
+          Settings
+        </Button>
+      </Link>
     </div>
   );
 }

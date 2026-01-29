@@ -6,9 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Trophy, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import type { LeaderboardEntry } from '@/lib/services/leaderboard';
 
+// Extended entry with optional live round info
+interface ExtendedLeaderboardEntry extends LeaderboardEntry {
+  currentHole?: number;
+  isFinished?: boolean;
+}
+
 interface LeaderboardPreviewProps {
   eventId: string;
-  entries: LeaderboardEntry[];
+  entries: ExtendedLeaderboardEntry[];
   isLoading?: boolean;
   limit?: number;
 }
@@ -21,17 +27,38 @@ export function LeaderboardPreview({
 }: LeaderboardPreviewProps) {
   const topEntries = entries.slice(0, limit);
 
+  // Medal icons for top 3 positions
+  const getMedalIcon = (position: number) => {
+    switch (position) {
+      case 1:
+        return '🥇';
+      case 2:
+        return '🥈';
+      case 3:
+        return '🥉';
+      default:
+        return null;
+    }
+  };
+
   const getPositionStyle = (position: number) => {
     switch (position) {
       case 1:
-        return 'bg-amber-500/20 text-amber-500';
+        return 'bg-amber-500/20 text-amber-500 ring-1 ring-amber-500/30';
       case 2:
-        return 'bg-slate-400/20 text-slate-400';
+        return 'bg-slate-400/20 text-slate-400 ring-1 ring-slate-400/30';
       case 3:
-        return 'bg-orange-600/20 text-orange-500';
+        return 'bg-orange-600/20 text-orange-500 ring-1 ring-orange-500/30';
       default:
         return 'bg-muted text-muted-foreground';
     }
+  };
+
+  // Get hole status text
+  const getHoleStatus = (entry: ExtendedLeaderboardEntry) => {
+    if (entry.isFinished) return 'Finished';
+    if (entry.currentHole) return `On #${entry.currentHole}`;
+    return null;
   };
 
   const getScoreDisplay = (entry: LeaderboardEntry) => {
@@ -96,28 +123,55 @@ export function LeaderboardPreview({
         </div>
 
         <div className="space-y-2">
-          {topEntries.map((entry) => {
+          {topEntries.map((entry, index) => {
             const score = getScoreDisplay(entry);
             const ScoreIcon = score.icon;
+            const medal = getMedalIcon(entry.rank);
+            const holeStatus = getHoleStatus(entry);
+            const isLeader = index === 0;
 
             return (
               <div
                 key={entry.userId}
-                className="flex items-center gap-2 rounded-lg bg-muted/30 p-2"
+                className={`flex items-center gap-2 rounded-lg p-2.5 transition-all ${
+                  isLeader
+                    ? 'bg-gradient-to-r from-amber-500/10 to-transparent ring-1 ring-amber-500/20'
+                    : 'bg-muted/30'
+                }`}
               >
-                <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${getPositionStyle(
-                    entry.rank
-                  )}`}
-                >
-                  {entry.rank}
-                </span>
-                <span className="flex-1 truncate text-sm font-medium text-foreground">
-                  {entry.name}
-                </span>
+                {/* Position with medal */}
+                <div className="relative">
+                  {medal ? (
+                    <span className="text-lg" role="img" aria-label={`Position ${entry.rank}`}>
+                      {medal}
+                    </span>
+                  ) : (
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${getPositionStyle(
+                        entry.rank
+                      )}`}
+                    >
+                      {entry.rank}
+                    </span>
+                  )}
+                </div>
+
+                {/* Player info */}
+                <div className="flex-1 min-w-0">
+                  <span className={`block truncate text-sm font-medium ${isLeader ? 'text-amber-400' : 'text-foreground'}`}>
+                    {entry.name}
+                  </span>
+                  {holeStatus && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {holeStatus}
+                    </span>
+                  )}
+                </div>
+
+                {/* Score */}
                 <div className={`flex items-center gap-1 ${score.color}`}>
                   <ScoreIcon className="h-3 w-3" />
-                  <span className="text-sm font-semibold">{score.text}</span>
+                  <span className="text-sm font-bold">{score.text}</span>
                 </div>
               </div>
             );

@@ -8,7 +8,115 @@ import {
   getActivityIcon,
   formatActivityMessage,
 } from '@/lib/services/activity';
-import type { ActivityEvent } from '@/types';
+import type { ActivityEvent, ActivityType } from '@/types';
+
+// Activity type → Card style mapping for visual polish
+const ACTIVITY_STYLES: Record<
+  ActivityType | 'default',
+  {
+    bg: string;
+    border: string;
+    header: string | null;
+    headerColor: string | null;
+    iconSize: string;
+  }
+> = {
+  eagle: {
+    bg: 'bg-gradient-to-r from-amber-500/20 to-yellow-500/10',
+    border: 'border-l-4 border-amber-500',
+    header: 'EAGLE!',
+    headerColor: 'text-amber-400',
+    iconSize: 'text-lg',
+  },
+  albatross: {
+    bg: 'bg-gradient-to-r from-amber-500/25 to-yellow-500/15',
+    border: 'border-l-4 border-amber-400',
+    header: 'ALBATROSS!',
+    headerColor: 'text-amber-300',
+    iconSize: 'text-lg',
+  },
+  ace: {
+    bg: 'bg-gradient-to-r from-purple-500/20 to-pink-500/10',
+    border: 'border-l-4 border-purple-500',
+    header: 'HOLE IN ONE!',
+    headerColor: 'text-purple-400',
+    iconSize: 'text-xl',
+  },
+  press: {
+    bg: 'bg-gradient-to-r from-red-500/20 to-orange-500/10',
+    border: 'border-l-4 border-red-500',
+    header: 'PRESS DECLARED!',
+    headerColor: 'text-red-400',
+    iconSize: 'text-lg',
+  },
+  birdie: {
+    bg: 'bg-muted/30',
+    border: 'border-l-4 border-green-500',
+    header: null,
+    headerColor: null,
+    iconSize: 'text-base',
+  },
+  settlement: {
+    bg: 'bg-muted/30',
+    border: 'border-l-2 border-muted-foreground/30',
+    header: null,
+    headerColor: null,
+    iconSize: 'text-base',
+  },
+  game_complete: {
+    bg: 'bg-gradient-to-r from-green-500/15 to-emerald-500/10',
+    border: 'border-l-4 border-green-500',
+    header: null,
+    headerColor: null,
+    iconSize: 'text-base',
+  },
+  tee_time: {
+    bg: 'bg-muted/30',
+    border: '',
+    header: null,
+    headerColor: null,
+    iconSize: 'text-base',
+  },
+  round_start: {
+    bg: 'bg-muted/30',
+    border: '',
+    header: null,
+    headerColor: null,
+    iconSize: 'text-base',
+  },
+  round_end: {
+    bg: 'bg-muted/30',
+    border: '',
+    header: null,
+    headerColor: null,
+    iconSize: 'text-base',
+  },
+  game_start: {
+    bg: 'bg-muted/30',
+    border: '',
+    header: null,
+    headerColor: null,
+    iconSize: 'text-base',
+  },
+  player_joined: {
+    bg: 'bg-muted/30',
+    border: '',
+    header: null,
+    headerColor: null,
+    iconSize: 'text-base',
+  },
+  default: {
+    bg: 'bg-muted/30',
+    border: '',
+    header: null,
+    headerColor: null,
+    iconSize: 'text-base',
+  },
+};
+
+function getActivityStyle(type: ActivityType) {
+  return ACTIVITY_STYLES[type] || ACTIVITY_STYLES.default;
+}
 
 interface ActivityTimelineProps {
   eventId: string;
@@ -92,24 +200,42 @@ export function ActivityTimeline({
       )}
 
       <div className="space-y-2">
-        {activities.map((activity) => (
-          <div
-            key={activity.id}
-            className="flex items-start gap-2 rounded-lg bg-muted/30 p-2"
-          >
-            <span className="text-base shrink-0" role="img" aria-label={activity.activityType}>
-              {getActivityIcon(activity.activityType)}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-foreground leading-tight">
-                {formatActivityMessage(activity)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {formatRelativeTime(activity.createdAt)}
-              </p>
+        {activities.map((activity) => {
+          const style = getActivityStyle(activity.activityType);
+          const isCelebratory = ['eagle', 'albatross', 'ace', 'press'].includes(
+            activity.activityType
+          );
+
+          return (
+            <div
+              key={activity.id}
+              className={`flex items-start gap-2 rounded-lg p-2.5 transition-all ${style.bg} ${style.border} ${
+                isCelebratory ? 'animate-shimmer' : ''
+              }`}
+            >
+              <span
+                className={`${style.iconSize} shrink-0`}
+                role="img"
+                aria-label={activity.activityType}
+              >
+                {getActivityIcon(activity.activityType)}
+              </span>
+              <div className="flex-1 min-w-0">
+                {style.header && (
+                  <p className={`text-xs font-bold ${style.headerColor} mb-0.5`}>
+                    {style.header}
+                  </p>
+                )}
+                <p className="text-sm text-foreground leading-tight">
+                  {formatActivityMessage(activity)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {formatRelativeTime(activity.createdAt)}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {showViewAll && activities.length >= limit && (

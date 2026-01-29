@@ -22,6 +22,8 @@ interface ClubhouseHeaderProps {
   memberCount: number;
   activePlayers?: number;
   isLive?: boolean;
+  currentHole?: number;
+  totalHoles?: number;
   onThemeChange?: (theme: ClubhouseTheme) => void;
 }
 
@@ -30,11 +32,23 @@ export function ClubhouseHeader({
   memberCount,
   activePlayers = 0,
   isLive = false,
+  currentHole,
+  totalHoles = 18,
   onThemeChange,
 }: ClubhouseHeaderProps) {
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const themes = getAllThemes();
   const currentTheme = themes.find((t) => t.id === event.theme) || themes[0];
+
+  // Get round context label based on current hole
+  const getRoundContext = () => {
+    if (!currentHole) return null;
+    if (currentHole <= 9) return 'Front 9';
+    if (currentHole <= 18) return 'Back 9';
+    return `Hole ${currentHole}`;
+  };
+
+  const roundContext = getRoundContext();
 
   const getVisibilityIcon = () => {
     switch (event.visibility) {
@@ -68,10 +82,19 @@ export function ClubhouseHeader({
               {event.name}
             </h1>
             {isLive && (
-              <span className="flex items-center gap-1 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-500">
-                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-                LIVE
-              </span>
+              <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-red-500/20 to-red-600/10 px-2.5 py-1 text-xs font-semibold animate-glow-pulse">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                </span>
+                <span className="text-red-400">LIVE ACTION</span>
+                {roundContext && (
+                  <>
+                    <span className="text-red-500/50">|</span>
+                    <span className="text-red-300">{roundContext}</span>
+                  </>
+                )}
+              </div>
             )}
           </div>
 

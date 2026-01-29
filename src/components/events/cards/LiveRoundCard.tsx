@@ -15,6 +15,19 @@ interface LiveRoundCardProps {
   isLive?: boolean;
 }
 
+// Get round context label
+function getRoundContext(hole: number, total: number): string {
+  if (total === 9) {
+    if (hole <= 3) return 'Starting';
+    if (hole <= 6) return 'Mid Round';
+    return 'Final Holes';
+  }
+  // 18 holes
+  if (hole <= 9) return 'Front 9';
+  if (hole <= 15) return 'Back 9';
+  return 'Final Holes';
+}
+
 export function LiveRoundCard({
   eventId,
   roundId,
@@ -26,6 +39,7 @@ export function LiveRoundCard({
   isLive = false,
 }: LiveRoundCardProps) {
   const progress = totalHoles > 0 ? (currentHole / totalHoles) * 100 : 0;
+  const roundContext = getRoundContext(currentHole, totalHoles);
 
   const content = (
     <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
@@ -38,10 +52,15 @@ export function LiveRoundCard({
                 {isLive ? 'Live Round' : 'Current Round'}
               </span>
               {isLive && (
-                <span className="flex items-center gap-1 rounded-full bg-red-500/20 px-1.5 py-0.5 text-[10px] font-medium text-red-500">
-                  <span className="h-1 w-1 rounded-full bg-red-500 animate-pulse" />
-                  LIVE
-                </span>
+                <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-red-500/20 to-red-600/10 px-2 py-0.5 text-[10px] font-semibold animate-glow-pulse">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-red-500" />
+                  </span>
+                  <span className="text-red-400">LIVE</span>
+                  <span className="text-red-500/50">|</span>
+                  <span className="text-red-300">{roundContext}</span>
+                </div>
               )}
             </div>
 
@@ -70,13 +89,40 @@ export function LiveRoundCard({
           </div>
         </div>
 
-        {/* Progress bar */}
+        {/* Hole marker dots */}
         <div className="mt-3">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
+          <div className="flex items-center justify-between gap-0.5">
+            {Array.from({ length: totalHoles }, (_, i) => {
+              const holeNum = i + 1;
+              const isCompleted = holeNum < currentHole;
+              const isCurrent = holeNum === currentHole;
+              const isTurnMarker = totalHoles === 18 && holeNum === 10; // Back 9 starts
+
+              return (
+                <div key={holeNum} className="flex items-center">
+                  {/* Turn marker separator for 18 holes */}
+                  {isTurnMarker && (
+                    <div className="w-1 h-3 mx-0.5 rounded-full bg-muted-foreground/30" />
+                  )}
+                  <div
+                    className={`h-2 w-2 rounded-full transition-all ${
+                      isCurrent
+                        ? 'bg-primary ring-2 ring-primary/50 animate-hole-pulse'
+                        : isCompleted
+                        ? 'bg-primary/70'
+                        : 'bg-muted'
+                    }`}
+                    title={`Hole ${holeNum}`}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          {/* Progress text */}
+          <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
+            <span>Hole 1</span>
+            <span className="font-medium text-foreground">{roundContext}</span>
+            <span>Hole {totalHoles}</span>
           </div>
         </div>
 

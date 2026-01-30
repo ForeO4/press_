@@ -25,8 +25,11 @@ export async function createEventWithRPC(
       id: eventId,
       name: input.name,
       date: input.date,
+      endDate: input.endDate,
       visibility: input.visibility,
       isLocked: false,
+      numRounds: input.numRounds,
+      numHoles: input.numHoles,
       createdBy: 'mock-user',
       createdAt: now,
       updatedAt: now,
@@ -40,6 +43,9 @@ export async function createEventWithRPC(
     p_name: input.name,
     p_date: input.date,
     p_visibility: input.visibility,
+    p_end_date: input.endDate || null,
+    p_num_rounds: input.numRounds || null,
+    p_num_holes: input.numHoles || null,
   });
 
   if (error) {

@@ -4,17 +4,25 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { WizardProgress } from '@/components/events/wizard/WizardProgress';
-import { StepBasics, type BasicFormData } from '@/components/events/wizard/StepBasics';
-import { StepCourse, type CourseFormData } from '@/components/events/wizard/StepCourse';
-import { StepRules, type RulesFormData } from '@/components/events/wizard/StepRules';
-import { StepReview } from '@/components/events/wizard/StepReview';
+import {
+  StepEventType,
+  type EventTypeFormData,
+} from '@/components/events/wizard/StepEventType';
+import {
+  StepDetails,
+  type DetailsFormData,
+} from '@/components/events/wizard/StepDetails';
+import {
+  StepGamesAndCourse,
+  type GamesAndCourseFormData,
+} from '@/components/events/wizard/StepGamesAndCourse';
+import { StepReviewNew } from '@/components/events/wizard/StepReviewNew';
 import { createEventWithRPC } from '@/lib/services/events';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { getCourses, getCourseTeeSets } from '@/lib/services/courses';
-import { DEFAULT_AUTO_PRESS_CONFIG } from '@/lib/domain/games/autoPress';
 import type { Course, TeeSet } from '@/types';
 
-const STEPS = ['Basics', 'Course', 'Rules', 'Review'];
+const STEPS = ['Type', 'Details', 'Games', 'Review'];
 
 export default function CreateEventWizardPage() {
   const router = useRouter();
@@ -23,23 +31,29 @@ export default function CreateEventWizardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form data for each step
-  const [basics, setBasics] = useState<BasicFormData>({
+  // Step 1: Event Type
+  const [eventType, setEventType] = useState<EventTypeFormData>({
+    style: 'casual',
+    numRounds: 1,
+    numHoles: 18,
+  });
+
+  // Step 2: Details
+  const [details, setDetails] = useState<DetailsFormData>({
     name: '',
     description: '',
     startDate: new Date().toISOString().split('T')[0],
     endDate: '',
+    expectedPlayers: 4,
     visibility: 'PRIVATE',
   });
 
-  const [course, setCourse] = useState<CourseFormData>({
-    teeSetId: undefined,
-  });
-
-  const [rules, setRules] = useState<RulesFormData>({
-    allowedGameTypes: ['nassau'],
+  // Step 3: Games & Course
+  const [gamesAndCourse, setGamesAndCourse] = useState<GamesAndCourseFormData>({
+    allowedGameTypes: ['match_play'],
     defaultStake: 5,
-    autoPressConfig: DEFAULT_AUTO_PRESS_CONFIG,
+    teeSetId: undefined,
+    manualCourse: undefined,
   });
 
   // Course/tee set names for review display
@@ -53,13 +67,13 @@ export default function CreateEventWizardPage() {
 
   // Load tee sets when course is selected
   useEffect(() => {
-    if (course.teeSetId) {
+    if (gamesAndCourse.teeSetId) {
       // Find the course that contains this tee set
       const loadTeeSets = async () => {
         for (const c of courses) {
           try {
             const sets = await getCourseTeeSets(c.id);
-            if (sets.some((t) => t.id === course.teeSetId)) {
+            if (sets.some((t) => t.id === gamesAndCourse.teeSetId)) {
               setTeeSets(sets);
               break;
             }
@@ -70,27 +84,26 @@ export default function CreateEventWizardPage() {
       };
       loadTeeSets();
     }
-  }, [course.teeSetId, courses]);
+  }, [gamesAndCourse.teeSetId, courses]);
 
   // Get course and tee set names for review
   const getCourseName = () => {
-    if (!course.teeSetId) return undefined;
+    if (!gamesAndCourse.teeSetId) return undefined;
     for (const c of courses) {
-      const teeSet = teeSets.find((t) => t.id === course.teeSetId);
+      const teeSet = teeSets.find((t) => t.id === gamesAndCourse.teeSetId);
       if (teeSet) return c.name;
     }
     return undefined;
   };
 
   const getTeeSetName = () => {
-    if (!course.teeSetId) return undefined;
-    const teeSet = teeSets.find((t) => t.id === course.teeSetId);
+    if (!gamesAndCourse.teeSetId) return undefined;
+    const teeSet = teeSets.find((t) => t.id === gamesAndCourse.teeSetId);
     return teeSet ? `${teeSet.name} (${teeSet.rating}/${teeSet.slope})` : undefined;
   };
 
-  const handleCancel = () => {
-    router.push('/app');
-  };
+  // Show end date for tournaments or multi-round events
+  const showEndDate = eventType.style === 'tournament' || eventType.numRounds > 1;
 
   const handleSubmit = async () => {
     if (!user?.id) {
@@ -102,12 +115,20 @@ export default function CreateEventWizardPage() {
     setError(null);
 
     try {
-      // Create the event using RPC (creates event, membership, settings, and teeth balance)
+      // Create the event using RPC (creates event, membership, settings, and teeth balance in one transaction)
       const event = await createEventWithRPC({
-        name: basics.name,
-        date: basics.startDate,
-        visibility: basics.visibility,
-        teeSetId: course.teeSetId,
+        name: details.name,
+        date: details.startDate,
+        visibility: details.visibility,
+        teeSetId: gamesAndCourse.teeSetId,
+        // New fields
+        endDate: showEndDate ? details.endDate : undefined,
+        numRounds: eventType.numRounds,
+        numHoles: eventType.numHoles,
+        expectedPlayers: details.expectedPlayers,
+        allowedGameTypes: gamesAndCourse.allowedGameTypes,
+        defaultStake: gamesAndCourse.defaultStake,
+        eventStyle: eventType.style,
       });
 
       // Navigate to the new event
@@ -118,46 +139,52 @@ export default function CreateEventWizardPage() {
     }
   };
 
+  const handleEditStep = (step: number) => {
+    setCurrentStep(step + 1); // Steps are 1-indexed
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
         return (
-          <StepBasics
-            data={basics}
-            onChange={setBasics}
+          <StepEventType
+            data={eventType}
+            onChange={setEventType}
             onNext={() => setCurrentStep(2)}
-            onCancel={handleCancel}
           />
         );
       case 2:
         return (
-          <StepCourse
-            data={course}
-            onChange={setCourse}
+          <StepDetails
+            data={details}
+            onChange={setDetails}
             onNext={() => setCurrentStep(3)}
             onBack={() => setCurrentStep(1)}
+            showEndDate={showEndDate}
           />
         );
       case 3:
         return (
-          <StepRules
-            data={rules}
-            onChange={setRules}
+          <StepGamesAndCourse
+            data={gamesAndCourse}
+            onChange={setGamesAndCourse}
             onNext={() => setCurrentStep(4)}
             onBack={() => setCurrentStep(2)}
+            numHoles={eventType.numHoles}
           />
         );
       case 4:
         return (
-          <StepReview
-            basics={basics}
-            course={course}
-            rules={rules}
-            courseName={getCourseName()}
-            teeSetName={getTeeSetName()}
+          <StepReviewNew
+            eventTypeData={eventType}
+            detailsData={details}
+            gamesData={gamesAndCourse}
             onBack={() => setCurrentStep(3)}
             onSubmit={handleSubmit}
-            isLoading={isLoading}
+            onEditStep={handleEditStep}
+            isSubmitting={isLoading}
+            courseName={getCourseName()}
+            teeSetName={getTeeSetName()}
           />
         );
       default:

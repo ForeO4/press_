@@ -149,6 +149,14 @@ export interface CreateEventInput {
   date: string;
   visibility: EventVisibility;
   teeSetId?: string; // Optional tee set to create snapshot from
+  // New wizard fields
+  endDate?: string;
+  numRounds?: number;
+  numHoles?: 9 | 18;
+  expectedPlayers?: number;
+  allowedGameTypes?: GameType[];
+  defaultStake?: number;
+  eventStyle?: 'casual' | 'tournament';
 }
 
 export interface UpdateEventInput {

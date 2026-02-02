@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { GameType, GuestPlayer } from '@/types';
+import { validatePlayerCount, getMinPlayerCount } from '@/lib/games/gameTypeConfig';
 
 /**
  * Game wizard step
@@ -74,6 +75,7 @@ interface GameWizardStore {
   getAllPlayerIds: () => string[];
   getTotalPlayerCount: () => number;
   canProceed: () => boolean;
+  validateGameSetup: () => { valid: boolean; errors: string[] };
 }
 
 const STEP_ORDER: GameWizardStep[] = ['type', 'course', 'players', 'confirm'];
@@ -207,13 +209,49 @@ export const useGameWizardStore = create<GameWizardStore>((set, get) => ({
       case 'course':
         // Course is optional for some game types
         return true;
-      case 'players':
-        // Need at least 2 players
-        return playerIds.length + guestPlayers.length >= 2;
+      case 'players': {
+        // Use config-driven validation for player count
+        const totalPlayers = playerIds.length + guestPlayers.length;
+        if (!gameType) {
+          // Fallback to minimum 2 players if no game type selected
+          return totalPlayers >= 2;
+        }
+        // Check if player count meets minimum requirement
+        const minPlayers = getMinPlayerCount(gameType);
+        return totalPlayers >= minPlayers;
+      }
       case 'confirm':
         return true;
       default:
         return false;
     }
+  },
+
+  validateGameSetup: () => {
+    const { gameType, playerIds, guestPlayers, stakeBucks } = get();
+    const errors: string[] = [];
+
+    // Validate game type is selected
+    if (!gameType) {
+      errors.push('Please select a game type');
+      return { valid: false, errors };
+    }
+
+    // Validate player count using config
+    const totalPlayers = playerIds.length + guestPlayers.length;
+    const playerValidation = validatePlayerCount(gameType, totalPlayers);
+    if (!playerValidation.valid && playerValidation.error) {
+      errors.push(playerValidation.error);
+    }
+
+    // Validate stake
+    if (stakeBucks < 0) {
+      errors.push('Stake cannot be negative');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
   },
 }));

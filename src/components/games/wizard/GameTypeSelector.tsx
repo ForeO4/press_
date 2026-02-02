@@ -9,29 +9,10 @@ import { useGameWizardStore } from '@/stores/gameWizardStore';
 import type { GameType } from '@/types';
 import { ArrowLeft, Check } from 'lucide-react';
 import { AlligatorIcon } from '@/components/ui/AlligatorIcon';
+import { getAvailableGameTypes } from '@/lib/games/gameTypeConfig';
 
-const GAME_TYPES: { value: GameType; label: string; description: string }[] = [
-  {
-    value: 'match_play',
-    label: 'Match Play',
-    description: 'Win holes, not strokes. Best for 1v1 or 2v2.',
-  },
-  {
-    value: 'nassau',
-    label: 'Nassau',
-    description: 'Three bets: front 9, back 9, and overall. The classic.',
-  },
-  {
-    value: 'skins',
-    label: 'Skins',
-    description: 'Win the hole outright to take the skin. Carryovers build the pot.',
-  },
-  {
-    value: 'high_low_total',
-    label: 'High-Low-Total',
-    description: 'Win Low point, avoid High penalty. 3-4 players.',
-  },
-];
+// Get game types from config (single source of truth)
+const GAME_TYPE_CONFIGS = getAvailableGameTypes();
 
 interface GameTypeSelectorProps {
   eventId?: string;
@@ -76,24 +57,29 @@ export function GameTypeSelector({ eventId, onBack = '/app' }: GameTypeSelectorP
             <CardDescription>Select how you want to play</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {GAME_TYPES.map((type) => (
+            {GAME_TYPE_CONFIGS.map((config) => (
               <button
-                key={type.value}
+                key={config.type}
                 type="button"
-                onClick={() => setGameType(type.value)}
+                onClick={() => setGameType(config.type)}
                 className={`relative w-full p-4 rounded-lg border text-left transition-colors ${
-                  gameType === type.value
+                  gameType === config.type
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50'
                 }`}
               >
-                {gameType === type.value && (
+                {gameType === config.type && (
                   <div className="absolute top-3 right-3 h-6 w-6 rounded-full bg-primary flex items-center justify-center">
                     <Check className="h-4 w-4 text-primary-foreground" />
                   </div>
                 )}
-                <h3 className="font-medium text-foreground">{type.label}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{type.description}</p>
+                <h3 className="font-medium text-foreground">{config.label}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{config.description}</p>
+                {config.status === 'beta' && (
+                  <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded bg-amber-500/20 text-amber-400">
+                    Beta
+                  </span>
+                )}
               </button>
             ))}
           </CardContent>

@@ -18,6 +18,16 @@ import { gameTypePillStyles } from '@/lib/design/colors';
 import { createPlayer } from '@/lib/services/players';
 import { Plus } from 'lucide-react';
 import type { MockUser, GameType, CreatePlayerInput } from '@/types';
+import {
+  getAvailableGameTypes,
+  getGameTypeConfig,
+  validatePlayerCount,
+  supportsScoringBasis,
+  getGatorBucksExamples,
+  getPlayerSlotCount,
+  getMinPlayerCount,
+  type GameTypeConfig,
+} from '@/lib/games/gameTypeConfig';
 
 interface CreateGameModalProps {
   eventId: string;
@@ -41,17 +51,20 @@ export interface CreateGameData {
   stake: number;
   playerAId: string;
   playerBId: string;
+  playerIds?: string[]; // For 3-4 player games like HLT
   startHole: number;
   endHole: number;
   scoringBasis: ScoringBasis;
+  // HLT-specific settings
+  hltSettings?: {
+    tieRule: 'push' | 'split' | 'carryover';
+    isTeamMode: boolean;
+    pointValue: number;
+  };
 }
 
-const gameTypes: { value: GameType; label: string; description: string }[] = [
-  { value: 'match_play', label: 'Match Play', description: 'Win holes, not strokes' },
-  { value: 'nassau', label: 'Nassau', description: 'Front 9 + Back 9 + Overall' },
-  { value: 'skins', label: 'Skins', description: 'Win skin per hole' },
-  { value: 'high_low_total', label: 'High-Low-Total', description: 'Low wins, High penalty' },
-];
+// Get available game types from config (single source of truth)
+const gameTypeConfigs = getAvailableGameTypes();
 
 const holePresets = [
   { label: 'Front 9', start: 1, end: 9 },
@@ -75,6 +88,18 @@ export function CreateGameModal({
   const [startHole, setStartHole] = useState(1);
   const [endHole, setEndHole] = useState(18);
   const [error, setError] = useState<string | null>(null);
+
+  // HLT-specific state
+  const [hltPlayerIds, setHltPlayerIds] = useState<string[]>([
+    players[0]?.id ?? '',
+    players[1]?.id ?? '',
+    players[2]?.id ?? '',
+  ]);
+  const [hltTieRule, setHltTieRule] = useState<'push' | 'split' | 'carryover'>('push');
+  const [hltTeamMode, setHltTeamMode] = useState(false);
+  const [hltPointValue, setHltPointValue] = useState(10);
+
+  const isHLT = selectedType === 'high_low_total';
 
   // Add player modal state
   const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
@@ -137,7 +162,10 @@ export function CreateGameModal({
   };
 
   const handleSubmit = () => {
-    // Validate
+    // Get config for selected game type
+    const config = getGameTypeConfig(selectedType);
+
+    // Validate stake
     if (stake < 0) {
       setError('Stake cannot be negative');
       return;
@@ -148,13 +176,50 @@ export function CreateGameModal({
       return;
     }
 
-    if (!playerAId || !playerBId) {
-      setError('Please select both players');
+    // Validate scoring basis using config
+    if (!supportsScoringBasis(selectedType, scoringBasis)) {
+      setError(`${config.label} only supports ${config.scoringBasis} scoring`);
       return;
     }
 
-    if (playerAId === playerBId) {
-      setError('Players must be different');
+    // Get player count and validate using config
+    let playerCount: number;
+    let playerList: string[];
+
+    if (isHLT) {
+      const validPlayers = hltPlayerIds.filter(id => id !== '');
+      playerCount = validPlayers.length;
+      playerList = validPlayers;
+
+      // Check for duplicate players
+      if (new Set(validPlayers).size !== validPlayers.length) {
+        setError('All players must be different');
+        return;
+      }
+
+      // Team mode requires exactly 4 players
+      if (hltTeamMode && validPlayers.length !== 4) {
+        setError('Team mode requires exactly 4 players');
+        return;
+      }
+    } else {
+      playerCount = 2;
+      playerList = [playerAId, playerBId].filter(id => id !== '');
+
+      if (!playerAId || !playerBId) {
+        setError('Please select both players');
+        return;
+      }
+      if (playerAId === playerBId) {
+        setError('Players must be different');
+        return;
+      }
+    }
+
+    // Validate player count using config-driven validation
+    const playerValidation = validatePlayerCount(selectedType, playerCount);
+    if (!playerValidation.valid) {
+      setError(playerValidation.error || 'Invalid player count');
       return;
     }
 
@@ -169,15 +234,22 @@ export function CreateGameModal({
     }
 
     setError(null);
+
     onSubmit({
       type: selectedType,
       contests: [{ type: selectedType, enabled: true, scoringBasis }],
       stake,
-      playerAId,
-      playerBId,
+      playerAId: isHLT ? playerList[0] : playerAId,
+      playerBId: isHLT ? playerList[1] : playerBId,
+      playerIds: isHLT ? playerList : undefined,
       startHole,
       endHole,
       scoringBasis,
+      hltSettings: isHLT ? {
+        tieRule: hltTieRule,
+        isTeamMode: hltTeamMode,
+        pointValue: hltPointValue,
+      } : undefined,
     });
   };
 
@@ -209,19 +281,20 @@ export function CreateGameModal({
               Game Type
             </label>
             <div className="space-y-2">
-              {gameTypes.map((gt) => {
-                const styles = gameTypePillStyles[gt.value];
-                const isSelected = selectedType === gt.value;
+              {gameTypeConfigs.map((config) => {
+                const styles = gameTypePillStyles[config.type];
+                const isSelected = selectedType === config.type;
+                const showScoringToggle = isSelected && config.scoringBasis === 'both';
                 return (
                   <div
-                    key={gt.value}
+                    key={config.type}
                     className={cn(
                       'flex items-center justify-between p-3 rounded-lg border transition-all duration-200 cursor-pointer',
                       isSelected
                         ? cn(styles.background, styles.border)
                         : 'bg-muted/10 border-muted/20 hover:border-muted/40'
                     )}
-                    onClick={() => setSelectedType(gt.value)}
+                    onClick={() => setSelectedType(config.type)}
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -238,12 +311,12 @@ export function CreateGameModal({
                       </div>
                       <div>
                         <div className={cn('font-medium text-sm', isSelected ? styles.text : 'text-muted-foreground')}>
-                          {gt.label}
+                          {config.label}
                         </div>
-                        <div className="text-xs text-muted-foreground">{gt.description}</div>
+                        <div className="text-xs text-muted-foreground">{config.shortDescription}</div>
                       </div>
                     </div>
-                    {isSelected && (
+                    {showScoringToggle && (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -301,79 +374,265 @@ export function CreateGameModal({
             </div>
           )}
 
-          {/* Player A */}
-          <div className="space-y-2">
-            <label htmlFor="playerA" className="text-sm font-medium text-muted-foreground">
-              Player 1
-            </label>
-            <div className="flex items-center gap-3">
-              {playerA && (
-                <PlayerAvatar name={playerA.name} size="md" color="primary" />
-              )}
-              <select
-                id="playerA"
-                value={playerAId}
-                onChange={(e) => setPlayerAId(e.target.value)}
-                className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="">{localPlayers.length === 0 ? 'No players - click + to add' : 'Select player...'}</option>
-                {playersForA.map((player) => (
-                  <option key={player.id} value={player.id}>
-                    {player.name}
-                  </option>
-                ))}
-              </select>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-10 w-10 shrink-0"
-                onClick={() => {
-                  setAddingFor('A');
-                  setShowAddPlayerModal(true);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          {/* HLT Player Selection (3-4 players) */}
+          {isHLT ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium text-muted-foreground">
+                  Players ({hltPlayerIds.filter(id => id !== '').length}/{hltTeamMode ? 4 : '3-4'})
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8"
+                  onClick={() => {
+                    setAddingFor('A');
+                    setShowAddPlayerModal(true);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Player
+                </Button>
+              </div>
 
-          {/* Player B */}
-          <div className="space-y-2">
-            <label htmlFor="playerB" className="text-sm font-medium text-muted-foreground">
-              Player 2
-            </label>
-            <div className="flex items-center gap-3">
-              {playerB && (
-                <PlayerAvatar name={playerB.name} size="md" color="secondary" />
-              )}
-              <select
-                id="playerB"
-                value={playerBId}
-                onChange={(e) => setPlayerBId(e.target.value)}
-                className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <option value="">{playersForB.length === 0 ? 'No players - click + to add' : 'Select player...'}</option>
-                {playersForB.map((player) => (
-                  <option key={player.id} value={player.id}>
-                    {player.name}
-                  </option>
-                ))}
-              </select>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="h-10 w-10 shrink-0"
-                onClick={() => {
-                  setAddingFor('B');
-                  setShowAddPlayerModal(true);
-                }}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              {/* Player slots */}
+              {[0, 1, 2, 3].map((idx) => {
+                const playerId = hltPlayerIds[idx] ?? '';
+                const player = localPlayers.find(p => p.id === playerId);
+                const usedIds = hltPlayerIds.filter((id, i) => i !== idx && id !== '');
+                const availablePlayers = localPlayers.filter(p => !usedIds.includes(p.id));
+                const isRequired = idx < 3;
+                const isTeamSlot = hltTeamMode || idx < 4;
+
+                // In non-team mode, 4th player is optional
+                if (!hltTeamMode && idx === 3 && hltPlayerIds[3] === '' && hltPlayerIds.filter(id => id !== '').length < 4) {
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        const newIds = [...hltPlayerIds];
+                        if (newIds.length <= idx) {
+                          newIds.push('');
+                        }
+                        setHltPlayerIds(newIds);
+                      }}
+                      className="flex items-center gap-2 p-2 rounded-lg border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors text-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add 4th Player (optional)
+                    </button>
+                  );
+                }
+
+                if (idx > hltPlayerIds.length - 1 && idx >= 3) return null;
+
+                return (
+                  <div key={idx} className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-muted/30 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                      {idx + 1}
+                    </div>
+                    {player && (
+                      <PlayerAvatar name={player.name} size="md" color={idx % 2 === 0 ? 'primary' : 'secondary'} />
+                    )}
+                    <select
+                      value={playerId}
+                      onChange={(e) => {
+                        const newIds = [...hltPlayerIds];
+                        newIds[idx] = e.target.value;
+                        setHltPlayerIds(newIds);
+                      }}
+                      className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <option value="">
+                        {localPlayers.length === 0
+                          ? 'No players - click Add Player'
+                          : isRequired
+                            ? 'Select player...'
+                            : 'Select player (optional)...'}
+                      </option>
+                      {availablePlayers.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    {idx === 3 && !hltTeamMode && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => {
+                          const newIds = hltPlayerIds.slice(0, 3);
+                          setHltPlayerIds(newIds);
+                        }}
+                      >
+                        ×
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* HLT Settings */}
+              <div className="pt-3 mt-3 border-t border-muted/30 space-y-3">
+                <label className="text-sm font-medium text-muted-foreground">
+                  High-Low-Total Settings
+                </label>
+
+                {/* Tie Rule */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Tie Rule</label>
+                  <div className="flex gap-2">
+                    {(['push', 'split', 'carryover'] as const).map((rule) => (
+                      <button
+                        key={rule}
+                        type="button"
+                        onClick={() => setHltTieRule(rule)}
+                        className={cn(
+                          'flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-200 capitalize',
+                          hltTieRule === rule
+                            ? 'bg-pink-500/20 text-pink-400 border-pink-500/30'
+                            : 'bg-muted/20 text-muted-foreground border-muted/30 hover:bg-muted/30'
+                        )}
+                      >
+                        {rule}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {hltTieRule === 'push' && 'Ties are void - no points awarded'}
+                    {hltTieRule === 'split' && 'Tied players split the point'}
+                    {hltTieRule === 'carryover' && 'Point carries to next hole'}
+                  </p>
+                </div>
+
+                {/* Team Mode Toggle */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-muted/30">
+                  <div>
+                    <div className="text-sm font-medium">Team Mode (2v2)</div>
+                    <div className="text-xs text-muted-foreground">Adds Total point for team combined score</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHltTeamMode(!hltTeamMode);
+                      // If enabling team mode, ensure we have 4 player slots
+                      if (!hltTeamMode && hltPlayerIds.length < 4) {
+                        setHltPlayerIds([...hltPlayerIds, '']);
+                      }
+                    }}
+                    className={cn(
+                      'relative w-11 h-6 rounded-full transition-colors',
+                      hltTeamMode ? 'bg-pink-500' : 'bg-muted'
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform',
+                        hltTeamMode && 'translate-x-5'
+                      )}
+                    />
+                  </button>
+                </div>
+
+                {/* Point Value */}
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Gator Bucks per Point</label>
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                      <AlligatorIcon size="md" className="text-primary" />
+                    </div>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={hltPointValue}
+                      onChange={(e) => setHltPointValue(parseInt(e.target.value, 10) || 1)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Player A */}
+              <div className="space-y-2">
+                <label htmlFor="playerA" className="text-sm font-medium text-muted-foreground">
+                  Player 1
+                </label>
+                <div className="flex items-center gap-3">
+                  {playerA && (
+                    <PlayerAvatar name={playerA.name} size="md" color="primary" />
+                  )}
+                  <select
+                    id="playerA"
+                    value={playerAId}
+                    onChange={(e) => setPlayerAId(e.target.value)}
+                    className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">{localPlayers.length === 0 ? 'No players - click + to add' : 'Select player...'}</option>
+                    {playersForA.map((player) => (
+                      <option key={player.id} value={player.id}>
+                        {player.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0"
+                    onClick={() => {
+                      setAddingFor('A');
+                      setShowAddPlayerModal(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Player B */}
+              <div className="space-y-2">
+                <label htmlFor="playerB" className="text-sm font-medium text-muted-foreground">
+                  Player 2
+                </label>
+                <div className="flex items-center gap-3">
+                  {playerB && (
+                    <PlayerAvatar name={playerB.name} size="md" color="secondary" />
+                  )}
+                  <select
+                    id="playerB"
+                    value={playerBId}
+                    onChange={(e) => setPlayerBId(e.target.value)}
+                    className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">{playersForB.length === 0 ? 'No players - click + to add' : 'Select player...'}</option>
+                    {playersForB.map((player) => (
+                      <option key={player.id} value={player.id}>
+                        {player.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0"
+                    onClick={() => {
+                      setAddingFor('B');
+                      setShowAddPlayerModal(true);
+                    }}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Add Player Modal */}
           {showAddPlayerModal && (

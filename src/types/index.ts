@@ -210,6 +210,7 @@ export interface MockUser {
 
 export type GameType = 'match_play' | 'nassau' | 'skins' | 'high_low_total';
 export type GameStatus = 'active' | 'complete';
+export type GameLength = 9 | 18;
 
 export interface Game {
   id: string;
@@ -224,26 +225,137 @@ export interface Game {
 }
 
 // ============================================
+// NASSAU
+// ============================================
+
+/** Nassau bet type */
+export type NassauBetType = 'front' | 'back' | 'overall';
+
+/** Nassau team format */
+export type NassauTeamFormat = 'individual' | 'best_ball' | 'both_balls';
+
+/** Settings for Nassau game */
+export interface NassauSettings {
+  teamFormat: NassauTeamFormat;
+  maxPresses: number;
+  scoringBasis: 'net' | 'gross';
+}
+
+/** Per-bet result for Nassau game */
+export interface NassauBetResult {
+  gameId: string;
+  betType: NassauBetType;
+  winnerId: string | null; // Null if halved
+  status: 'active' | 'won' | 'halved';
+  holesUp: number;
+}
+
+/** Nassau hole result (match play per hole) */
+export interface NassauHoleResult {
+  hole: number;
+  winnerId: string | null; // Null if halved
+  frontHolesUp: number; // Running tally for front 9
+  backHolesUp: number; // Running tally for back 9
+  overallHolesUp: number; // Running tally for overall
+}
+
+// ============================================
+// SKINS
+// ============================================
+
+/** Settings for Skins game */
+export interface SkinsSettings {
+  gameLength: 9 | 18;
+  carryover: boolean;
+  scoringBasis: 'net' | 'gross';
+}
+
+/** Per-hole result for Skins game */
+export interface SkinResult {
+  gameId: string;
+  holeNumber: number;
+  winnerId: string | null; // Null if carryover
+  skinValue: number; // 1 + accumulated carryovers
+}
+
+/** Skins game state */
+export interface SkinsGameState {
+  currentCarryover: number;
+  holesWithCarryover: number[];
+  results: SkinResult[];
+}
+
+// ============================================
 // HIGH-LOW-TOTAL
 // ============================================
 
-/** Tie rule for High-Low-Total game */
-export type HighLowTotalTieRule = 'push' | 'split' | 'carryover';
-
-/** Settings for High-Low-Total game */
+/**
+ * Settings for High-Low-Total game
+ * HLT is always:
+ * - 4 players exactly
+ * - 2v2 teams
+ * - Net scoring
+ * - 18 holes
+ * - Wash on ties (no carryover, no split)
+ */
 export interface HighLowTotalSettings {
-  tieRule: HighLowTotalTieRule;
-  isTeamMode: boolean;
   pointValue: number; // Gator Bucks per point
+  team1Player1Id: string;
+  team1Player2Id: string;
+  team2Player1Id: string;
+  team2Player2Id: string;
 }
 
-/** Per-hole result for High-Low-Total game */
+/** Team number (1 or 2) */
+export type HLTTeamNumber = 1 | 2;
+
+/**
+ * Per-hole result for High-Low-Total game
+ * Each hole awards up to 3 points:
+ * - Low Ball: Team with best individual net
+ * - High Ball: Team that avoids worst individual net
+ * - Total: Team with lowest combined net
+ * Ties = wash (null winner, no points awarded)
+ */
 export interface HighLowTotalHoleResult {
   hole: number;
-  lowWinnerId: string | null;    // Player/team with lowest net score
-  highLoserId: string | null;    // Player/team with highest net score (penalty)
-  totalWinnerId: string | null;  // Team with lowest combined net (team mode only)
-  carryover: { low: number; high: number; total: number };
+  // Team 1 scores
+  team1Low: number;
+  team1High: number;
+  team1Total: number;
+  // Team 2 scores
+  team2Low: number;
+  team2High: number;
+  team2Total: number;
+  // Point winners (null = wash/tie)
+  lowBallWinner: HLTTeamNumber | null;
+  highBallWinner: HLTTeamNumber | null;
+  totalWinner: HLTTeamNumber | null;
+}
+
+/** HLT team standings */
+export interface HLTTeamStanding {
+  teamNumber: HLTTeamNumber;
+  player1Id: string;
+  player2Id: string;
+  lowBallPoints: number;
+  highBallPoints: number;
+  totalPoints: number;
+  netPoints: number;
+  netValue: number; // netPoints × pointValue
+}
+
+/** @deprecated Use HighLowTotalSettings instead - old format */
+export type HighLowTotalTieRule = 'push' | 'split' | 'carryover';
+
+/**
+ * @deprecated Legacy HLT settings format for backward compatibility
+ * Use HighLowTotalSettings for new code
+ */
+export interface LegacyHLTSettings {
+  tieRule: 'push' | 'split' | 'carryover';
+  isTeamMode: boolean;
+  pointValue: number;
 }
 
 export interface GameParticipant {

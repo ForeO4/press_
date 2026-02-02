@@ -5,15 +5,29 @@
  * Each game type defines its rules, player requirements, scoring options,
  * settlement calculations, and Gator Bucks conversion.
  *
- * BACKLOG:
- * - [ ] Match Play: Get full rules and settings definition
- * - [ ] Nassau: Get full rules and settings definition
- * - [ ] Skins: Get full rules and settings definition
- * - [ ] High-Low-Total: Rules defined, needs validation
- * - [ ] Wolf: Add game type
- * - [ ] Stableford: Add game type
- * - [ ] Best Ball: Add game type
- * - [ ] Scramble: Add game type
+ * GLOBAL RULES:
+ * - Gross scores are always recorded
+ * - Net scores are calculated per hole when handicap applies
+ * - Hole score confirmation is the source of truth for all game outcomes
+ * - Settlement happens when all hole scores are entered and game marked complete
+ *
+ * GAME LENGTH RULES:
+ * - Match Play: 9 or 18 holes (default 18)
+ * - Nassau: 18 holes only (Front/Back/Overall structure)
+ * - Skins: 9 or 18 holes (default 18)
+ * - High-Low-Total: 18 holes only (full-round balance)
+ *
+ * PRESS SUPPORT:
+ * - Match Play: Yes (default max: 2)
+ * - Nassau: Yes (per bet, default max: 2)
+ * - Skins: No
+ * - High-Low-Total: No
+ *
+ * FUTURE GAME TYPES:
+ * - Wolf: Choose-your-partner rotating captain format
+ * - Stableford: Points-based scoring
+ * - Best Ball: Team best score format
+ * - Scramble: All play from best shot
  */
 
 import type { GameType } from '@/types';
@@ -23,6 +37,18 @@ import type { GameType } from '@/types';
 // ============================================
 
 export type ScoringBasisOption = 'net' | 'gross' | 'both';
+export type GameLength = 9 | 18;
+
+// ============================================
+// Press Configuration
+// ============================================
+
+export interface PressConfig {
+  allowed: boolean;
+  maxPresses: number; // Default: 2, configurable 1-5
+  autoPress: boolean;
+  autoPressThreshold: number; // Holes down to trigger auto-press (1-5)
+}
 
 // ============================================
 // Scoring Calculation Types
@@ -104,12 +130,19 @@ export interface GameTypeConfig {
   // Player requirements
   players: PlayerRequirement;
 
+  // Game length options
+  supportedLengths: GameLength[];
+  defaultLength: GameLength;
+
   // Scoring options
   scoringBasis: ScoringBasisOption;
   defaultScoringBasis: 'net' | 'gross';
 
   // Scoring calculation (how winners/points are determined)
   scoring: ScoringCalculation;
+
+  // Press configuration
+  press: PressConfig;
 
   // Gator Bucks conversion (how game results become currency)
   gatorBucks: GatorBucksConversion;
@@ -136,8 +169,9 @@ export const GAME_TYPE_CONFIGS: Record<GameType, GameTypeConfig> = {
   match_play: {
     type: 'match_play',
     label: 'Match Play',
-    description: 'Win holes, not strokes. Each hole is worth 1 point.',
-    shortDescription: 'Win holes, not strokes',
+    description:
+      'Two players compete hole by hole. Win a hole by having the lowest score. The player who wins more holes wins the match.',
+    shortDescription: 'Head-to-head hole-by-hole',
 
     players: {
       min: 2,
@@ -145,45 +179,88 @@ export const GAME_TYPE_CONFIGS: Record<GameType, GameTypeConfig> = {
       exact: 2,
     },
 
+    supportedLengths: [9, 18],
+    defaultLength: 18,
+
     scoringBasis: 'both',
     defaultScoringBasis: 'net',
 
     scoring: {
       method: 'hole_by_hole',
-      description: 'Lowest score wins each hole. Count holes won vs lost.',
+      description: 'Lowest score wins each hole. Tied holes are "halved".',
       holeWinner: {
         criteria: 'lowest_score',
         tieHandling: 'halve',
       },
     },
 
+    press: {
+      allowed: true,
+      maxPresses: 2,
+      autoPress: false,
+      autoPressThreshold: 2,
+    },
+
     gatorBucks: {
       method: 'per_hole',
-      formula: 'Stake × Holes Up',
+      formula: 'Stake × Holes Up (margin of victory)',
       calculate: ({ stake, holesUp = 0 }) => stake * holesUp,
       examples: [
-        { scenario: '2 Up at $10/hole', result: '+$20 winner, -$20 loser' },
+        { scenario: '3 Up at $10/hole', result: '+$30 winner, -$30 loser' },
+        { scenario: '1 Up at $10/hole', result: '+$10 winner, -$10 loser' },
         { scenario: 'All Square', result: 'No money changes hands' },
       ],
     },
 
-    stakeLabel: 'Stake per hole',
+    stakeLabel: 'Stake per hole margin',
     defaultStake: 10,
 
     settings: [
       {
+        key: 'gameLength',
+        label: 'Holes',
+        type: 'select',
+        defaultValue: '18',
+        options: [
+          { value: '9', label: '9 Holes' },
+          { value: '18', label: '18 Holes' },
+        ],
+        description: 'Number of holes to play',
+      },
+      {
+        key: 'scoringBasis',
+        label: 'Scoring',
+        type: 'select',
+        defaultValue: 'net',
+        options: [
+          { value: 'net', label: 'Net', description: 'With handicap strokes' },
+          { value: 'gross', label: 'Gross', description: 'No handicap' },
+        ],
+        description: 'How scores are calculated',
+      },
+      {
         key: 'pressEnabled',
-        label: 'Allow Press',
+        label: 'Allow Presses',
         type: 'toggle',
         defaultValue: true,
-        description: 'Players can press when down to create side games',
+        description: 'Players can press to create side bets',
+      },
+      {
+        key: 'maxPresses',
+        label: 'Max Presses',
+        type: 'number',
+        defaultValue: 2,
+        min: 1,
+        max: 5,
+        description: 'Maximum number of presses allowed',
+        dependsOn: { field: 'pressEnabled', value: true },
       },
       {
         key: 'autoPress',
         label: 'Auto Press',
         type: 'toggle',
         defaultValue: false,
-        description: 'Automatically press when 2 down',
+        description: 'Automatically press when down',
         dependsOn: { field: 'pressEnabled', value: true },
       },
       {
@@ -193,16 +270,17 @@ export const GAME_TYPE_CONFIGS: Record<GameType, GameTypeConfig> = {
         defaultValue: 2,
         min: 1,
         max: 5,
-        description: 'Number of holes down to trigger auto press',
+        description: 'Holes down to trigger auto press',
         dependsOn: { field: 'autoPress', value: true },
       },
     ],
 
     rulesSummary: [
-      'Lowest score on a hole wins that hole (1 point)',
-      'Ties ("halved") result in no points awarded',
-      'Player with most points at end wins',
-      'Can be played net (with handicap strokes) or gross',
+      'Two players compete hole by hole for the lowest net score',
+      'Win a hole by having the lower score; tied holes are "halved"',
+      'Match status shown as "X Up", "X Down", or "All Square"',
+      'Match may end early when mathematically decided (e.g., 4 & 3)',
+      'Gator Bucks = Stake × Final Holes Up Margin',
     ],
 
     status: 'stable',
@@ -211,34 +289,48 @@ export const GAME_TYPE_CONFIGS: Record<GameType, GameTypeConfig> = {
   nassau: {
     type: 'nassau',
     label: 'Nassau',
-    description: 'Three bets in one: Front 9, Back 9, and Overall match.',
-    shortDescription: 'Front 9 + Back 9 + Overall',
+    description:
+      'The most popular golf betting format. Three separate match play bets: Front 9, Back 9, and Overall 18. Each bet is scored independently using match play rules.',
+    shortDescription: 'Three bets in one',
 
     players: {
       min: 2,
       max: 4,
+      teamSize: 2, // For 2v2 team mode
     },
+
+    supportedLengths: [18], // Nassau requires 18 holes
+    defaultLength: 18,
 
     scoringBasis: 'both',
     defaultScoringBasis: 'net',
 
     scoring: {
       method: 'hole_by_hole',
-      description: 'Three separate match play bets: Front 9, Back 9, Overall.',
+      description: 'Three separate match play bets: Front 9 (1-9), Back 9 (10-18), Overall 18.',
       holeWinner: {
         criteria: 'lowest_score',
         tieHandling: 'halve',
       },
     },
 
+    press: {
+      allowed: true,
+      maxPresses: 2, // Per bet
+      autoPress: false,
+      autoPressThreshold: 2,
+    },
+
     gatorBucks: {
       method: 'per_bet',
-      formula: 'Stake × 3 bets (Front + Back + Overall)',
+      formula: 'Stake × Bets Won (3 possible: Front, Back, Overall)',
       calculate: ({ stake, betsWon = 0 }) => stake * betsWon,
       examples: [
-        { scenario: 'Win all 3 at $10/bet', result: '+$30' },
-        { scenario: 'Win Front, Lose Back, Halve Overall', result: 'Net $0' },
-        { scenario: 'Max exposure at $10/bet', result: '$30 (3 bets)' },
+        { scenario: 'Sweep (win all 3) at $10/bet', result: '+$30' },
+        { scenario: 'Win 2, Lose 1 at $10/bet', result: '+$10' },
+        { scenario: 'Win 1, Tie 2 at $10/bet', result: '+$10' },
+        { scenario: 'All Ties at $10/bet', result: '$0' },
+        { scenario: 'Get swept at $10/bet', result: '-$30' },
       ],
     },
 
@@ -247,70 +339,148 @@ export const GAME_TYPE_CONFIGS: Record<GameType, GameTypeConfig> = {
 
     settings: [
       {
+        key: 'scoringBasis',
+        label: 'Scoring',
+        type: 'select',
+        defaultValue: 'net',
+        options: [
+          { value: 'net', label: 'Net', description: 'With handicap strokes' },
+          { value: 'gross', label: 'Gross', description: 'No handicap' },
+        ],
+        description: 'How scores are calculated',
+      },
+      {
+        key: 'teamFormat',
+        label: 'Team Format',
+        type: 'select',
+        defaultValue: 'individual',
+        options: [
+          { value: 'individual', label: 'Individual', description: '1v1 or 1v1v1v1' },
+          { value: 'best_ball', label: 'Best Ball', description: '2v2, best score counts' },
+          { value: 'both_balls', label: 'Both Balls', description: '2v2, both scores count' },
+        ],
+        description: 'How teams are scored',
+      },
+      {
         key: 'pressEnabled',
-        label: 'Allow Press',
+        label: 'Allow Presses',
         type: 'toggle',
         defaultValue: true,
         description: 'Players can press on any of the three bets',
+      },
+      {
+        key: 'maxPresses',
+        label: 'Max Presses Per Bet',
+        type: 'number',
+        defaultValue: 2,
+        min: 1,
+        max: 5,
+        description: 'Maximum presses allowed per bet',
+        dependsOn: { field: 'pressEnabled', value: true },
       },
       {
         key: 'autoPress',
         label: 'Auto Press',
         type: 'toggle',
         defaultValue: false,
-        description: 'Automatically press when 2 down on any bet',
+        description: 'Automatically press when down',
         dependsOn: { field: 'pressEnabled', value: true },
+      },
+      {
+        key: 'autoPressThreshold',
+        label: 'Auto Press When Down',
+        type: 'number',
+        defaultValue: 2,
+        min: 1,
+        max: 5,
+        description: 'Holes down to trigger auto press',
+        dependsOn: { field: 'autoPress', value: true },
       },
     ],
 
     rulesSummary: [
-      'Three separate match play bets: Front 9, Back 9, Overall 18',
-      'Each bet is independent - you can win one and lose others',
-      'Presses create additional side bets',
-      'Total payout = sum of all three bets',
+      'Always 18 holes - three separate match-play bets',
+      'Front 9 (holes 1-9), Back 9 (holes 10-18), Overall 18',
+      'Each bet uses match play scoring (most holes won)',
+      'Win a bet = +1× stake, lose = -1× stake, tie = push',
+      'Presses can be made on any of the three bets independently',
     ],
 
-    status: 'beta', // TODO: Needs full implementation
+    status: 'stable',
   },
 
   skins: {
     type: 'skins',
     label: 'Skins',
-    description: 'Win a skin by having the outright lowest score on a hole.',
-    shortDescription: 'Win skin per hole',
+    description:
+      'Each hole has value. To win a "skin" you must have the lowest score outright (no ties). Tied holes carry over to the next, building larger pots.',
+    shortDescription: 'Winner-take-all per hole',
 
     players: {
       min: 2,
       max: 8,
     },
 
+    supportedLengths: [9, 18],
+    defaultLength: 18,
+
     scoringBasis: 'both',
-    defaultScoringBasis: 'gross',
+    defaultScoringBasis: 'gross', // More common in casual skins
 
     scoring: {
       method: 'skins',
-      description: 'Outright lowest score wins the skin. Ties carry over.',
+      description: 'Outright lowest score wins the skin. Ties carry over (default).',
       holeWinner: {
         criteria: 'lowest_score',
         tieHandling: 'carryover',
       },
     },
 
+    press: {
+      allowed: false, // Skins does not support presses
+      maxPresses: 0,
+      autoPress: false,
+      autoPressThreshold: 0,
+    },
+
     gatorBucks: {
       method: 'per_skin',
-      formula: 'Stake × Skins Won × (Players - 1)',
+      formula: 'Winner receives: Stake × Skins × (Players - 1)',
       calculate: ({ stake, skins = 0, players = 2 }) => stake * skins * (players - 1),
       examples: [
         { scenario: '1 skin at $5, 4 players', result: '+$15 (from 3 others)' },
-        { scenario: '2 skins with carryover at $5, 4 players', result: '+$30' },
-        { scenario: 'No skins won', result: '$0' },
+        { scenario: '1 skin with 1 carryover at $5, 4 players', result: '+$30 (2 skins worth)' },
+        { scenario: '3 skins at $5, 4 players', result: '+$45' },
+        { scenario: '0 skins won, 6 skins awarded', result: '-$30 (paid to winners)' },
       ],
     },
 
     stakeLabel: 'Stake per skin',
-    defaultStake: 10,
+    defaultStake: 5,
 
     settings: [
+      {
+        key: 'gameLength',
+        label: 'Holes',
+        type: 'select',
+        defaultValue: '18',
+        options: [
+          { value: '9', label: '9 Holes' },
+          { value: '18', label: '18 Holes' },
+        ],
+        description: 'Number of holes to play',
+      },
+      {
+        key: 'scoringBasis',
+        label: 'Scoring',
+        type: 'select',
+        defaultValue: 'gross',
+        options: [
+          { value: 'gross', label: 'Gross', description: 'No handicap (more common)' },
+          { value: 'net', label: 'Net', description: 'With handicap strokes' },
+        ],
+        description: 'How scores are calculated',
+      },
       {
         key: 'carryover',
         label: 'Carryover Ties',
@@ -318,57 +488,65 @@ export const GAME_TYPE_CONFIGS: Record<GameType, GameTypeConfig> = {
         defaultValue: true,
         description: 'When tied, skin carries to next hole',
       },
-      {
-        key: 'validation',
-        label: 'Validation Required',
-        type: 'toggle',
-        defaultValue: false,
-        description: 'Other players must confirm skin winner',
-      },
     ],
 
     rulesSummary: [
-      'Lowest score on a hole wins that skin',
-      'Must have outright lowest - ties push',
-      'With carryover, tied skins add to next hole',
-      'More players = more competition for each skin',
+      'Win a skin by having the lowest net score outright - no ties',
+      'Tied holes carry over (default) - carryovers accumulate as a count',
+      'Last hole tie: skins split evenly among tied players',
+      'UI shows current carryover count and which holes carry',
+      'Winner collects stake from each other player per skin won',
     ],
 
-    status: 'beta', // TODO: Needs full implementation
+    status: 'stable',
   },
 
   high_low_total: {
     type: 'high_low_total',
     label: 'High-Low-Total',
-    description: 'Win Low point, avoid High penalty. Optional team Total point.',
-    shortDescription: 'Low wins, High penalty',
+    description:
+      'A 2v2 team game where each hole awards up to 3 points: Low Ball (best individual), High Ball (worst individual avoided), and Total (best combined team score).',
+    shortDescription: 'Team game: 3 points per hole',
 
     players: {
-      min: 3,
+      min: 4,
       max: 4,
-      teamSize: 2, // For 2v2 team mode
+      exact: 4, // HLT requires exactly 4 players
+      teamSize: 2, // Always 2v2
     },
 
-    scoringBasis: 'net', // HLT is typically played net only
+    supportedLengths: [18], // HLT is 18 holes only
+    defaultLength: 18,
+
+    scoringBasis: 'net', // HLT is net scoring only
     defaultScoringBasis: 'net',
 
     scoring: {
       method: 'points',
-      description: 'Low wins +1, High gets -1 penalty. Team Total wins +1.',
+      description:
+        'Each hole: Low Ball (1 pt), High Ball (1 pt), Total (1 pt). Ties = wash (no point awarded).',
       pointsSystem: {
-        perHole: { low: 1, high: -1, total: 1 },
-        aggregation: 'net',
+        perHole: { lowBall: 1, highBall: 1, total: 1 },
+        aggregation: 'sum',
       },
+    },
+
+    press: {
+      allowed: false, // HLT does not support presses
+      maxPresses: 0,
+      autoPress: false,
+      autoPressThreshold: 0,
     },
 
     gatorBucks: {
       method: 'per_point',
-      formula: 'Net Points × Point Value',
+      formula: 'Net Team Points × Point Value (split between teammates)',
       calculate: ({ stake, points = 0 }) => stake * points,
       examples: [
-        { scenario: '+3 net points at $10/pt', result: '+$30' },
-        { scenario: '-2 net points at $10/pt', result: '-$20' },
-        { scenario: 'Break even', result: '$0' },
+        { scenario: 'Team wins all 3 on a hole', result: '+3 points' },
+        { scenario: 'Low Ball tie (wash)', result: '0 points for that category' },
+        { scenario: 'Team +15 points at $10/point', result: '+$150 (split $75 each)' },
+        { scenario: 'All ties (wash)', result: '0 points' },
       ],
     },
 
@@ -377,31 +555,23 @@ export const GAME_TYPE_CONFIGS: Record<GameType, GameTypeConfig> = {
 
     settings: [
       {
-        key: 'tieRule',
-        label: 'Tie Rule',
-        type: 'select',
-        defaultValue: 'push',
-        options: [
-          { value: 'push', label: 'Push', description: 'Ties are void - no points awarded' },
-          { value: 'split', label: 'Split', description: 'Tied players split the point' },
-          { value: 'carryover', label: 'Carryover', description: 'Point carries to next hole' },
-        ],
-        description: 'How to handle ties for Low or High',
-      },
-      {
-        key: 'isTeamMode',
-        label: 'Team Mode (2v2)',
-        type: 'toggle',
-        defaultValue: false,
-        description: 'Adds Total point for team combined score',
+        key: 'pointValue',
+        label: 'Point Value',
+        type: 'number',
+        defaultValue: 10,
+        min: 1,
+        max: 100,
+        description: 'Gator Bucks per point',
       },
     ],
 
     rulesSummary: [
-      'Low: Lowest net score wins +1 point',
-      'High: Highest net score gets -1 point (penalty)',
-      'Team Mode adds Total: Team with lowest combined net wins +1',
-      'Net points = Low points + Total points - High points',
+      '2v2 team game, 18 holes only, net scoring required',
+      'Each hole has 3 possible points: Low Ball, High Ball, Total',
+      'Low Ball: Team with best individual net wins a point',
+      'High Ball: Team that avoids the worst individual net wins a point',
+      'Total: Team with lowest combined net wins a point',
+      'Ties = wash (no points awarded, no carryovers)',
     ],
 
     status: 'stable',
@@ -604,18 +774,21 @@ export function getDefaultStake(type: GameType): number {
 /**
  * Check if a game type requires teams
  */
-export function requiresTeams(type: GameType, settings?: Record<string, unknown>): boolean {
+export function requiresTeams(type: GameType): boolean {
   const config = getGameTypeConfig(type);
 
-  // Check if team size is defined
-  if (!config.players.teamSize) return false;
-
-  // For HLT, team mode is optional
+  // HLT always requires teams (2v2)
   if (type === 'high_low_total') {
-    return settings?.isTeamMode === true;
+    return true;
   }
 
-  return true;
+  // Nassau can be team mode if configured
+  if (type === 'nassau') {
+    return false; // Team mode is optional for Nassau
+  }
+
+  // Check if team size is defined
+  return config.players.teamSize !== undefined && config.players.exact === 4;
 }
 
 /**
@@ -624,4 +797,122 @@ export function requiresTeams(type: GameType, settings?: Record<string, unknown>
 export function getTeamSize(type: GameType): number | null {
   const config = getGameTypeConfig(type);
   return config.players.teamSize ?? null;
+}
+
+// ============================================
+// Game Length Helpers
+// ============================================
+
+/**
+ * Get supported game lengths for a game type
+ */
+export function getSupportedLengths(type: GameType): GameLength[] {
+  const config = getGameTypeConfig(type);
+  return config.supportedLengths;
+}
+
+/**
+ * Get default game length for a game type
+ */
+export function getDefaultLength(type: GameType): GameLength {
+  const config = getGameTypeConfig(type);
+  return config.defaultLength;
+}
+
+/**
+ * Check if a game length is supported for a game type
+ */
+export function isLengthSupported(type: GameType, length: GameLength): boolean {
+  const config = getGameTypeConfig(type);
+  return config.supportedLengths.includes(length);
+}
+
+/**
+ * Validate game length for a game type
+ */
+export function validateGameLength(
+  type: GameType,
+  length: number
+): { valid: boolean; error?: string } {
+  const config = getGameTypeConfig(type);
+
+  if (length !== 9 && length !== 18) {
+    return { valid: false, error: 'Game length must be 9 or 18 holes' };
+  }
+
+  if (!config.supportedLengths.includes(length as GameLength)) {
+    return {
+      valid: false,
+      error: `${config.label} only supports ${config.supportedLengths.join(' or ')} holes`,
+    };
+  }
+
+  return { valid: true };
+}
+
+// ============================================
+// Press Support Helpers
+// ============================================
+
+/**
+ * Check if a game type supports presses
+ */
+export function supportsPresses(type: GameType): boolean {
+  const config = getGameTypeConfig(type);
+  return config.press.allowed;
+}
+
+/**
+ * Get press configuration for a game type
+ */
+export function getPressConfig(type: GameType): PressConfig {
+  const config = getGameTypeConfig(type);
+  return config.press;
+}
+
+/**
+ * Get default max presses for a game type
+ */
+export function getDefaultMaxPresses(type: GameType): number {
+  const config = getGameTypeConfig(type);
+  return config.press.maxPresses;
+}
+
+// ============================================
+// Enhanced Validation
+// ============================================
+
+/**
+ * Comprehensive game setup validation
+ */
+export function validateGameSetupFull(
+  type: GameType,
+  playerCount: number,
+  scoringBasis: 'net' | 'gross',
+  gameLength: number
+): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  const config = getGameTypeConfig(type);
+
+  // Validate player count
+  const playerValidation = validatePlayerCount(type, playerCount);
+  if (!playerValidation.valid && playerValidation.error) {
+    errors.push(playerValidation.error);
+  }
+
+  // Validate scoring basis
+  if (!supportsScoringBasis(type, scoringBasis)) {
+    errors.push(`${config.label} does not support ${scoringBasis} scoring`);
+  }
+
+  // Validate game length
+  const lengthValidation = validateGameLength(type, gameLength);
+  if (!lengthValidation.valid && lengthValidation.error) {
+    errors.push(lengthValidation.error);
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
 }

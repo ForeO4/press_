@@ -15,9 +15,13 @@ import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
 import { getEventTeeSnapshot } from '@/lib/services/courses';
 import { getHandicapSnapshot } from '@/lib/services/handicaps';
 import { getAutoPressConfig } from '@/lib/services/eventSettings';
+import { getHighLowTotalSettings } from '@/lib/services/highLowTotal';
 import { checkAutoPress, computeAutoPressStake } from '@/lib/domain/games/autoPress';
 import { createAutoPressPost } from '@/lib/services/posts';
 import { mockUsers } from '@/lib/mock/users';
+import { UnifiedGameScorecard } from '@/components/games/scorecard/UnifiedGameScorecard';
+import type { ScorecardPlayer } from '@/components/games/scorecard/types';
+import type { LegacyHLTSettings } from '@/types';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useAppStore } from '@/stores';
 import { isMockMode } from '@/lib/env/public';
@@ -58,6 +62,7 @@ export default function GameDetailPage({
   const [currentHole, setCurrentHole] = useState(1);
   const [showFullScorecard, setShowFullScorecard] = useState(true); // Default to visible
   const [autoPressConfig, setAutoPressConfig] = useState<AutoPressConfig | null>(null);
+  const [hltSettings, setHltSettings] = useState<LegacyHLTSettings | null>(null);
 
   // Scorecard store for inline editing
   const selectCell = useScorecardStore((state) => state.selectCell);
@@ -87,6 +92,12 @@ export default function GameDetailPage({
 
       setGame(gameData);
       setCourseData(teeSnapshot);
+
+      // Load HLT settings if it's an HLT game
+      if (gameData.type === 'high_low_total') {
+        const hltConfig = await getHighLowTotalSettings(gameData.id);
+        setHltSettings(hltConfig);
+      }
 
       // Convert roundId -> scores to userId -> scores
       const userScores: Record<string, HoleScore[]> = {};
@@ -337,38 +348,85 @@ export default function GameDetailPage({
   }
 
   // Build score entry players with proper handicap stroke calculation
-  const handicapDiff = Math.abs(playerAHandicap - playerBHandicap);
-  const playerAGetsStrokes = playerAHandicap > playerBHandicap;
-  const playerBGetsStrokes = playerBHandicap > playerAHandicap;
+  // For HLT games with 3-4 players, we build the list from all participants
+  const isHLTGame = game.type === 'high_low_total';
 
-  const scoreEntryPlayers = [
-    {
-      id: playerAId,
-      name: playerAName,
-      handicap: playerAHandicap,
-      getsStroke: currentHoleData?.handicap && playerAGetsStrokes
-        ? currentHoleData.handicap <= handicapDiff
-        : false,
-    },
-    {
-      id: playerBId,
-      name: playerBName,
-      handicap: playerBHandicap,
-      getsStroke: currentHoleData?.handicap && playerBGetsStrokes
-        ? currentHoleData.handicap <= handicapDiff
-        : false,
-    },
-  ];
+  let scoreEntryPlayers: Array<{
+    id: string;
+    name: string;
+    handicap: number;
+    getsStroke: boolean;
+  }> = [];
+
+  if (isHLTGame) {
+    // For HLT games, include all participants
+    const allHandicaps = game.participants.map((p) => {
+      const pid = getParticipantPlayerId(p);
+      return handicaps[pid] ?? 0;
+    });
+    const minHandicap = Math.min(...allHandicaps);
+
+    scoreEntryPlayers = game.participants.map((p) => {
+      const pid = getParticipantPlayerId(p);
+      const user = mockUsers.find((u) => u.id === pid);
+      const playerHcp = handicaps[pid] ?? 0;
+      const strokesReceived = playerHcp - minHandicap;
+      const getsStroke = currentHoleData?.handicap
+        ? currentHoleData.handicap <= strokesReceived
+        : false;
+
+      return {
+        id: pid,
+        name: user?.name ?? `Player ${pid.slice(0, 4)}`,
+        handicap: playerHcp,
+        getsStroke,
+      };
+    });
+  } else {
+    // Standard 2-player game
+    const handicapDiff = Math.abs(playerAHandicap - playerBHandicap);
+    const playerAGetsStrokes = playerAHandicap > playerBHandicap;
+    const playerBGetsStrokes = playerBHandicap > playerAHandicap;
+
+    scoreEntryPlayers = [
+      {
+        id: playerAId,
+        name: playerAName,
+        handicap: playerAHandicap,
+        getsStroke: currentHoleData?.handicap && playerAGetsStrokes
+          ? currentHoleData.handicap <= handicapDiff
+          : false,
+      },
+      {
+        id: playerBId,
+        name: playerBName,
+        handicap: playerBHandicap,
+        getsStroke: currentHoleData?.handicap && playerBGetsStrokes
+          ? currentHoleData.handicap <= handicapDiff
+          : false,
+      },
+    ];
+  }
 
   // Get current scores for entry
   const currentScores: Record<string, number | null> = {};
-  if (playerAId) {
-    const score = playerAScores.find((s) => s.holeNumber === currentHole);
-    currentScores[playerAId] = score?.strokes ?? null;
-  }
-  if (playerBId) {
-    const score = playerBScores.find((s) => s.holeNumber === currentHole);
-    currentScores[playerBId] = score?.strokes ?? null;
+  if (isHLTGame) {
+    // For HLT games, get scores for all participants
+    for (const p of game.participants) {
+      const pid = getParticipantPlayerId(p);
+      const playerScores = getPlayerScoresFromStore(pid);
+      const score = playerScores.find((s) => s.holeNumber === currentHole);
+      currentScores[pid] = score?.strokes ?? null;
+    }
+  } else {
+    if (playerAId) {
+      const score = playerAScores.find((s) => s.holeNumber === currentHole);
+      currentScores[playerAId] = score?.strokes ?? null;
+    }
+    if (playerBId) {
+      const score = playerBScores.find((s) => s.holeNumber === currentHole);
+      currentScores[playerBId] = score?.strokes ?? null;
+    }
   }
 
   return (
@@ -414,7 +472,39 @@ export default function GameDetailPage({
       </div>
 
       {/* Full Scorecard (collapsible) */}
-      {showFullScorecard && courseData && playerAId && playerBId && (
+      {showFullScorecard && courseData && game.type === 'high_low_total' && (
+        <div className="space-y-4">
+          {/* HLT Unified Scorecard for 3-4 players */}
+          <UnifiedGameScorecard
+            gameId={game.id}
+            gameType="high_low_total"
+            players={game.participants.map((p) => {
+              const pid = getParticipantPlayerId(p);
+              const user = mockUsers.find((u) => u.id === pid);
+              const playerScores = getPlayerScoresFromStore(pid);
+              return {
+                id: pid,
+                name: user?.name ?? `Player ${pid.slice(0, 4)}`,
+                handicap: handicaps[pid] ?? 0,
+                scores: playerScores.map((s) => ({
+                  holeNumber: s.holeNumber,
+                  strokes: s.strokes,
+                })),
+              } as ScorecardPlayer;
+            })}
+            holes={courseData.holes}
+            startHole={game.startHole}
+            endHole={game.endHole}
+            gameSettings={{
+              tieRule: hltSettings?.tieRule ?? 'push',
+              isTeamMode: hltSettings?.isTeamMode ?? false,
+              pointValue: hltSettings?.pointValue ?? 1,
+            }}
+            onCellClick={handleCellClick}
+          />
+        </div>
+      )}
+      {showFullScorecard && courseData && game.type !== 'high_low_total' && playerAId && playerBId && (
         <div className="space-y-4">
           <GameScorecard
             game={game}

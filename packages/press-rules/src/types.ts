@@ -151,7 +151,8 @@ export type ContestType =
   | 'ctp'
   | 'long_drive'
   | 'birdie_pool'
-  | 'snake';
+  | 'snake'
+  | 'high_low_total';
 
 /** Scoring basis */
 export type ScoringBasis = 'gross' | 'net';
@@ -464,6 +465,39 @@ export interface SidePotStandings {
   }>;
 }
 
+/** High-Low-Total standing for a player */
+export interface HighLowTotalStanding {
+  playerId: PlayerId;
+  playerName: string;
+  lowPoints: number;      // Points from winning Low
+  highPoints: number;     // Points from losing High (negative)
+  totalPoints: number;    // Points from winning Total (team mode only)
+  netPoints: number;      // lowPoints + totalPoints - highPoints
+  netValue: Units;        // netPoints * pointValue
+}
+
+/** High-Low-Total tie rule */
+export type HighLowTotalTieRule = 'push' | 'split' | 'carryover';
+
+/** High-Low-Total hole result */
+export interface HighLowTotalHoleResult {
+  hole: HoleNumber;
+  lowWinnerId: PlayerId | null;
+  highLoserId: PlayerId | null;
+  totalWinnerId: PlayerId | null;  // Team mode only
+  carryover: { low: number; high: number; total: number };
+}
+
+/** High-Low-Total standings container */
+export interface HighLowTotalStandings {
+  type: 'high_low_total';
+  standings: HighLowTotalStanding[];
+  holeResults: HighLowTotalHoleResult[];
+  tieRule: HighLowTotalTieRule;
+  isTeamMode: boolean;
+  pointValue: Units;
+}
+
 /** Union of all standings types */
 export type ContestStandings =
   | MatchPlayStandings
@@ -472,7 +506,8 @@ export type ContestStandings =
   | StablefordStandings
   | StrokePlayStandings
   | NassauStandings
-  | SidePotStandings;
+  | SidePotStandings
+  | HighLowTotalStandings;
 
 // ============================================
 // AUDIT (hole-by-hole details)

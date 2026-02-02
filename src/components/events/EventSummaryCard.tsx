@@ -29,6 +29,7 @@ const GAME_TYPE_LABELS: Record<GameType, string> = {
   match_play: 'Match Play',
   nassau: 'Nassau',
   skins: 'Skins',
+  high_low_total: 'High-Low-Total',
 };
 
 export function EventSummaryCard({

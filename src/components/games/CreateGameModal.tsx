@@ -50,6 +50,7 @@ const gameTypes: { value: GameType; label: string; description: string }[] = [
   { value: 'match_play', label: 'Match Play', description: 'Win holes, not strokes' },
   { value: 'nassau', label: 'Nassau', description: 'Front 9 + Back 9 + Overall' },
   { value: 'skins', label: 'Skins', description: 'Win skin per hole' },
+  { value: 'high_low_total', label: 'High-Low-Total', description: 'Low wins, High penalty' },
 ];
 
 const holePresets = [

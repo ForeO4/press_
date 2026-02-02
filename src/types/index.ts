@@ -208,7 +208,7 @@ export interface MockUser {
 // GAMES
 // ============================================
 
-export type GameType = 'match_play' | 'nassau' | 'skins';
+export type GameType = 'match_play' | 'nassau' | 'skins' | 'high_low_total';
 export type GameStatus = 'active' | 'complete';
 
 export interface Game {
@@ -221,6 +221,29 @@ export interface Game {
   endHole: number;
   status: GameStatus;
   createdAt: string;
+}
+
+// ============================================
+// HIGH-LOW-TOTAL
+// ============================================
+
+/** Tie rule for High-Low-Total game */
+export type HighLowTotalTieRule = 'push' | 'split' | 'carryover';
+
+/** Settings for High-Low-Total game */
+export interface HighLowTotalSettings {
+  tieRule: HighLowTotalTieRule;
+  isTeamMode: boolean;
+  pointValue: number; // Gator Bucks per point
+}
+
+/** Per-hole result for High-Low-Total game */
+export interface HighLowTotalHoleResult {
+  hole: number;
+  lowWinnerId: string | null;    // Player/team with lowest net score
+  highLoserId: string | null;    // Player/team with highest net score (penalty)
+  totalWinnerId: string | null;  // Team with lowest combined net (team mode only)
+  carryover: { low: number; high: number; total: number };
 }
 
 export interface GameParticipant {

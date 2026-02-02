@@ -145,6 +145,11 @@ export const gameTypePillStyles = {
     text: 'text-amber-400',
     border: 'border-amber-500/30',
   },
+  high_low_total: {
+    background: 'bg-pink-500/20',
+    text: 'text-pink-400',
+    border: 'border-pink-500/30',
+  },
   press: {
     background: 'bg-purple-500/20',
     text: 'text-purple-400',

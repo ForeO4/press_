@@ -12,6 +12,7 @@ import { matchPlayBestballHandler } from './match-play-bestball';
 import { bestballStrokeHandler } from './bestball-stroke';
 import { stablefordHandler } from './stableford';
 import { ctpHandler, longDriveHandler, birdiePoolHandler, snakeHandler } from './side-pots';
+import { highLowTotalHandler } from './high-low-total';
 
 // Register all contest handlers
 defaultRegistry.register(matchPlaySinglesHandler);
@@ -24,6 +25,7 @@ defaultRegistry.register(ctpHandler);
 defaultRegistry.register(longDriveHandler);
 defaultRegistry.register(birdiePoolHandler);
 defaultRegistry.register(snakeHandler);
+defaultRegistry.register(highLowTotalHandler);
 
 // Export handlers for direct use
 export {
@@ -37,4 +39,5 @@ export {
   longDriveHandler,
   birdiePoolHandler,
   snakeHandler,
+  highLowTotalHandler,
 };

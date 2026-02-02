@@ -26,6 +26,11 @@ const GAME_TYPES: { value: GameType; label: string; description: string }[] = [
     label: 'Skins',
     description: 'Win the hole outright to take the skin. Carryovers build the pot.',
   },
+  {
+    value: 'high_low_total',
+    label: 'High-Low-Total',
+    description: 'Win Low point, avoid High penalty. 3-4 players.',
+  },
 ];
 
 interface GameTypeSelectorProps {

@@ -43,7 +43,7 @@ CREATE POLICY "Users can view HLT settings for events they're members of"
   USING (
     EXISTS (
       SELECT 1 FROM games g
-      JOIN event_members em ON g.event_id = em.event_id
+      JOIN event_memberships em ON g.event_id = em.event_id
       WHERE g.id = high_low_total_settings.game_id
         AND em.user_id = auth.uid()
     )
@@ -54,7 +54,7 @@ CREATE POLICY "Users can insert HLT settings for games in their events"
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM games g
-      JOIN event_members em ON g.event_id = em.event_id
+      JOIN event_memberships em ON g.event_id = em.event_id
       WHERE g.id = high_low_total_settings.game_id
         AND em.user_id = auth.uid()
     )
@@ -65,7 +65,7 @@ CREATE POLICY "Users can update HLT settings for games in their events"
   USING (
     EXISTS (
       SELECT 1 FROM games g
-      JOIN event_members em ON g.event_id = em.event_id
+      JOIN event_memberships em ON g.event_id = em.event_id
       WHERE g.id = high_low_total_settings.game_id
         AND em.user_id = auth.uid()
     )
@@ -77,7 +77,7 @@ CREATE POLICY "Users can view HLT results for events they're members of"
   USING (
     EXISTS (
       SELECT 1 FROM games g
-      JOIN event_members em ON g.event_id = em.event_id
+      JOIN event_memberships em ON g.event_id = em.event_id
       WHERE g.id = high_low_total_results.game_id
         AND em.user_id = auth.uid()
     )
@@ -88,7 +88,7 @@ CREATE POLICY "Users can insert HLT results for games in their events"
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM games g
-      JOIN event_members em ON g.event_id = em.event_id
+      JOIN event_memberships em ON g.event_id = em.event_id
       WHERE g.id = high_low_total_results.game_id
         AND em.user_id = auth.uid()
     )
@@ -99,7 +99,7 @@ CREATE POLICY "Users can update HLT results for games in their events"
   USING (
     EXISTS (
       SELECT 1 FROM games g
-      JOIN event_members em ON g.event_id = em.event_id
+      JOIN event_memberships em ON g.event_id = em.event_id
       WHERE g.id = high_low_total_results.game_id
         AND em.user_id = auth.uid()
     )

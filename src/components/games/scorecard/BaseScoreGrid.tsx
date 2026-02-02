@@ -226,7 +226,9 @@ export function BaseScoreGrid({
                                   indicator.type === 'high' && 'bg-red-500/20 text-red-500',
                                   indicator.type === 'total' && 'bg-blue-500/20 text-blue-500',
                                   indicator.type === 'win' && 'bg-amber-500/20 text-amber-500',
+                                  indicator.type === 'loss' && 'bg-slate-500/20 text-slate-500',
                                   indicator.type === 'skin' && 'bg-amber-500/20 text-amber-500',
+                                  indicator.type === 'carryover' && 'bg-orange-500/20 text-orange-500',
                                   indicator.type === 'tie' && 'bg-slate-500/20 text-slate-500'
                                 )}
                               >

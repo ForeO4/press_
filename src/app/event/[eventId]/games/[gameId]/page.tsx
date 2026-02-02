@@ -496,9 +496,11 @@ export default function GameDetailPage({
             startHole={game.startHole}
             endHole={game.endHole}
             gameSettings={{
-              tieRule: hltSettings?.tieRule ?? 'push',
-              isTeamMode: hltSettings?.isTeamMode ?? false,
-              pointValue: hltSettings?.pointValue ?? 1,
+              pointValue: hltSettings?.pointValue ?? 10,
+              teams: game.participants.length === 4 ? [
+                { id: 'team1', playerIds: [getParticipantPlayerId(game.participants[0]), getParticipantPlayerId(game.participants[1])] },
+                { id: 'team2', playerIds: [getParticipantPlayerId(game.participants[2]), getParticipantPlayerId(game.participants[3])] },
+              ] : undefined,
             }}
             onCellClick={handleCellClick}
           />

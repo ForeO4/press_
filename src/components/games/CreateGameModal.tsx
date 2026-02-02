@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -22,7 +22,9 @@ import {
   getAvailableGameTypes,
   getGameTypeConfig,
   validatePlayerCount,
+  validateGameLength,
   supportsScoringBasis,
+  getSupportedLengths,
   getGatorBucksExamples,
   getPlayerSlotCount,
   getMinPlayerCount,
@@ -100,6 +102,22 @@ export function CreateGameModal({
   const [hltPointValue, setHltPointValue] = useState(10);
 
   const isHLT = selectedType === 'high_low_total';
+  const isNassau = selectedType === 'nassau';
+
+  // Check if game type requires 18 holes
+  const requires18Holes = isHLT || isNassau;
+
+  // Auto-select Full 18 when Nassau or HLT is selected
+  const supportedLengths = getSupportedLengths(selectedType);
+  const is9HoleDisabled = !supportedLengths.includes(9);
+
+  // Auto-select Full 18 when a game type that requires 18 holes is selected
+  useEffect(() => {
+    if (requires18Holes) {
+      setStartHole(1);
+      setEndHole(18);
+    }
+  }, [requires18Holes]);
 
   // Add player modal state
   const [showAddPlayerModal, setShowAddPlayerModal] = useState(false);
@@ -230,6 +248,14 @@ export function CreateGameModal({
 
     if (endHole < startHole || endHole > 18) {
       setError('End hole must be between start hole and 18');
+      return;
+    }
+
+    // Validate game length for game type
+    const gameLength = endHole - startHole + 1;
+    const lengthValidation = validateGameLength(selectedType, gameLength);
+    if (!lengthValidation.valid) {
+      setError(lengthValidation.error || 'Invalid game length');
       return;
     }
 
@@ -649,58 +675,74 @@ export function CreateGameModal({
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">
               Holes
+              {requires18Holes && (
+                <span className="ml-2 text-xs text-muted-foreground/70 font-normal">
+                  ({getGameTypeConfig(selectedType).label} requires 18 holes)
+                </span>
+              )}
             </label>
             <div className="flex gap-2">
-              {holePresets.map((preset) => (
-                <button
-                  key={preset.label}
-                  type="button"
-                  onClick={() => applyPreset(preset)}
-                  className={cn(
-                    'flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-200',
-                    isPresetActive(preset)
-                      ? 'bg-primary/20 text-primary border-primary/30'
-                      : 'bg-muted/20 text-muted-foreground border-muted/30 hover:bg-muted/30'
-                  )}
-                >
-                  {preset.label}
-                </button>
-              ))}
+              {holePresets.map((preset) => {
+                const isNineHolePreset = preset.end - preset.start + 1 === 9;
+                const isDisabled = isNineHolePreset && is9HoleDisabled;
+
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => !isDisabled && applyPreset(preset)}
+                    disabled={isDisabled}
+                    className={cn(
+                      'flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-200',
+                      isPresetActive(preset)
+                        ? 'bg-primary/20 text-primary border-primary/30'
+                        : isDisabled
+                          ? 'bg-muted/10 text-muted-foreground/40 border-muted/20 cursor-not-allowed'
+                          : 'bg-muted/20 text-muted-foreground border-muted/30 hover:bg-muted/30'
+                    )}
+                    title={isDisabled ? `${getGameTypeConfig(selectedType).label} requires 18 holes` : undefined}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Custom Hole Range */}
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="space-y-1">
-                <label htmlFor="startHole" className="text-xs text-muted-foreground">
-                  Start
-                </label>
-                <Input
-                  id="startHole"
-                  type="number"
-                  min={1}
-                  max={18}
-                  value={startHole}
-                  onChange={(e) =>
-                    setStartHole(parseInt(e.target.value, 10) || 1)
-                  }
-                />
+            {/* Custom Hole Range - only show if game type allows custom ranges */}
+            {!requires18Holes && (
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="space-y-1">
+                  <label htmlFor="startHole" className="text-xs text-muted-foreground">
+                    Start
+                  </label>
+                  <Input
+                    id="startHole"
+                    type="number"
+                    min={1}
+                    max={18}
+                    value={startHole}
+                    onChange={(e) =>
+                      setStartHole(parseInt(e.target.value, 10) || 1)
+                    }
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="endHole" className="text-xs text-muted-foreground">
+                    End
+                  </label>
+                  <Input
+                    id="endHole"
+                    type="number"
+                    min={startHole}
+                    max={18}
+                    value={endHole}
+                    onChange={(e) =>
+                      setEndHole(parseInt(e.target.value, 10) || 18)
+                    }
+                  />
+                </div>
               </div>
-              <div className="space-y-1">
-                <label htmlFor="endHole" className="text-xs text-muted-foreground">
-                  End
-                </label>
-                <Input
-                  id="endHole"
-                  type="number"
-                  min={startHole}
-                  max={18}
-                  value={endHole}
-                  onChange={(e) =>
-                    setEndHole(parseInt(e.target.value, 10) || 18)
-                  }
-                />
-              </div>
-            </div>
+            )}
           </div>
 
           {error && (

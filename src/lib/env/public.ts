@@ -42,6 +42,13 @@ export const FEATURE_REALTIME_SCORING = process.env.NEXT_PUBLIC_FEATURE_REALTIME
 export const SETTLEMENT_LIVE = process.env.NEXT_PUBLIC_SETTLEMENT_LIVE === 'true';
 
 /**
+ * Feature flag: HLT Teams (High-Low-Total 2v2)
+ * When enabled, allows creating HLT games with team assignments
+ * Default: OFF (requires explicit opt-in)
+ */
+export const FEATURE_HLT_TEAMS = process.env.NEXT_PUBLIC_FEATURE_HLT_TEAMS === 'true';
+
+/**
  * Validate public environment variables
  * Call this early in app initialization
  */

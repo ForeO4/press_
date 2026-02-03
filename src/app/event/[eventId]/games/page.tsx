@@ -6,7 +6,8 @@ import { GamesList } from '@/components/games/GamesList';
 import { Plus } from 'lucide-react';
 import { GolfClubsIcon } from '@/components/ui/GolfClubsIcon';
 import { CreateGameModal, type CreateGameData } from '@/components/games/CreateGameModal';
-import { getGamesForEvent, createGame } from '@/lib/services/games';
+import { getGamesForEvent, createGame, createGameWithPlayers } from '@/lib/services/games';
+import { saveHighLowTotalSettings } from '@/lib/services/highLowTotal';
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
 import { getEventMembers } from '@/lib/services/players';
 import { useAppStore } from '@/stores';
@@ -113,15 +114,42 @@ export default function GamesPage({
   const handleCreateGame = async (data: CreateGameData) => {
     try {
       console.log('[GamesPage] Creating game:', { eventId: params.eventId, data });
-      const newGame = await createGame(
-        params.eventId,
-        data.type,
-        data.stake,
-        data.playerAId,
-        data.playerBId,
-        data.startHole,
-        data.endHole
-      );
+
+      let newGame;
+
+      // High-Low-Total uses createGameWithPlayers for 3-4 players
+      if (data.type === 'high_low_total' && data.playerIds && data.playerIds.length >= 3) {
+        newGame = await createGameWithPlayers({
+          eventId: params.eventId,
+          type: data.type,
+          stakeTeethInt: data.stake,
+          startHole: data.startHole,
+          endHole: data.endHole,
+          playerIds: data.playerIds,
+        });
+
+        // Save HLT-specific settings
+        if (data.hltSettings) {
+          await saveHighLowTotalSettings(newGame.id, {
+            tieRule: data.hltSettings.tieRule,
+            isTeamMode: data.hltSettings.isTeamMode,
+            pointValue: data.hltSettings.pointValue,
+          });
+          console.log('[GamesPage] HLT settings saved for game:', newGame.id);
+        }
+      } else {
+        // Standard 2-player game
+        newGame = await createGame(
+          params.eventId,
+          data.type,
+          data.stake,
+          data.playerAId,
+          data.playerBId,
+          data.startHole,
+          data.endHole
+        );
+      }
+
       console.log('[GamesPage] Game created:', newGame);
       setShowCreateModal(false);
 

@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { GameScorecard } from '@/components/games/GameScorecard';
 import { ScoreEntry } from '@/components/games/ScoreEntry';
 import { SettleGameModal } from '@/components/games/SettleGameModal';
+import { HLTSettleModal } from '@/components/games/hlt';
 import { ScoreEditorSheet } from '@/components/scorecard/ScoreEditorSheet';
 import { useScorecardStore } from '@/stores/scorecardStore';
 import { getGameWithParticipants, createPress, updateGameStatus } from '@/lib/services/games';
@@ -15,7 +16,7 @@ import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
 import { getEventTeeSnapshot } from '@/lib/services/courses';
 import { getHandicapSnapshot } from '@/lib/services/handicaps';
 import { getAutoPressConfig } from '@/lib/services/eventSettings';
-import { getHighLowTotalSettings } from '@/lib/services/highLowTotal';
+import { getHighLowTotalSettings, getHLTTeams, type HLTTeams } from '@/lib/services/highLowTotal';
 import { checkAutoPress, computeAutoPressStake } from '@/lib/domain/games/autoPress';
 import { createAutoPressPost } from '@/lib/services/posts';
 import { mockUsers } from '@/lib/mock/users';
@@ -63,6 +64,7 @@ export default function GameDetailPage({
   const [showFullScorecard, setShowFullScorecard] = useState(true); // Default to visible
   const [autoPressConfig, setAutoPressConfig] = useState<AutoPressConfig | null>(null);
   const [hltSettings, setHltSettings] = useState<LegacyHLTSettings | null>(null);
+  const [hltTeams, setHltTeams] = useState<HLTTeams | null>(null);
 
   // Scorecard store for inline editing
   const selectCell = useScorecardStore((state) => state.selectCell);
@@ -93,10 +95,14 @@ export default function GameDetailPage({
       setGame(gameData);
       setCourseData(teeSnapshot);
 
-      // Load HLT settings if it's an HLT game
+      // Load HLT settings and teams if it's an HLT game
       if (gameData.type === 'high_low_total') {
-        const hltConfig = await getHighLowTotalSettings(gameData.id);
+        const [hltConfig, hltTeamsData] = await Promise.all([
+          getHighLowTotalSettings(gameData.id),
+          getHLTTeams(gameData.id),
+        ]);
         setHltSettings(hltConfig);
+        setHltTeams(hltTeamsData);
       }
 
       // Convert roundId -> scores to userId -> scores
@@ -584,7 +590,20 @@ export default function GameDetailPage({
       </div>
 
       {/* Settle Modal */}
-      {showSettleModal && playerAId && playerBId && (
+      {showSettleModal && isHLTGame && hltTeams && game.participants.length === 4 && (
+        <HLTSettleModal
+          game={game}
+          players={game.participants.map((p) => {
+            const pid = getParticipantPlayerId(p);
+            const user = mockUsers.find((u) => u.id === pid);
+            return { id: pid, name: user?.name ?? `Player ${pid.slice(0, 4)}` };
+          })}
+          teams={hltTeams}
+          onConfirm={handleConfirmSettle}
+          onClose={() => setShowSettleModal(false)}
+        />
+      )}
+      {showSettleModal && !isHLTGame && playerAId && playerBId && (
         <SettleGameModal
           game={game}
           playerAId={playerAId}

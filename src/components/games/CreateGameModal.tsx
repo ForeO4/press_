@@ -17,7 +17,11 @@ import { cn } from '@/lib/utils';
 import { gameTypePillStyles } from '@/lib/design/colors';
 import { createPlayer } from '@/lib/services/players';
 import { Plus } from 'lucide-react';
-import type { MockUser, GameType, CreatePlayerInput } from '@/types';
+import type { MockUser, GameType, CreatePlayerInput, UserSearchResult } from '@/types';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { getFavorites } from '@/lib/services/userFavorites';
+import { HLTTeamPicker, type HLTTeamAssignment } from './hlt';
+import { FEATURE_HLT_TEAMS } from '@/lib/env/public';
 import {
   getAvailableGameTypes,
   getGameTypeConfig,
@@ -62,6 +66,7 @@ export interface CreateGameData {
     tieRule: 'push' | 'split' | 'carryover';
     isTeamMode: boolean;
     pointValue: number;
+    teamAssignment?: HLTTeamAssignment;
   };
 }
 
@@ -81,6 +86,18 @@ export function CreateGameModal({
   onClose,
   onAddPlayer,
 }: CreateGameModalProps) {
+  const currentUser = useCurrentUser();
+
+  // Favorites state
+  const [favorites, setFavorites] = useState<UserSearchResult[]>([]);
+
+  // Load favorites on mount
+  useEffect(() => {
+    if (currentUser?.id) {
+      getFavorites(currentUser.id).then(setFavorites).catch(console.error);
+    }
+  }, [currentUser?.id]);
+
   // Game type configuration - single selection (radio buttons)
   const [selectedType, setSelectedType] = useState<GameType>('match_play');
   const [scoringBasis, setScoringBasis] = useState<ScoringBasis>('net');
@@ -100,6 +117,7 @@ export function CreateGameModal({
   const [hltTieRule, setHltTieRule] = useState<'push' | 'split' | 'carryover'>('push');
   const [hltTeamMode, setHltTeamMode] = useState(false);
   const [hltPointValue, setHltPointValue] = useState(10);
+  const [hltTeamAssignment, setHltTeamAssignment] = useState<HLTTeamAssignment | null>(null);
 
   const isHLT = selectedType === 'high_low_total';
   const isNassau = selectedType === 'nassau';
@@ -275,6 +293,7 @@ export function CreateGameModal({
         tieRule: hltTieRule,
         isTeamMode: hltTeamMode,
         pointValue: hltPointValue,
+        teamAssignment: hltTeamMode && hltTeamAssignment ? hltTeamAssignment : undefined,
       } : undefined,
     });
   };
@@ -564,6 +583,23 @@ export function CreateGameModal({
                   </button>
                 </div>
 
+                {/* HLT Team Picker - shows when team mode enabled and 4 players selected */}
+                {FEATURE_HLT_TEAMS && hltTeamMode && hltPlayerIds.filter(id => id !== '').length === 4 && (
+                  <HLTTeamPicker
+                    players={hltPlayerIds
+                      .filter(id => id !== '')
+                      .map(id => {
+                        const player = localPlayers.find(p => p.id === id);
+                        return {
+                          id,
+                          name: player?.name ?? 'Unknown',
+                        };
+                      })}
+                    initialTeams={hltTeamAssignment ?? undefined}
+                    onTeamsChange={setHltTeamAssignment}
+                  />
+                )}
+
                 {/* Point Value */}
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">Gator Bucks per Point</label>
@@ -600,11 +636,28 @@ export function CreateGameModal({
                     className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     <option value="">{localPlayers.length === 0 ? 'No players - click + to add' : 'Select player...'}</option>
-                    {playersForA.map((player) => (
-                      <option key={player.id} value={player.id}>
-                        {player.name}
-                      </option>
-                    ))}
+                    {/* Event Members */}
+                    {playersForA.length > 0 && (
+                      <optgroup label="Event Members">
+                        {playersForA.map((player) => (
+                          <option key={player.id} value={player.id}>
+                            {player.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {/* Favorites (not already in event) */}
+                    {favorites.filter(f => !playersForA.some(p => p.id === f.id)).length > 0 && (
+                      <optgroup label="⭐ Favorites">
+                        {favorites
+                          .filter(f => !playersForA.some(p => p.id === f.id))
+                          .map((fav) => (
+                            <option key={fav.id} value={fav.id}>
+                              {fav.displayName}
+                            </option>
+                          ))}
+                      </optgroup>
+                    )}
                   </select>
                   <Button
                     type="button"
@@ -637,11 +690,28 @@ export function CreateGameModal({
                     className="flex-1 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   >
                     <option value="">{playersForB.length === 0 ? 'No players - click + to add' : 'Select player...'}</option>
-                    {playersForB.map((player) => (
-                      <option key={player.id} value={player.id}>
-                        {player.name}
-                      </option>
-                    ))}
+                    {/* Event Members */}
+                    {playersForB.length > 0 && (
+                      <optgroup label="Event Members">
+                        {playersForB.map((player) => (
+                          <option key={player.id} value={player.id}>
+                            {player.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {/* Favorites (not already in event and not selected as Player A) */}
+                    {favorites.filter(f => !playersForB.some(p => p.id === f.id) && f.id !== playerAId).length > 0 && (
+                      <optgroup label="⭐ Favorites">
+                        {favorites
+                          .filter(f => !playersForB.some(p => p.id === f.id) && f.id !== playerAId)
+                          .map((fav) => (
+                            <option key={fav.id} value={fav.id}>
+                              {fav.displayName}
+                            </option>
+                          ))}
+                      </optgroup>
+                    )}
                   </select>
                   <Button
                     type="button"

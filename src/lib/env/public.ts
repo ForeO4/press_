@@ -28,6 +28,27 @@ export const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 export const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 
 /**
+ * Feature flag: Real-time Scoring
+ * When enabled, scores sync across devices using Supabase Realtime
+ * Default: OFF (requires explicit opt-in)
+ */
+export const FEATURE_REALTIME_SCORING = process.env.NEXT_PUBLIC_FEATURE_REALTIME_SCORING === 'true';
+
+/**
+ * Feature flag: Settlement Live Mode
+ * When enabled, settlement UI fetches from real Supabase data
+ * Default: OFF (uses mock data)
+ */
+export const SETTLEMENT_LIVE = process.env.NEXT_PUBLIC_SETTLEMENT_LIVE === 'true';
+
+/**
+ * Feature flag: HLT Teams (High-Low-Total 2v2)
+ * When enabled, allows creating HLT games with team assignments
+ * Default: OFF (requires explicit opt-in)
+ */
+export const FEATURE_HLT_TEAMS = process.env.NEXT_PUBLIC_FEATURE_HLT_TEAMS === 'true';
+
+/**
  * Validate public environment variables
  * Call this early in app initialization
  */

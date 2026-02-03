@@ -108,14 +108,13 @@ export function CreateGameModal({
   const [endHole, setEndHole] = useState(18);
   const [error, setError] = useState<string | null>(null);
 
-  // HLT-specific state
+  // HLT-specific state (always 4 players, always 2v2 team mode)
   const [hltPlayerIds, setHltPlayerIds] = useState<string[]>([
     players[0]?.id ?? '',
     players[1]?.id ?? '',
     players[2]?.id ?? '',
+    players[3]?.id ?? '',
   ]);
-  const [hltTieRule, setHltTieRule] = useState<'push' | 'split' | 'carryover'>('push');
-  const [hltTeamMode, setHltTeamMode] = useState(false);
   const [hltPointValue, setHltPointValue] = useState(10);
   const [hltTeamAssignment, setHltTeamAssignment] = useState<HLTTeamAssignment | null>(null);
 
@@ -233,9 +232,9 @@ export function CreateGameModal({
         return;
       }
 
-      // Team mode requires exactly 4 players
-      if (hltTeamMode && validPlayers.length !== 4) {
-        setError('Team mode requires exactly 4 players');
+      // HLT requires exactly 4 players for 2v2 teams
+      if (validPlayers.length !== 4) {
+        setError('High-Low-Total requires exactly 4 players for 2v2 teams');
         return;
       }
     } else {
@@ -290,10 +289,10 @@ export function CreateGameModal({
       endHole,
       scoringBasis,
       hltSettings: isHLT ? {
-        tieRule: hltTieRule,
-        isTeamMode: hltTeamMode,
+        tieRule: 'push', // Always wash on ties in new HLT
+        isTeamMode: true, // Always 2v2 team mode
         pointValue: hltPointValue,
-        teamAssignment: hltTeamMode && hltTeamAssignment ? hltTeamAssignment : undefined,
+        teamAssignment: hltTeamAssignment ?? undefined,
       } : undefined,
     });
   };
@@ -419,12 +418,12 @@ export function CreateGameModal({
             </div>
           )}
 
-          {/* HLT Player Selection (3-4 players) */}
+          {/* HLT Player Selection (exactly 4 players for 2v2 teams) */}
           {isHLT ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium text-muted-foreground">
-                  Players ({hltPlayerIds.filter(id => id !== '').length}/{hltTeamMode ? 4 : '3-4'})
+                  Players ({hltPlayerIds.filter(id => id !== '').length}/4)
                 </label>
                 <Button
                   type="button"
@@ -441,45 +440,25 @@ export function CreateGameModal({
                 </Button>
               </div>
 
-              {/* Player slots */}
+              {/* Player slots - all 4 required */}
               {[0, 1, 2, 3].map((idx) => {
                 const playerId = hltPlayerIds[idx] ?? '';
                 const player = localPlayers.find(p => p.id === playerId);
                 const usedIds = hltPlayerIds.filter((id, i) => i !== idx && id !== '');
                 const availablePlayers = localPlayers.filter(p => !usedIds.includes(p.id));
-                const isRequired = idx < 3;
-                const isTeamSlot = hltTeamMode || idx < 4;
-
-                // In non-team mode, 4th player is optional
-                if (!hltTeamMode && idx === 3 && hltPlayerIds[3] === '' && hltPlayerIds.filter(id => id !== '').length < 4) {
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        const newIds = [...hltPlayerIds];
-                        if (newIds.length <= idx) {
-                          newIds.push('');
-                        }
-                        setHltPlayerIds(newIds);
-                      }}
-                      className="flex items-center gap-2 p-2 rounded-lg border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors text-sm"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add 4th Player (optional)
-                    </button>
-                  );
-                }
-
-                if (idx > hltPlayerIds.length - 1 && idx >= 3) return null;
+                // Team colors: 0,1 = Team 1 (blue), 2,3 = Team 2 (amber)
+                const teamColor = idx < 2 ? 'primary' : 'secondary';
 
                 return (
                   <div key={idx} className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted/30 flex items-center justify-center text-xs font-medium text-muted-foreground">
+                    <div className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium',
+                      idx < 2 ? 'bg-blue-500/20 text-blue-400' : 'bg-amber-500/20 text-amber-400'
+                    )}>
                       {idx + 1}
                     </div>
                     {player && (
-                      <PlayerAvatar name={player.name} size="md" color={idx % 2 === 0 ? 'primary' : 'secondary'} />
+                      <PlayerAvatar name={player.name} size="md" color={teamColor} />
                     )}
                     <select
                       value={playerId}
@@ -493,9 +472,7 @@ export function CreateGameModal({
                       <option value="">
                         {localPlayers.length === 0
                           ? 'No players - click Add Player'
-                          : isRequired
-                            ? 'Select player...'
-                            : 'Select player (optional)...'}
+                          : 'Select player...'}
                       </option>
                       {availablePlayers.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -503,102 +480,38 @@ export function CreateGameModal({
                         </option>
                       ))}
                     </select>
-                    {idx === 3 && !hltTeamMode && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => {
-                          const newIds = hltPlayerIds.slice(0, 3);
-                          setHltPlayerIds(newIds);
-                        }}
-                      >
-                        ×
-                      </Button>
-                    )}
                   </div>
                 );
               })}
 
+              {/* Team assignment info */}
+              <div className="text-xs text-muted-foreground bg-muted/20 px-3 py-2 rounded-md">
+                Players 1-2 = <span className="text-blue-400">Team 1</span> |
+                Players 3-4 = <span className="text-amber-400">Team 2</span>
+              </div>
+
+              {/* HLT Team Picker - shows when 4 players selected */}
+              {FEATURE_HLT_TEAMS && hltPlayerIds.filter(id => id !== '').length === 4 && (
+                <HLTTeamPicker
+                  players={hltPlayerIds
+                    .filter(id => id !== '')
+                    .map(id => {
+                      const player = localPlayers.find(p => p.id === id);
+                      return {
+                        id,
+                        name: player?.name ?? 'Unknown',
+                      };
+                    })}
+                  initialTeams={hltTeamAssignment ?? undefined}
+                  onTeamsChange={setHltTeamAssignment}
+                />
+              )}
+
               {/* HLT Settings */}
               <div className="pt-3 mt-3 border-t border-muted/30 space-y-3">
                 <label className="text-sm font-medium text-muted-foreground">
-                  High-Low-Total Settings
+                  Settings
                 </label>
-
-                {/* Tie Rule */}
-                <div className="space-y-1">
-                  <label className="text-xs text-muted-foreground">Tie Rule</label>
-                  <div className="flex gap-2">
-                    {(['push', 'split', 'carryover'] as const).map((rule) => (
-                      <button
-                        key={rule}
-                        type="button"
-                        onClick={() => setHltTieRule(rule)}
-                        className={cn(
-                          'flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-all duration-200 capitalize',
-                          hltTieRule === rule
-                            ? 'bg-pink-500/20 text-pink-400 border-pink-500/30'
-                            : 'bg-muted/20 text-muted-foreground border-muted/30 hover:bg-muted/30'
-                        )}
-                      >
-                        {rule}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {hltTieRule === 'push' && 'Ties are void - no points awarded'}
-                    {hltTieRule === 'split' && 'Tied players split the point'}
-                    {hltTieRule === 'carryover' && 'Point carries to next hole'}
-                  </p>
-                </div>
-
-                {/* Team Mode Toggle */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-muted/30">
-                  <div>
-                    <div className="text-sm font-medium">Team Mode (2v2)</div>
-                    <div className="text-xs text-muted-foreground">Adds Total point for team combined score</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHltTeamMode(!hltTeamMode);
-                      // If enabling team mode, ensure we have 4 player slots
-                      if (!hltTeamMode && hltPlayerIds.length < 4) {
-                        setHltPlayerIds([...hltPlayerIds, '']);
-                      }
-                    }}
-                    className={cn(
-                      'relative w-11 h-6 rounded-full transition-colors',
-                      hltTeamMode ? 'bg-pink-500' : 'bg-muted'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform',
-                        hltTeamMode && 'translate-x-5'
-                      )}
-                    />
-                  </button>
-                </div>
-
-                {/* HLT Team Picker - shows when team mode enabled and 4 players selected */}
-                {FEATURE_HLT_TEAMS && hltTeamMode && hltPlayerIds.filter(id => id !== '').length === 4 && (
-                  <HLTTeamPicker
-                    players={hltPlayerIds
-                      .filter(id => id !== '')
-                      .map(id => {
-                        const player = localPlayers.find(p => p.id === id);
-                        return {
-                          id,
-                          name: player?.name ?? 'Unknown',
-                        };
-                      })}
-                    initialTeams={hltTeamAssignment ?? undefined}
-                    onTeamsChange={setHltTeamAssignment}
-                  />
-                )}
 
                 {/* Point Value */}
                 <div className="space-y-1">
@@ -615,6 +528,15 @@ export function CreateGameModal({
                       className="pl-10"
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    3 points per hole: Low Ball + High Ball + Total
+                  </p>
+                </div>
+
+                {/* Game info */}
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>• Ties = wash (no points awarded)</p>
+                  <p>• Net scoring only</p>
                 </div>
               </div>
             </div>

@@ -7,7 +7,7 @@ import { Plus } from 'lucide-react';
 import { GolfClubsIcon } from '@/components/ui/GolfClubsIcon';
 import { CreateGameModal, type CreateGameData } from '@/components/games/CreateGameModal';
 import { getGamesForEvent, createGame, createGameWithPlayers } from '@/lib/services/games';
-import { saveHighLowTotalSettings } from '@/lib/services/highLowTotal';
+import { saveHLTSettings } from '@/lib/services/highLowTotal';
 import { getScoresForEvent, getEventRounds } from '@/lib/services/scores';
 import { getEventMembers } from '@/lib/services/players';
 import { useAppStore } from '@/stores';
@@ -128,14 +128,29 @@ export default function GamesPage({
           playerIds: data.playerIds,
         });
 
-        // Save HLT-specific settings
-        if (data.hltSettings) {
-          await saveHighLowTotalSettings(newGame.id, {
-            tieRule: data.hltSettings.tieRule,
-            isTeamMode: data.hltSettings.isTeamMode,
-            pointValue: data.hltSettings.pointValue,
-          });
-          console.log('[GamesPage] HLT settings saved for game:', newGame.id);
+        // Save HLT team settings (required for 2v2 HLT)
+        if (data.hltSettings && data.hltSettings.teamAssignment && data.playerIds) {
+          const teams = data.hltSettings.teamAssignment;
+          await saveHLTSettings(
+            newGame.id,
+            {
+              team1: [teams.team1[0], teams.team1[1]],
+              team2: [teams.team2[0], teams.team2[1]],
+            },
+            data.hltSettings.pointValue
+          );
+          console.log('[GamesPage] HLT team settings saved for game:', newGame.id, teams);
+        } else if (data.hltSettings && data.playerIds && data.playerIds.length === 4) {
+          // Default team assignment: first two vs last two
+          await saveHLTSettings(
+            newGame.id,
+            {
+              team1: [data.playerIds[0], data.playerIds[1]],
+              team2: [data.playerIds[2], data.playerIds[3]],
+            },
+            data.hltSettings.pointValue
+          );
+          console.log('[GamesPage] HLT team settings saved with default assignment for game:', newGame.id);
         }
       } else {
         // Standard 2-player game

@@ -204,6 +204,16 @@ export interface MockUser {
   role: MembershipRole;
 }
 
+/**
+ * User search result for player selection/favorites
+ */
+export interface UserSearchResult {
+  id: string;
+  displayName: string;
+  email?: string;
+  avatarUrl?: string;
+}
+
 // ============================================
 // GAMES
 // ============================================

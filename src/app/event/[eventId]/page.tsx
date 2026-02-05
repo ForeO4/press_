@@ -10,7 +10,7 @@ import { getLeaderboard } from '@/lib/services/leaderboard';
 import { getGamesForEvent } from '@/lib/services/games';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { ClubhouseThemeProvider } from '@/components/providers/ClubhouseThemeProvider';
-import type { Event, TeeSnapshot, PlayerProfile, MembershipRole, GameWithParticipants } from '@/types';
+import type { Event, TeeSnapshot, PlayerProfile, MembershipRole, GameWithParticipants, ClubhouseTheme } from '@/types';
 import type { LeaderboardEntry } from '@/lib/services/leaderboard';
 import type { TabId } from '@/components/events';
 
@@ -20,6 +20,7 @@ import {
   ClubhouseTabs,
   OverviewTabContent,
   RoundsTabContent,
+  GamesTabContent,
   StatsTabContent,
   ClubhouseTabContent,
 } from '@/components/events';
@@ -43,8 +44,16 @@ export default function EventPage({
   const [error, setError] = useState<string | null>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
+  const [currentTheme, setCurrentTheme] = useState<ClubhouseTheme>('dark');
 
   const isDemoEvent = params.eventId.startsWith('demo-');
+
+  // Update theme when event loads
+  useEffect(() => {
+    if (event?.theme) {
+      setCurrentTheme(event.theme);
+    }
+  }, [event?.theme]);
 
   // Get current user's role in the event
   const userMembership = members.find((m) => m.userId === user?.id);
@@ -109,6 +118,15 @@ export default function EventPage({
             isLoading={loading}
           />
         );
+      case 'games':
+        return (
+          <GamesTabContent
+            eventId={params.eventId}
+            games={games}
+            members={members}
+            isLoading={loading}
+          />
+        );
       case 'stats':
         return (
           <StatsTabContent
@@ -169,7 +187,7 @@ export default function EventPage({
   }
 
   return (
-    <ClubhouseThemeProvider themeId={event.theme}>
+    <ClubhouseThemeProvider themeId={currentTheme}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Clubhouse Header */}
         <ClubhouseHeader
@@ -177,6 +195,8 @@ export default function EventPage({
           memberCount={members.length}
           activePlayers={activePlayers}
           isLive={games.some((g) => g.status === 'active')}
+          currentTheme={currentTheme}
+          onThemeChange={setCurrentTheme}
         />
 
         {/* Navigation Tabs */}

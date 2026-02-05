@@ -6,10 +6,11 @@ import {
   Calendar,
   BarChart3,
   Home,
+  Trophy,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type TabId = 'overview' | 'rounds' | 'stats' | 'clubhouse';
+export type TabId = 'overview' | 'rounds' | 'games' | 'stats' | 'clubhouse';
 
 interface Tab {
   id: TabId;
@@ -27,6 +28,7 @@ interface ClubhouseTabsProps {
 const TABS: Tab[] = [
   { id: 'overview', label: 'Overview', icon: LayoutGrid },
   { id: 'rounds', label: 'Rounds', icon: Calendar },
+  { id: 'games', label: 'Games', icon: Trophy },
   { id: 'stats', label: 'Stats', icon: BarChart3 },
   { id: 'clubhouse', label: 'Clubhouse', icon: Home },
 ];

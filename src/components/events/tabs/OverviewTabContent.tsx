@@ -13,6 +13,14 @@ import {
   Mail,
   UserMinus,
 } from 'lucide-react';
+import {
+  LiveRoundCard,
+  LeaderboardPreview,
+  GamesPotSummary,
+  WhosPlayingModule,
+} from '../cards';
+import { ActivityTimeline } from '../ActivityTimeline';
+import { RoleActionBar } from '../RoleActionBar';
 import type { OverviewTabProps } from './types';
 
 interface QuickStatCardProps {
@@ -52,8 +60,8 @@ interface Member {
 export function OverviewTabContent({
   eventId,
   members,
-  games,
-  leaderboard,
+  games = [],
+  leaderboard = [],
   courseName,
   userRole,
   isLoading = false,
@@ -117,8 +125,60 @@ export function OverviewTabContent({
     );
   }
 
+  // Check if any games are active (live)
+  const isLive = games.some((g) => g.status === 'active');
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Role Action Bar */}
+      <RoleActionBar
+        eventId={eventId}
+        role={userRole || 'VIEWER'}
+      />
+
+      {/* Live Round Card (if active games) */}
+      {isLive && (
+        <LiveRoundCard
+          eventId={eventId}
+          courseName={courseName}
+          isLive={true}
+          playersActive={members.length}
+        />
+      )}
+
+      {/* Snapshot Cards Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <LeaderboardPreview
+          eventId={eventId}
+          entries={leaderboard}
+          isLoading={isLoading}
+          limit={3}
+        />
+        <GamesPotSummary
+          eventId={eventId}
+          games={games}
+          isLoading={isLoading}
+        />
+        <WhosPlayingModule
+          players={members.map((m) => ({
+            ...m,
+            isActive: isLive, // Placeholder: mark all as active when live
+          }))}
+          isLoading={isLoading}
+        />
+      </div>
+
+      {/* Activity Timeline */}
+      <Card>
+        <CardContent className="p-4">
+          <ActivityTimeline
+            eventId={eventId}
+            limit={5}
+            showViewAll={true}
+          />
+        </CardContent>
+      </Card>
+
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <QuickStatCard
